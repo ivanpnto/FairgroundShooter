@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &3177492658283166799
+--- !u!1 &281615788582607217
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,49 +8,49 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 268198653081166845}
-  - component: {fileID: 8039108805991033892}
-  - component: {fileID: 8509751337809103668}
-  - component: {fileID: 4271850645779012742}
-  - component: {fileID: 4623887984864130885}
-  - component: {fileID: 899763937924410382}
+  - component: {fileID: 3404731413347878890}
+  - component: {fileID: 4006279478891540070}
+  - component: {fileID: 1540804439213704616}
+  - component: {fileID: 3280266124845622305}
+  - component: {fileID: -3176783230508079407}
+  - component: {fileID: 8316596162309698566}
   m_Layer: 0
-  m_Name: Target
+  m_Name: JumpTarget
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &268198653081166845
+--- !u!4 &3404731413347878890
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3177492658283166799}
+  m_GameObject: {fileID: 281615788582607217}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 5}
+  m_LocalPosition: {x: 6.52972, y: -0, z: -1.44591}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &8039108805991033892
+--- !u!33 &4006279478891540070
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3177492658283166799}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &8509751337809103668
+  m_GameObject: {fileID: 281615788582607217}
+  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1540804439213704616
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3177492658283166799}
+  m_GameObject: {fileID: 281615788582607217}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -93,13 +93,13 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &4271850645779012742
-BoxCollider:
+--- !u!136 &3280266124845622305
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3177492658283166799}
+  m_GameObject: {fileID: 281615788582607217}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -111,34 +111,37 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &4623887984864130885
+  serializedVersion: 2
+  m_Radius: 0.5000001
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
+--- !u!114 &-3176783230508079407
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3177492658283166799}
+  m_GameObject: {fileID: 281615788582607217}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bf24ec98ca1ada147bbd13ba269b11b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Target
-  points: 10
+  points: 20
   lifetime: 5
---- !u!114 &899763937924410382
+--- !u!114 &8316596162309698566
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3177492658283166799}
+  m_GameObject: {fileID: 281615788582607217}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 736f825e8d02a7d4d99f2bd1b54b4056, type: 3}
+  m_Script: {fileID: 11500000, guid: 65346f6f054a3014fb506b54f965811f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HorizontalMovement
-  speed: 2
-  distance: 3
+  m_EditorClassIdentifier: Assembly-CSharp::JumpMovement
+  horizontalDistance: 8
+  jumpHeight: 2
+  jumpDuration: 1.5

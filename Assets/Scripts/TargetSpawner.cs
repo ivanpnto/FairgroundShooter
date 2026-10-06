@@ -41,11 +41,18 @@ public class TargetSpawner : MonoBehaviour
 
         Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
 
-        Instantiate(
+        GameObject targetObject = Instantiate(
             targetPrefab,
             spawnPoint.position,
             spawnPoint.rotation
         );
+
+        Target target = targetObject.GetComponent<Target>();
+
+        if (target != null)
+        {
+            target.SetSpawner(this);
+        }
 
         activeTargets++;
     }

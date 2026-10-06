@@ -11,12 +11,16 @@ public class Target : MonoBehaviour
     private void Awake()
     {
         scoreManager = FindFirstObjectByType<ScoreManager>();
-        spawner = FindFirstObjectByType<TargetSpawner>();
     }
 
     private void Start()
     {
         Destroy(gameObject, lifetime);
+    }
+
+    public void SetSpawner(TargetSpawner targetSpawner)
+    {
+        spawner = targetSpawner;
     }
 
     public void Hit()
