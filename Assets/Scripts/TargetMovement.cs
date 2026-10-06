@@ -8,4 +8,11 @@ public abstract class TargetMovement : MonoBehaviour
     {
         startPosition = transform.position;
     }
+
+    private void Update()
+    {
+        Move();
+    }
+
+    protected abstract void Move();
 }

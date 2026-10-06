@@ -668,12 +668,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a95d2a76ed14ae242aed044482907c89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TargetSpawner
-  targetPrefab: {fileID: 3177492658283166799, guid: 82751ea26bd5d5145a7208e1c1b2cdf7, type: 3}
+  targetPrefab: {fileID: 6937787947357308795, guid: af873c609adb8531d9312c6947d27630, type: 3}
   spawnPoints:
-  - {fileID: 1346310869}
-  - {fileID: 2008558651}
-  - {fileID: 930520648}
-  - {fileID: 1632511467}
   - {fileID: 635459594}
   spawnInterval: 2
   maxActiveTargets: 3

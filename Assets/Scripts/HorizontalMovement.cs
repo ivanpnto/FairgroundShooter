@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class HorizontalMovement : TargetMovement
@@ -7,7 +8,7 @@ public class HorizontalMovement : TargetMovement
 
     private float direction = 1f;
 
-    private void Update()
+    protected override void Move()
     {
         transform.position += Vector3.right * speed * direction * Time.deltaTime;
 
