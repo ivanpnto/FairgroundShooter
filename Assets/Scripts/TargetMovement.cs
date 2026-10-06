@@ -1,27 +1,11 @@
 using UnityEngine;
 
-public class TargetMovement : MonoBehaviour
+public abstract class TargetMovement : MonoBehaviour
 {
-    [SerializeField] private float speed = 2f;
-    [SerializeField] private float distance = 3f;
+    protected Vector3 startPosition;
 
-    private Vector3 startPosition;
-    private float direction = 1f;
-
-    private void Start()
+    protected virtual void Start()
     {
         startPosition = transform.position;
-    }
-
-    private void Update()
-    {
-        transform.position += Vector3.right * speed * direction * Time.deltaTime;
-
-        float distanceFromStart = transform.position.x - startPosition.x;
-
-        if (Mathf.Abs(distanceFromStart) >= distance)
-        {
-            direction *= -1f;
-        }
     }
 }
