@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8509751337809103668}
   - component: {fileID: 4271850645779012742}
   - component: {fileID: 4623887984864130885}
+  - component: {fileID: -3350581648086213627}
   m_Layer: 0
   m_Name: Target
   m_TagString: Untagged
@@ -126,4 +127,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Target
   points: 10
-  scoreManager: {fileID: 0}
+  lifetime: 5
+--- !u!114 &-3350581648086213627
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3177492658283166799}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74d77dc2f4897c44d8a14a2138b030c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TargetMovement
+  speed: 2
+  distance: 3
