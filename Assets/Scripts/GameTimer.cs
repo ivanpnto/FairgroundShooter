@@ -1,8 +1,10 @@
 using UnityEngine;
+using TMPro;
 
 public class GameTimer : MonoBehaviour
 {
     [SerializeField] private float gameDuration = 60f;
+    [SerializeField] private TMP_Text timerText;
 
     private float timeRemaining;
     private GameManager gameManager;
@@ -20,12 +22,17 @@ public class GameTimer : MonoBehaviour
 
         timeRemaining -= Time.deltaTime;
 
-        Debug.Log($"Time remaining: {timeRemaining:F1}");
-
         if (timeRemaining <= 0f)
         {
             timeRemaining = 0f;
             gameManager.EndGame();
         }
+
+        UpdateTimerText();
+    }
+
+    private void UpdateTimerText()
+    {
+        timerText.text = $"TIEMPO: {Mathf.CeilToInt(timeRemaining)}";
     }
 }
