@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class GameManager : MonoBehaviour
 {
@@ -11,14 +10,6 @@ public class GameManager : MonoBehaviour
     }
 
     public GameState CurrentState { get; private set; } = GameState.Waiting;
-
-    private void Update()
-    {
-        if (Keyboard.current.spaceKey.wasPressedThisFrame)
-        {
-            StartGame();
-        }
-    }
 
     public void StartGame()
     {
