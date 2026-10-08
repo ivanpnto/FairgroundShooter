@@ -5,12 +5,30 @@ public class PlayerShoot : MonoBehaviour
 {
     [SerializeField] private Camera playerCamera;
     [SerializeField] private float maxDistance = 100f;
+    [SerializeField] private WeaponAmmo weaponAmmo;
+
+    private GameManager gameManager;
+
+    private void Awake()
+    {
+        gameManager = FindFirstObjectByType<GameManager>();
+    }
 
     private void Update()
     {
+        if (gameManager == null)
+            return;
+
+        if (gameManager.CurrentState != GameManager.GameState.Playing)
+            return;
+
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
-            Shoot();
+            if (weaponAmmo.CanShoot)
+            {
+                Shoot();
+                weaponAmmo.UseAmmo();
+            }
         }
     }
 

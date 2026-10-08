@@ -11,16 +11,27 @@ public class WeaponAmmo : MonoBehaviour
     private bool isReloading;
     private float reloadTimer;
 
+    private GameManager gameManager;
+
     public bool CanShoot => currentAmmo > 0 && !isReloading;
 
     private void Awake()
     {
+        gameManager = FindFirstObjectByType<GameManager>();
+
         currentAmmo = magazineSize;
+
         UpdateAmmoText();
     }
 
     private void Update()
     {
+        if (gameManager == null)
+            return;
+
+        if (gameManager.CurrentState != GameManager.GameState.Playing)
+            return;
+
         if (!isReloading)
             return;
 
@@ -73,5 +84,14 @@ public class WeaponAmmo : MonoBehaviour
         {
             ammoText.text = $"BALAS: {currentAmmo}/{magazineSize}";
         }
+    }
+
+    public void ResetAmmo()
+    {
+        currentAmmo = magazineSize;
+        isReloading = false;
+        reloadTimer = 0f;
+
+        UpdateAmmoText();
     }
 }

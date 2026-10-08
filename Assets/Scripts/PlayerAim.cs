@@ -7,16 +7,45 @@ public class PlayerAim : MonoBehaviour
     [SerializeField] private float horizontalLimit = 60f;
     [SerializeField] private float verticalLimit = 45f;
 
-    // 1. Variable para controlar si la cámara puede moverse. Empieza en false.
     public bool canAim = false;
 
     private float horizontalRotation = 0f;
     private float verticalRotation = 0f;
 
+    private GameManager gameManager;
+    private GameManager.GameState lastState;
+
+    private void Awake()
+    {
+        gameManager = FindFirstObjectByType<GameManager>();
+
+        if (gameManager != null)
+        {
+            lastState = gameManager.CurrentState;
+            UpdateCursor();
+        }
+    }
+
     private void Update()
     {
-        // 2. Si no podemos apuntar, salimos del Update inmediatamente.
-        if (!canAim) return;
+        if (gameManager == null)
+            return;
+
+        // Comprobar si ha cambiado el estado del juego
+        if (gameManager.CurrentState != lastState)
+        {
+            lastState = gameManager.CurrentState;
+            UpdateCursor();
+        }
+
+        // No permitir apuntar fuera de la partida
+        if (gameManager.CurrentState != GameManager.GameState.Playing)
+        {
+            canAim = false;
+            return;
+        }
+
+        canAim = true;
 
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
 
@@ -45,14 +74,17 @@ public class PlayerAim : MonoBehaviour
         );
     }
 
-    // 3. Método público que llamarás desde el botón "Play"
-    public void EnableAiming()
+    private void UpdateCursor()
     {
-        canAim = true;
-        
-        // Opcional pero recomendado para juegos en primera persona: 
-        // Ocultar y bloquear el cursor en el centro de la pantalla al empezar a jugar
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        if (gameManager.CurrentState == GameManager.GameState.Playing)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
     }
 }

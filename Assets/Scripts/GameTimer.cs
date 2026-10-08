@@ -35,4 +35,10 @@ public class GameTimer : MonoBehaviour
     {
         timerText.text = $"TIEMPO: {Mathf.CeilToInt(timeRemaining)}";
     }
+
+    public void ResetTimer()
+    {
+        timeRemaining = gameDuration;
+        UpdateTimerText();
+    }
 }

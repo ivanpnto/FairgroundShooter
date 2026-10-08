@@ -61,4 +61,20 @@ public class TargetSpawner : MonoBehaviour
     {
         activeTargets = Mathf.Max(0, activeTargets - 1);
     }
+
+    public void ResetSpawner()
+    {
+        Target[] targets = FindObjectsByType<Target>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None
+        );
+
+        foreach (Target target in targets)
+        {
+            Destroy(target.gameObject);
+        }
+
+        activeTargets = 0;
+        spawnTimer = 0f;
+    }
 }
