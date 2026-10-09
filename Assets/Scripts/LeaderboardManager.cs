@@ -45,6 +45,7 @@ public class LeaderboardManager : MonoBehaviour
     public List<LeaderboardEntry> GetTopScores(int count)
     {
         return scores
+            .OrderByDescending(entry => entry.score)
             .Take(count)
             .ToList();
     }

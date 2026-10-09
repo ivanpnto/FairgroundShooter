@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private TMP_Text finalScoreText;
     [SerializeField] private TMP_InputField nameInputField;
+    [SerializeField] private LeaderboardUI leaderboardUI;
 
     private ScoreManager scoreManager;
     private GameTimer gameTimer;
@@ -67,13 +68,15 @@ public class GameManager : MonoBehaviour
 
         leaderboardManager.AddScore(playerName, finalScore);
 
-        hud.SetActive(false);
-
         finalScoreText.text = $"SCORE: {finalScore}";
 
+        hud.SetActive(false);
         gameOverPanel.SetActive(true);
 
+        leaderboardUI.UpdateRanking();
+
         Debug.Log($"Jugador: {playerName} | Puntuación: {finalScore}");
+        Debug.Log($"Game state: {CurrentState}");
     }
 
     public void RestartGame()
