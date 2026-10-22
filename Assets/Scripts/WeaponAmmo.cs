@@ -13,7 +13,17 @@ public class WeaponAmmo : MonoBehaviour
 
     private GameManager gameManager;
 
+    // NUEVO: evento para que otros sistemas (visual, sonido, partículas) reaccionen al disparo
+    public event System.Action OnShot;
+
     public bool CanShoot => currentAmmo > 0 && !isReloading;
+
+    // NUEVO: estado de solo lectura para la parte visual
+    public bool IsReloading => isReloading;
+
+    // NUEVO: progreso de la recarga 0..1 (la animación dura exactamente reloadTime)
+    public float ReloadProgress =>
+        isReloading && reloadTime > 0f ? 1f - (reloadTimer / reloadTime) : 0f;
 
     private void Awake()
     {
@@ -43,12 +53,15 @@ public class WeaponAmmo : MonoBehaviour
         }
     }
 
-    public void UseAmmo()
+    // CAMBIO: devuelve bool para que la regla "¿puedo disparar?" viva en un único sitio
+    public bool UseAmmo()
     {
         if (!CanShoot)
-            return;
+            return false;
 
         currentAmmo--;
+
+        OnShot?.Invoke(); // "?." evita error si nadie está suscrito
 
         UpdateAmmoText();
 
@@ -56,6 +69,17 @@ public class WeaponAmmo : MonoBehaviour
         {
             StartReload();
         }
+
+        return true;
+    }
+
+    // NUEVO: recarga manual (tecla R)
+    public void TryReload()
+    {
+        if (isReloading || currentAmmo == magazineSize)
+            return;
+
+        StartReload();
     }
 
     private void StartReload()
@@ -76,6 +100,10 @@ public class WeaponAmmo : MonoBehaviour
 
     private void UpdateAmmoText()
     {
+        // CAMBIO: evita NullReferenceException si no se ha asignado en el Inspector
+        if (ammoText == null)
+            return;
+
         if (isReloading)
         {
             ammoText.text = "RECARGANDO...";

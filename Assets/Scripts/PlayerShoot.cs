@@ -7,6 +7,9 @@ public class PlayerShoot : MonoBehaviour
     [SerializeField] private float maxDistance = 100f;
     [SerializeField] private WeaponAmmo weaponAmmo;
 
+    // NUEVO: capas que puede golpear el disparo (quita la del jugador/arma si la tienen)
+    [SerializeField] private LayerMask hitMask = ~0; // ~0 = todas las capas
+
     private GameManager gameManager;
 
     private void Awake()
@@ -22,13 +25,20 @@ public class PlayerShoot : MonoBehaviour
         if (gameManager.CurrentState != GameManager.GameState.Playing)
             return;
 
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+        // NUEVO: Mouse/Keyboard.current pueden ser null si no hay dispositivo conectado
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
-            if (weaponAmmo.CanShoot)
+            // CAMBIO: UseAmmo() comprueba y gasta la bala; solo disparamos si ha tenido éxito
+            if (weaponAmmo.UseAmmo())
             {
                 Shoot();
-                weaponAmmo.UseAmmo();
             }
+        }
+
+        // NUEVO: recarga manual
+        if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
+        {
+            weaponAmmo.TryReload();
         }
     }
 
@@ -38,7 +48,7 @@ public class PlayerShoot : MonoBehaviour
             new Vector3(0.5f, 0.5f, 0f)
         );
 
-        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance))
+        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, hitMask, QueryTriggerInteraction.Ignore))
         {
             Debug.Log("Impacto en: " + hit.collider.gameObject.name);
 
