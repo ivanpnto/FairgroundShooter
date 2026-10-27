@@ -836,7 +836,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponAmmo
   magazineSize: 6
   reloadTime: 2
-  ammoText: {fileID: 0}
+  ammoText: {fileID: 964036227}
 --- !u!1 &377001214
 GameObject:
   m_ObjectHideFlags: 0

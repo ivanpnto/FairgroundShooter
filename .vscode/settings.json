@@ -67,5 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "FairgroundShooter.slnx"
+    "dotnet.defaultSolution": "FairgroundShooter.slnx",
+    "dotnet.preferCSharpExtension": true
 }
