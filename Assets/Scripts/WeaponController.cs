@@ -17,6 +17,11 @@ public class WeaponController : MonoBehaviour
 
     public WeaponData CurrentWeapon { get; private set; }
 
+    // Avisa de que hay un arma nueva lista para usar. Con un evento, WeaponController no
+    // necesita conocer a quien reacciona (PlayerShoot reinicia su cadencia, y en el futuro
+    // podrían suscribirse el HUD o el sonido)
+    public event System.Action<WeaponData> OnWeaponEquipped;
+
     // Guardamos el modelo que hemos creado nosotros en lugar de vaciar WeaponHolder:
     // así no destruimos otros hijos que se le añadan en el futuro (fogonazo, mira...)
     private GameObject currentModel;
@@ -62,6 +67,9 @@ public class WeaponController : MonoBehaviour
             Debug.LogWarning($"WeaponController: '{data.modelPrefab.name}' no tiene componente WeaponModel", this);
 
         weaponVisual.SetModel(model, data);
+
+        // Al final, cuando munición y visual ya están configurados para el arma nueva
+        OnWeaponEquipped?.Invoke(data);
     }
 
     private void ApplyHoldTransform(WeaponData data)
