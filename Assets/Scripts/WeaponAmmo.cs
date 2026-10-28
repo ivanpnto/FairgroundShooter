@@ -101,7 +101,12 @@ public class WeaponAmmo : MonoBehaviour
     private void UpdateAmmoText()
     {
         // CAMBIO: evita NullReferenceException si no se ha asignado en el Inspector
-        if (ammoText == null) Debug.LogWarning("WeaponAmmo: falta asignar ammoText", this);
+        if (ammoText == null)
+        {
+            Debug.LogWarning("WeaponAmmo: falta asignar ammoText", this);
+            return;
+        }    
+
 
         if (isReloading)
         {

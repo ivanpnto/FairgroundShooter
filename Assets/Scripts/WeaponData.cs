@@ -1,0 +1,51 @@
+using UnityEngine;
+
+/// <summary>
+/// Datos que definen un arma. No tiene lógica: solo almacena valores.
+/// Cada arma del juego es un asset de este tipo (Create > FairgroundShooter > Weapon Data).
+/// </summary>
+[CreateAssetMenu(fileName = "NewWeapon", menuName = "FairgroundShooter/Weapon Data")]
+public class WeaponData : ScriptableObject
+{
+    [Header("General")]
+    public string displayName = "Arma";
+    [Tooltip("Prefab del modelo (carpeta PolyOne/Free Gun/Prefabs)")]
+    public GameObject modelPrefab;
+
+    [Header("Colocación en la mano (relativa a WeaponHolder)")]
+    // Cada modelo tiene un tamaño y un pivote distintos, así que cada arma
+    // necesita su propio ajuste para verse bien en pantalla
+    public Vector3 holdPosition = Vector3.zero;
+    public Vector3 holdRotation = Vector3.zero;
+    public Vector3 holdScale = Vector3.one;
+
+    [Header("Munición")]
+    [Min(1)] public int magazineSize = 12;
+    [Min(0f)] public float reloadTime = 2f;
+
+    [Header("Disparo")]
+    [Tooltip("Disparos por segundo como máximo")]
+    [Min(0.1f)] public float fireRate = 5f;
+    [Tooltip("true = dispara mientras se mantiene el clic; false = un disparo por clic")]
+    public bool isAutomatic = false;
+    [Min(1f)] public float maxDistance = 100f;
+
+    [Header("Retroceso del modelo (los valores que ahora están en WeaponVisual)")]
+    public float recoilKick = 0.06f;    // metros hacia atrás
+    public float recoilAngle = 10f;     // grados hacia arriba
+    public float recoverySpeed = 12f;   // mayor = vuelve antes
+
+    [Header("Retroceso de cámara (Fase 4)")]
+    [Tooltip("Grados que sube la vista con cada disparo")]
+    public float cameraKick = 1f;
+    public float cameraRecoverySpeed = 8f;
+
+    [Header("Mira (Fase 5)")]
+    public bool hasScope = false;
+    [Tooltip("Campo de visión al apuntar. La cámara normal tiene 60")]
+    [Range(5f, 60f)] public float scopeFov = 20f;
+
+    // Propiedad calculada: el controlador trabajará con segundos entre disparos.
+    // Se guarda la cadencia en disparos/segundo porque es más intuitiva al editarla
+    public float TimeBetweenShots => 1f / fireRate;
+}
