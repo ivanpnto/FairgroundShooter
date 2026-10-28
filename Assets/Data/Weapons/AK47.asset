@@ -22,8 +22,8 @@ MonoBehaviour:
   fireRate: 10
   isAutomatic: 1
   maxDistance: 100
-  reloadOffset: {x: 0, y: -0.1, z: 0}
-  reloadRotation: {x: -8, y: 0, z: 20}
+  reloadOffset: {x: -0.08, y: 0.05, z: 0.1}
+  reloadRotation: {x: -15, y: 10, z: -35}
   magazineOutOffset: {x: 0, y: -0.3, z: 0}
   recoilKick: 0.06
   recoilAngle: 7
