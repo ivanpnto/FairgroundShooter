@@ -118,6 +118,22 @@ public class WeaponAmmo : MonoBehaviour
         }
     }
 
+    // Lo llama WeaponController al equipar un arma. Los campos serializados se quedan
+    // como valores por defecto por si el objeto se usa sin controlador
+    public void Configure(int newMagazineSize, float newReloadTime)
+    {
+        magazineSize = newMagazineSize;
+        reloadTime = newReloadTime;
+
+        // Un arma recién equipada empieza llena: cancelar la recarga evita que
+        // termine con los datos del arma anterior
+        currentAmmo = magazineSize;
+        isReloading = false;
+        reloadTimer = 0f;
+
+        UpdateAmmoText();
+    }
+
     public void ResetAmmo()
     {
         currentAmmo = magazineSize;

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Barrett
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   displayName: Barrett M82A1
-  modelPrefab: {fileID: 8861018534708125288, guid: e255ad384286fce4f876c07a7e5e1d25, type: 3}
+  modelPrefab: {fileID: 7562074499662942624, guid: e9ee2b129b83af390a7d203b1ce1204c, type: 3}
   holdPosition: {x: 0, y: 0, z: 0}
   holdRotation: {x: 0, y: 0, z: 0}
   holdScale: {x: 1, y: 1, z: 1}

@@ -59,6 +59,31 @@ public class WeaponVisual : MonoBehaviour
         restPosition = transform.localPosition;
         restRotation = transform.localRotation;
 
+        CacheParts();
+    }
+
+    /// <summary>
+    /// Lo llama WeaponController al equipar un arma: cambia las piezas animadas y el retroceso.
+    /// Los campos serializados se quedan como valores por defecto si no se llama nunca.
+    /// </summary>
+    public void SetModel(WeaponModel model, WeaponData data)
+    {
+        magazine = model != null ? model.Magazine : null;
+        slide = model != null ? model.Slide : null;
+        CacheParts();
+
+        recoilKick = data.recoilKick;
+        recoilAngle = data.recoilAngle;
+        recoverySpeed = data.recoverySpeed;
+
+        recoil = 0f; // que el arma nueva no herede el retroceso a medias de la anterior
+    }
+
+    // Las poses de reposo se leen del modelo tal como viene del prefab, antes de animarlo
+    private void CacheParts()
+    {
+        magazineRenderers = null;
+
         if (magazine != null)
         {
             magazineRest = magazine.localPosition;

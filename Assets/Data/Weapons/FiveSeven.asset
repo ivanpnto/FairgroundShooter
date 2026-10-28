@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: FiveSeven
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   displayName: FN Five-seven
-  modelPrefab: {fileID: 6949219968297497114, guid: 55b1fd5f577255c4a8338b61385780ec, type: 3}
+  modelPrefab: {fileID: 287262192003203302, guid: cf7212f4679b8de3fbbef332bf539909, type: 3}
   holdPosition: {x: 0, y: 0, z: 0}
   holdRotation: {x: 0, y: 0, z: 0}
   holdScale: {x: 1, y: 1, z: 1}

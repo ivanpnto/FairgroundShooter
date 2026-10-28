@@ -4,7 +4,6 @@ using UnityEngine.InputSystem;
 public class PlayerShoot : MonoBehaviour
 {
     [SerializeField] private Camera playerCamera;
-    [SerializeField] private float maxDistance = 100f;
     [SerializeField] private WeaponAmmo weaponAmmo;
 
     // NUEVO: capas que puede golpear el disparo (quita la del jugador/arma si la tienen)
@@ -12,9 +11,16 @@ public class PlayerShoot : MonoBehaviour
 
     private GameManager gameManager;
 
+    // El alcance sale del arma equipada; ya no hay campo maxDistance propio para
+    // que no existan dos valores que puedan contradecirse
+    private WeaponController weaponController;
+
     private void Awake()
     {
         gameManager = FindFirstObjectByType<GameManager>();
+
+        // Ambos componentes van en Player: GetComponent evita otro campo que asignar en la escena
+        weaponController = GetComponent<WeaponController>();
     }
 
     private void Update()
@@ -26,6 +32,11 @@ public class PlayerShoot : MonoBehaviour
             return;
 
         // NUEVO: Mouse/Keyboard.current pueden ser null si no hay dispositivo conectado
+        // Sin arma equipada no hay alcance con el que disparar; se comprueba antes de
+        // UseAmmo() para no gastar una bala en un disparo que no ocurre
+        if (weaponController == null || weaponController.CurrentWeapon == null)
+            return;
+
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
             // CAMBIO: UseAmmo() comprueba y gasta la bala; solo disparamos si ha tenido éxito
@@ -48,7 +59,7 @@ public class PlayerShoot : MonoBehaviour
             new Vector3(0.5f, 0.5f, 0f)
         );
 
-        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, hitMask, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(ray, out RaycastHit hit, weaponController.CurrentWeapon.maxDistance, hitMask, QueryTriggerInteraction.Ignore))
         {
             Debug.Log("Impacto en: " + hit.collider.gameObject.name);
 
