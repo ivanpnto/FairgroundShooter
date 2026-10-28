@@ -7,6 +7,7 @@ public class Target : MonoBehaviour
 
     private ScoreManager scoreManager;
     private TargetSpawner spawner;
+    private int spawnEntryIndex = -1;   // Qué tipo de la lista del spawner es este objetivo
 
     private void Awake()
     {
@@ -18,9 +19,10 @@ public class Target : MonoBehaviour
         Destroy(gameObject, lifetime);
     }
 
-    public void SetSpawner(TargetSpawner targetSpawner)
+    public void SetSpawner(TargetSpawner targetSpawner, int entryIndex)
     {
         spawner = targetSpawner;
+        spawnEntryIndex = entryIndex;
     }
 
     public void Hit()
@@ -36,7 +38,7 @@ public class Target : MonoBehaviour
     {
         if (spawner != null)
         {
-            spawner.TargetDestroyed();
+            spawner.TargetDestroyed(spawnEntryIndex);
         }
     }
-}
+}

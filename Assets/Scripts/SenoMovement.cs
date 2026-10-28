@@ -8,14 +8,25 @@ public class SenoMovement : TargetMovement
     [SerializeField] private float frequency = 3f;         // Qué tan juntas están las curvas de la ola
 
     private float time;
+    private float direction = 1f;
+
+    protected override void Start()
+    {
+        base.Start();
+
+        // Cruza el puesto hacia el lado contrario al que aparece:
+        // si nace a la derecha (x > 0) va hacia la izquierda, y viceversa.
+        direction = startPosition.x > 0f ? -1f : 1f;
+        FaceDirection(direction);
+    }
 
     protected override void Move()
     {
         time += Time.deltaTime;
 
         // El eje X avanza constantemente en línea recta
-        float x = time * horizontalSpeed;
-        
+        float x = time * horizontalSpeed * direction;
+
         // El eje Y sube y baja usando la función matemática del seno
         float y = Mathf.Sin(time * frequency) * verticalAmplitude;
 

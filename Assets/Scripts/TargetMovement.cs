@@ -24,4 +24,13 @@ public abstract class TargetMovement : MonoBehaviour
     }
 
     protected abstract void Move();
+
+    // Los modelos miran hacia +X. Para que no "naden marcha atrás" volteamos la escala X
+    // del objeto raíz; el BoxCollider se voltea con él y sigue encajando con el modelo.
+    protected void FaceDirection(float direction)
+    {
+        Vector3 scale = transform.localScale;
+        scale.x = Mathf.Abs(scale.x) * (direction < 0f ? -1f : 1f);
+        transform.localScale = scale;
+    }
 }
