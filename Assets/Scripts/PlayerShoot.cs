@@ -14,6 +14,7 @@ public class PlayerShoot : MonoBehaviour
     // El alcance sale del arma equipada; ya no hay campo maxDistance propio para
     // que no existan dos valores que puedan contradecirse
     private WeaponController weaponController;
+    private PlayerAim playerAim;
 
     // Momento (en Time.time) a partir del cual se permite el siguiente disparo
     private float nextFireTime;
@@ -22,8 +23,9 @@ public class PlayerShoot : MonoBehaviour
     {
         gameManager = FindFirstObjectByType<GameManager>();
 
-        // Ambos componentes van en Player: GetComponent evita otro campo que asignar en la escena
+        // Todos van en Player: GetComponent evita más campos que asignar en la escena
         weaponController = GetComponent<WeaponController>();
+        playerAim = GetComponent<PlayerAim>();
     }
 
     // Suscribirse en OnEnable y desuscribirse en OnDisable evita llamadas
@@ -81,6 +83,15 @@ public class PlayerShoot : MonoBehaviour
                 nextFireTime += weapon.TimeBetweenShots;
 
                 Shoot();
+
+                // Después de Shoot(): el retroceso desvía los disparos siguientes, no este.
+                // La vista no se recupera hasta 1.5 intervalos sin disparar: en ráfaga continua
+                // (o clicando a la cadencia máxima) el retroceso se acumula y el arma "trepa".
+                // Con tope de 0.25 s: en armas lentas (Barrett, 1.25 s entre disparos) cada
+                // disparo debe ser un golpe que se asienta antes del siguiente, no acumularse
+                if (playerAim != null)
+                    playerAim.AddRecoil(weapon.cameraKick, weapon.cameraKickSide,
+                        weapon.cameraRecoverySpeed, Mathf.Min(weapon.TimeBetweenShots * 1.5f, 0.25f));
             }
         }
 

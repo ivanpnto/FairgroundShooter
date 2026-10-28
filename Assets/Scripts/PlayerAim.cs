@@ -12,6 +12,14 @@ public class PlayerAim : MonoBehaviour
     private float horizontalRotation = 0f;
     private float verticalRotation = 0f;
 
+    // Retroceso de la vista: un desfase que se SUMA a la puntería del jugador y vuelve
+    // solo a cero. Se guarda aparte (en vez de tocar horizontal/verticalRotation) para
+    // que la vista regrese a donde apuntaba el jugador cuando el arma deja de disparar
+    private float recoilPitch;           // grados hacia arriba
+    private float recoilYaw;             // grados a la derecha (+) o izquierda (-)
+    private float recoilRecoverySpeed;
+    private float recoilRecoverAt;       // Time.time a partir del cual la vista empieza a volver
+
     private GameManager gameManager;
     private GameManager.GameState lastState;
 
@@ -67,11 +75,36 @@ public class PlayerAim : MonoBehaviour
             verticalLimit
         );
 
+        // Solo se recupera cuando se deja de disparar: si recuperase también durante la ráfaga,
+        // la subida se estancaría en un equilibrio de pocos grados por muchas balas que se tiren.
+        // Decaimiento exponencial: independiente de los FPS, igual que el retroceso de WeaponVisual
+        if (Time.time >= recoilRecoverAt)
+        {
+            float decay = Mathf.Exp(-recoilRecoverySpeed * Time.deltaTime);
+            recoilPitch *= decay;
+            recoilYaw *= decay;
+        }
+
+        // Los límites se aplican a la suma: el retroceso no puede sacar la vista de rango.
+        // En el eje X de Unity, un ángulo negativo mira hacia arriba
         transform.localRotation = Quaternion.Euler(
-            verticalRotation,
-            horizontalRotation,
+            Mathf.Clamp(verticalRotation - recoilPitch, -verticalLimit, verticalLimit),
+            Mathf.Clamp(horizontalRotation + recoilYaw, -horizontalLimit, horizontalLimit),
             0f
         );
+    }
+
+    /// <summary>
+    /// Lo llama PlayerShoot tras cada disparo. Solo acumula: la rotación se aplica en Update,
+    /// así que el raycast del disparo actual nunca sale desviado (el primero va al centro).
+    /// recoveryDelay: segundos sin disparar antes de que la vista empiece a volver.
+    /// </summary>
+    public void AddRecoil(float up, float side, float recoverySpeed, float recoveryDelay)
+    {
+        recoilPitch += up;
+        recoilYaw += Random.Range(-side, side);
+        recoilRecoverySpeed = recoverySpeed;
+        recoilRecoverAt = Time.time + recoveryDelay;
     }
 
     private void UpdateCursor()

@@ -28,7 +28,8 @@ MonoBehaviour:
   recoilKick: 0.06
   recoilAngle: 20
   recoverySpeed: 12
-  cameraKick: 5
-  cameraRecoverySpeed: 8
+  cameraKick: 7
+  cameraKickSide: 1.2
+  cameraRecoverySpeed: 3
   hasScope: 1
   scopeFov: 20

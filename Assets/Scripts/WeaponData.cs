@@ -50,9 +50,15 @@ public class WeaponData : ScriptableObject
     [Tooltip("Velocidad de vuelta a la pose de reposo (mayor = vuelve antes)")]
     public float recoverySpeed = 12f;
 
+    // Proporcional al calibre, pero comprimido: con la energía real el Barrett tendría
+    // ~40 veces el retroceso de la pistola. La vista no se recupera mientras se dispara a
+    // la cadencia máxima, así que vaciar el cargador sube aprox. cameraKick × magazineSize
+    // grados; cameraRecoverySpeed solo marca lo rápido que vuelve al dejar de disparar
     [Header("Retroceso de cámara")]
     [Tooltip("Grados que sube la vista con cada disparo")]
     public float cameraKick = 1f;
+    [Tooltip("Desviación lateral máxima por disparo (grados, al azar entre -valor y +valor)")]
+    [Min(0f)] public float cameraKickSide = 0.3f;
     [Tooltip("Velocidad con la que la vista vuelve a su sitio (mayor = vuelve antes)")]
     public float cameraRecoverySpeed = 8f;
 
