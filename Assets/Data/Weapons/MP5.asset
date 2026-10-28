@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35d26c045ee039b259010c0a62bf5db1, type: 3}
+  m_Name: MP5
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  displayName: HK MP5
+  modelPrefab: {fileID: 2855816089889277477, guid: 1fd930a48e8659c4ca2bb28f913b3182, type: 3}
+  holdPosition: {x: 0, y: 0, z: 0}
+  holdRotation: {x: 0, y: 0, z: 0}
+  holdScale: {x: 1, y: 1, z: 1}
+  magazineSize: 30
+  reloadTime: 2
+  fireRate: 13
+  isAutomatic: 1
+  maxDistance: 100
+  recoilKick: 0.06
+  recoilAngle: 4
+  recoverySpeed: 12
+  cameraKick: 0.4
+  cameraRecoverySpeed: 8
+  hasScope: 0
+  scopeFov: 20

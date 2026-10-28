@@ -30,17 +30,23 @@ public class WeaponData : ScriptableObject
     public bool isAutomatic = false;
     [Min(1f)] public float maxDistance = 100f;
 
-    [Header("Retroceso del modelo (los valores que ahora están en WeaponVisual)")]
-    public float recoilKick = 0.06f;    // metros hacia atrás
-    public float recoilAngle = 10f;     // grados hacia arriba
-    public float recoverySpeed = 12f;   // mayor = vuelve antes
+    // Mismos valores por defecto que WeaponVisual: así un arma nueva se siente
+    // igual que la pistola actual hasta que se ajuste a mano
+    [Header("Retroceso del modelo")]
+    [Tooltip("Metros que el modelo retrocede hacia atrás con cada disparo")]
+    public float recoilKick = 0.06f;
+    [Tooltip("Grados que el cañón sube con cada disparo")]
+    public float recoilAngle = 10f;
+    [Tooltip("Velocidad de vuelta a la pose de reposo (mayor = vuelve antes)")]
+    public float recoverySpeed = 12f;
 
-    [Header("Retroceso de cámara (Fase 4)")]
+    [Header("Retroceso de cámara")]
     [Tooltip("Grados que sube la vista con cada disparo")]
     public float cameraKick = 1f;
+    [Tooltip("Velocidad con la que la vista vuelve a su sitio (mayor = vuelve antes)")]
     public float cameraRecoverySpeed = 8f;
 
-    [Header("Mira (Fase 5)")]
+    [Header("Mira")]
     public bool hasScope = false;
     [Tooltip("Campo de visión al apuntar. La cámara normal tiene 60")]
     [Range(5f, 60f)] public float scopeFov = 20f;

@@ -10,22 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 35d26c045ee039b259010c0a62bf5db1, type: 3}
-  m_Name: 57
+  m_Name: M16A1
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  displayName: Arma
-  modelPrefab: {fileID: 0}
+  displayName: M16A1
+  modelPrefab: {fileID: 3852799265655734254, guid: 6c7859e017cea78489d643b95bb38ec3, type: 3}
   holdPosition: {x: 0, y: 0, z: 0}
   holdRotation: {x: 0, y: 0, z: 0}
   holdScale: {x: 1, y: 1, z: 1}
-  magazineSize: 12
-  reloadTime: 2
-  fireRate: 5
+  magazineSize: 20
+  reloadTime: 2.2
+  fireRate: 8
   isAutomatic: 0
   maxDistance: 100
   recoilKick: 0.06
-  recoilAngle: 10
+  recoilAngle: 6
   recoverySpeed: 12
-  cameraKick: 1
+  cameraKick: 0.7
   cameraRecoverySpeed: 8
   hasScope: 0
   scopeFov: 20
