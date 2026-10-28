@@ -14,14 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   displayName: M16A1
   modelPrefab: {fileID: 4931165053047272072, guid: 248c8e99d8f0c15b9b0c80531c02385a, type: 3}
-  holdPosition: {x: 0, y: 0, z: 0}
-  holdRotation: {x: 0, y: 0, z: 0}
+  holdPosition: {x: 0, y: 0.03, z: 0.141}
+  holdRotation: {x: 0, y: 90, z: 0}
   holdScale: {x: 1, y: 1, z: 1}
   magazineSize: 20
   reloadTime: 2.2
   fireRate: 8
   isAutomatic: 0
   maxDistance: 100
+  reloadOffset: {x: 0, y: -0.1, z: 0}
+  reloadRotation: {x: -6, y: 0, z: 15}
+  magazineOutOffset: {x: 0, y: -0.3, z: 0}
   recoilKick: 0.06
   recoilAngle: 6
   recoverySpeed: 12

@@ -30,6 +30,16 @@ public class WeaponData : ScriptableObject
     public bool isAutomatic = false;
     [Min(1f)] public float maxDistance = 100f;
 
+    // Mismos valores por defecto que WeaponVisual (pensados para la pistola). Un arma larga
+    // necesita menos giro: la rotación es alrededor de WeaponHolder y mueve mucho el cañón
+    [Header("Recarga (animación)")]
+    [Tooltip("Desplazamiento del arma durante la recarga (metros, ejes del WeaponHolder)")]
+    public Vector3 reloadOffset = new Vector3(0f, -0.12f, 0f);
+    [Tooltip("Inclinación del arma durante la recarga (grados)")]
+    public Vector3 reloadRotation = new Vector3(-15f, 0f, 30f);
+    [Tooltip("Hacia dónde sale el cargador (metros, ejes del WeaponHolder: Y negativo = abajo). Debe superar la altura del cargador")]
+    public Vector3 magazineOutOffset = new Vector3(0f, -0.25f, 0f);
+
     // Mismos valores por defecto que WeaponVisual: así un arma nueva se siente
     // igual que la pistola actual hasta que se ajuste a mano
     [Header("Retroceso del modelo")]

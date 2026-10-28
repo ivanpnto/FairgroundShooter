@@ -63,14 +63,19 @@ public class WeaponVisual : MonoBehaviour
     }
 
     /// <summary>
-    /// Lo llama WeaponController al equipar un arma: cambia las piezas animadas y el retroceso.
-    /// Los campos serializados se quedan como valores por defecto si no se llama nunca.
+    /// Lo llama WeaponController al equipar un arma: cambia las piezas animadas, la pose de
+    /// recarga y el retroceso. Los campos serializados se quedan como valores por defecto si
+    /// no se llama nunca. Las curvas no se copian: son el ritmo de la animación, común a todas.
     /// </summary>
     public void SetModel(WeaponModel model, WeaponData data)
     {
         magazine = model != null ? model.Magazine : null;
         slide = model != null ? model.Slide : null;
         CacheParts();
+
+        reloadOffset = data.reloadOffset;
+        reloadRotation = data.reloadRotation;
+        magazineOutOffset = data.magazineOutOffset;
 
         recoilKick = data.recoilKick;
         recoilAngle = data.recoilAngle;

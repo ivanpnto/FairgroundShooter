@@ -14,14 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   displayName: Barrett M82A1
   modelPrefab: {fileID: 7562074499662942624, guid: e9ee2b129b83af390a7d203b1ce1204c, type: 3}
-  holdPosition: {x: 0, y: 0, z: 0}
-  holdRotation: {x: 0, y: 0, z: 0}
+  holdPosition: {x: 0, y: 0.066, z: 0.27}
+  holdRotation: {x: 0, y: 90, z: 0}
   holdScale: {x: 1, y: 1, z: 1}
   magazineSize: 5
   reloadTime: 3.5
   fireRate: 0.8
   isAutomatic: 0
   maxDistance: 100
+  reloadOffset: {x: 0, y: -0.08, z: 0}
+  reloadRotation: {x: -4, y: 0, z: 10}
+  magazineOutOffset: {x: 0, y: -0.25, z: 0}
   recoilKick: 0.06
   recoilAngle: 20
   recoverySpeed: 12

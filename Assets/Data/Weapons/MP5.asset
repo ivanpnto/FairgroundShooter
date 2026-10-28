@@ -14,14 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   displayName: HK MP5
   modelPrefab: {fileID: 5731537676131412485, guid: 4e324861ce3d61e91a14e78ae7ed8394, type: 3}
-  holdPosition: {x: 0, y: 0, z: 0}
-  holdRotation: {x: 0, y: 0, z: 0}
+  holdPosition: {x: 0, y: 0.032, z: 0}
+  holdRotation: {x: 0, y: 90, z: 0}
   holdScale: {x: 1, y: 1, z: 1}
   magazineSize: 30
   reloadTime: 2
   fireRate: 13
   isAutomatic: 1
   maxDistance: 100
+  reloadOffset: {x: 0, y: -0.1, z: 0}
+  reloadRotation: {x: -8, y: 0, z: 20}
+  magazineOutOffset: {x: 0, y: -0.3, z: 0}
   recoilKick: 0.06
   recoilAngle: 4
   recoverySpeed: 12

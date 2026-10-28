@@ -14,14 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   displayName: AK-47
   modelPrefab: {fileID: 1124963470565848674, guid: b430bba859e379047a036bc67d1a6c43, type: 3}
-  holdPosition: {x: 0, y: 0, z: 0}
-  holdRotation: {x: 0, y: 0, z: 0}
+  holdPosition: {x: 0, y: 0.015, z: 0.083}
+  holdRotation: {x: 0, y: 90, z: 0}
   holdScale: {x: 1, y: 1, z: 1}
   magazineSize: 30
   reloadTime: 2.5
   fireRate: 10
   isAutomatic: 1
   maxDistance: 100
+  reloadOffset: {x: 0, y: -0.1, z: 0}
+  reloadRotation: {x: -8, y: 0, z: 20}
+  magazineOutOffset: {x: 0, y: -0.3, z: 0}
   recoilKick: 0.06
   recoilAngle: 7
   recoverySpeed: 12
