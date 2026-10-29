@@ -305,6 +305,7 @@ GameObject:
   - component: {fileID: 354793039}
   - component: {fileID: 354793040}
   - component: {fileID: 354793041}
+  - component: {fileID: 354793042}
   m_Layer: 0
   m_Name: Player
   m_TagString: MainCamera
@@ -515,6 +516,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerScope
   weaponHolder: {fileID: 1127249791}
   zoomSpeed: 20
+--- !u!114 &354793042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 354793032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ab1995ecc8d43887bcc6c8c735d3a0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponEffects
+  shotSourceCount: 4
 --- !u!1 &454783657
 GameObject:
   m_ObjectHideFlags: 0

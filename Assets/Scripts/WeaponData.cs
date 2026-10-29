@@ -67,6 +67,19 @@ public class WeaponData : ScriptableObject
     [Tooltip("Campo de visión al apuntar. La cámara normal tiene 60")]
     [Range(5f, 60f)] public float scopeFov = 20f;
 
+    // Todos opcionales: un clip sin asignar simplemente no suena (no da error)
+    [Header("Sonido")]
+    [Tooltip("Disparo. Debe empezar justo en el ataque para sonar en el mismo frame que el clic")]
+    public AudioClip shootSound;
+    [Tooltip("Suena cuando el cargador empieza a salir (según magazineCurve de WeaponVisual)")]
+    public AudioClip magOutSound;
+    [Tooltip("Suena cuando el cargador vuelve a entrar (según magazineCurve de WeaponVisual)")]
+    public AudioClip magInSound;
+    [Tooltip("Volumen del disparo. Sirve para equilibrar armas cuyos clips están todos normalizados al mismo pico")]
+    [Range(0f, 1f)] public float shootVolume = 1f;
+    [Tooltip("Variación aleatoria del tono en cada disparo (0.05 = entre 0.95 y 1.05): evita que una ráfaga suene a bucle")]
+    [Range(0f, 0.3f)] public float pitchVariation = 0.05f;
+
     // Propiedad calculada: el controlador trabajará con segundos entre disparos.
     // Se guarda la cadencia en disparos/segundo porque es más intuitiva al editarla
     public float TimeBetweenShots => 1f / fireRate;
