@@ -20,7 +20,7 @@ public class HorizontalMovement : TargetMovement
 
     protected override void Move()
     {
-        transform.position += Vector3.right * speed * direction * Time.deltaTime;
+        transform.position += Vector3.right * speed * direction * DeltaTime;
 
         float distanceFromStart = transform.position.x - startPosition.x;
 

@@ -22,7 +22,7 @@ public class SenoMovement : TargetMovement
 
     protected override void Move()
     {
-        time += Time.deltaTime;
+        time += DeltaTime;
 
         // El eje X avanza constantemente en línea recta
         float x = time * horizontalSpeed * direction;

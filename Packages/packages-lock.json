@@ -17,6 +17,14 @@
       },
       "hash": "81542a7e86292b5c4c21b1782c5af23b567f45ce"
     },
+    "com.justinpbarnett.unity-mcp": {
+      "version": "file:C:/Users/ipint/Downloads/unity-mcp-master/unity-mcp-master",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.0.2"
+      }
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 1,

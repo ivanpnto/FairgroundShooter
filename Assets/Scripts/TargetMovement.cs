@@ -47,6 +47,15 @@ public abstract class TargetMovement : MonoBehaviour
 
     protected abstract void Move();
 
+    // Dificultad del nivel: escala el tiempo del movimiento, así se acelera el patrón entero
+    // (velocidad, ritmo de los saltos, frecuencia del seno) sin tocar cada parámetro por separado
+    private float speedMultiplier = 1f;
+
+    public void SetSpeedMultiplier(float multiplier) => speedMultiplier = Mathf.Max(0.01f, multiplier);
+
+    // Las subclases usan esto en lugar de Time.deltaTime
+    protected float DeltaTime => Time.deltaTime * speedMultiplier;
+
     // Los modelos miran hacia +X. Para que no "naden marcha atrás" los reflejamos en X.
     // Se voltea solo el modelo hijo, no la raíz: Unity no admite BoxCollider con escala
     // negativa ("BoxCollider does not support negative scale or size"). A cambio, el centro

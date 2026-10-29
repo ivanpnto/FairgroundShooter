@@ -24,7 +24,7 @@ public class JumpMovement : TargetMovement
     protected override void Move()
     {
         // Movimiento horizontal
-        float horizontalMovement = speed * direction * Time.deltaTime;
+        float horizontalMovement = speed * direction * DeltaTime;
         transform.position += Vector3.right * horizontalMovement;
 
         // Progreso del salto actual

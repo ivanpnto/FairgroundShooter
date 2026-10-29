@@ -3,39 +3,69 @@ using UnityEngine;
 
 public class TargetSpawner : MonoBehaviour
 {
-    // Un tipo de objetivo que el spawner puede generar, con su propio "carril".
-    [System.Serializable]
-    private class SpawnEntry
-    {
-        public string label;                 // Solo informativo en el Inspector ("Pato", "Pez"...)
-        public GameObject prefab;
-        public Transform[] spawnPoints;      // Puntos propios de este tipo de objetivo
-        [Min(0f)] public float weight = 1f;  // Probabilidad relativa frente a los demás tipos
-        [Min(1)] public int maxActive = 1;   // Máximo de este tipo a la vez en pantalla
+    [Header("Contorno de los objetivos especiales")]
+    [SerializeField] private Material timeBonusOutline;   // dorado: tiempo extra
+    [SerializeField] private Material ammoBonusOutline;   // rojo: cargador lleno
 
-        [System.NonSerialized] public int active;
-    }
+    private readonly Dictionary<string, SpawnLane> lanes = new Dictionary<string, SpawnLane>();
+    private readonly List<int> candidates = new List<int>();
 
-    [SerializeField] private SpawnEntry[] entries;
-    [SerializeField] private float spawnInterval = 1.5f;
-    [SerializeField] private int maxActiveTargets = 4;   // Tope global, sumando todos los tipos
+    private LevelConfig level;
+    private int[] activePerEntry = new int[0];
+    private int activeTargets;
+    private float spawnTimer;
 
     private GameManager gameManager;
-    private float spawnTimer;
-    private int activeTargets;
-    private readonly List<int> candidates = new List<int>();
 
     private void Awake()
     {
         gameManager = GetComponent<GameManager>();
+        CacheLanes();
+    }
 
-        foreach (SpawnEntry entry in entries)
-            entry.active = 0;
+    // Los carriles son fijos en la escena: se buscan una vez y se indexan por id
+    private void CacheLanes()
+    {
+        lanes.Clear();
+
+        SpawnLane[] found = FindObjectsByType<SpawnLane>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        foreach (SpawnLane lane in found)
+        {
+            if (string.IsNullOrEmpty(lane.LaneId))
+                continue;
+
+            if (lanes.ContainsKey(lane.LaneId))
+            {
+                Debug.LogWarning($"TargetSpawner: hay dos carriles con el id '{lane.LaneId}'.", lane);
+                continue;
+            }
+
+            lanes.Add(lane.LaneId, lane);
+        }
+    }
+
+    // Lo llama LevelManager al empezar cada nivel
+    public void Configure(LevelConfig config)
+    {
+        ResetSpawner();
+
+        level = config;
+        activePerEntry = new int[config != null && config.entries != null ? config.entries.Length : 0];
+
+        if (config == null || config.entries == null)
+            return;
+
+        foreach (LevelConfig.SpawnEntry entry in config.entries)
+        {
+            if (!lanes.ContainsKey(entry.laneId))
+                Debug.LogWarning($"TargetSpawner: el nivel '{config.levelName}' usa el carril '{entry.laneId}', que no existe en la escena.", this);
+        }
     }
 
     private void Update()
     {
-        if (gameManager.CurrentState != GameManager.GameState.Playing)
+        if (level == null || gameManager.CurrentState != GameManager.GameState.Playing)
             return;
 
         spawnTimer -= Time.deltaTime;
@@ -43,26 +73,26 @@ public class TargetSpawner : MonoBehaviour
         if (spawnTimer > 0f)
             return;
 
-        spawnTimer = spawnInterval;
+        spawnTimer = level.spawnInterval;
 
-        if (activeTargets < maxActiveTargets)
+        if (activeTargets < level.maxActiveTargets)
             SpawnTarget();
     }
 
     private void SpawnTarget()
     {
-        // 1. Candidatos: tipos bien configurados que no han llegado a su propio máximo
+        // 1. Candidatos: tipos bien configurados, con carril válido y por debajo de su máximo
         candidates.Clear();
         float totalWeight = 0f;
 
-        for (int i = 0; i < entries.Length; i++)
+        for (int i = 0; i < level.entries.Length; i++)
         {
-            SpawnEntry entry = entries[i];
+            LevelConfig.SpawnEntry entry = level.entries[i];
 
-            if (entry.prefab == null || entry.spawnPoints == null || entry.spawnPoints.Length == 0)
+            if (entry.prefab == null || entry.weight <= 0f || activePerEntry[i] >= entry.maxActive)
                 continue;
 
-            if (entry.weight <= 0f || entry.active >= entry.maxActive)
+            if (!lanes.TryGetValue(entry.laneId, out SpawnLane lane) || !lane.HasPoints)
                 continue;
 
             candidates.Add(i);
@@ -72,13 +102,13 @@ public class TargetSpawner : MonoBehaviour
         if (candidates.Count == 0)
             return;
 
-        // 2. Ruleta ponderada: cada tipo ocupa un trozo proporcional a su peso
+        // 2. Ruleta ponderada
         float roll = Random.value * totalWeight;
         int chosen = candidates[candidates.Count - 1];
 
         foreach (int i in candidates)
         {
-            roll -= entries[i].weight;
+            roll -= level.entries[i].weight;
 
             if (roll <= 0f)
             {
@@ -87,53 +117,79 @@ public class TargetSpawner : MonoBehaviour
             }
         }
 
-        // 3. Instanciar en uno de los puntos de ese tipo
-        SpawnEntry selected = entries[chosen];
-        Transform spawnPoint = selected.spawnPoints[Random.Range(0, selected.spawnPoints.Length)];
+        // 3. Instanciar en un punto de su carril
+        LevelConfig.SpawnEntry selected = level.entries[chosen];
+        Transform spawnPoint = lanes[selected.laneId].GetRandomPoint();
 
         GameObject targetObject = Instantiate(selected.prefab, spawnPoint.position, spawnPoint.rotation);
         Target target = targetObject.GetComponent<Target>();
 
         if (target == null)
         {
-            // Sin Target nadie avisaría al destruirse y el hueco quedaría ocupado para siempre
             Debug.LogWarning($"TargetSpawner: el prefab '{selected.prefab.name}' no tiene componente Target.", this);
             Destroy(targetObject);
             return;
         }
 
+        // 4. Dificultad del nivel. Se aplica antes de su Start(), que es donde arranca el lifetime
         target.SetSpawner(this, chosen);
-        selected.active++;
+        target.ApplyLevel(level.pointsMultiplier, level.lifetimeMultiplier);
+
+        TargetMovement movement = targetObject.GetComponent<TargetMovement>();
+        if (movement != null)
+            movement.SetSpeedMultiplier(level.speedMultiplier);
+
+        // 5. ¿Objetivo especial?
+        TargetBonus bonus = RollBonus(target);
+        if (bonus == TargetBonus.Time)
+            target.ApplyBonus(bonus, timeBonusOutline, level.timeBonusSeconds);
+        else if (bonus == TargetBonus.Ammo)
+            target.ApplyBonus(bonus, ammoBonusOutline, 0f);
+
+        activePerEntry[chosen]++;
         activeTargets++;
+    }
+
+    private TargetBonus RollBonus(Target target)
+    {
+        if (!target.CanHaveBonus)
+            return TargetBonus.None;
+
+        float roll = Random.value;
+
+        if (roll < level.timeBonusChance)
+            return TargetBonus.Time;
+
+        if (roll < level.timeBonusChance + level.ammoBonusChance)
+            return TargetBonus.Ammo;
+
+        return TargetBonus.None;
     }
 
     public void TargetDestroyed(int entryIndex)
     {
         activeTargets = Mathf.Max(0, activeTargets - 1);
 
-        if (entryIndex >= 0 && entryIndex < entries.Length)
-            entries[entryIndex].active = Mathf.Max(0, entries[entryIndex].active - 1);
+        if (entryIndex >= 0 && entryIndex < activePerEntry.Length)
+            activePerEntry[entryIndex] = Mathf.Max(0, activePerEntry[entryIndex] - 1);
     }
 
     public void ResetSpawner()
     {
-        Target[] targets = FindObjectsByType<Target>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None
-        );
+        Target[] targets = FindObjectsByType<Target>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
         foreach (Target target in targets)
         {
-            // Destroy es diferido (fin de frame): desvinculamos antes para que su
-            // OnDestroy no descuente de los contadores que ponemos a 0 justo debajo
+            // Destroy es diferido: desvinculamos antes para que su OnDestroy
+            // no descuente de los contadores que ponemos a 0 justo debajo
             target.SetSpawner(null, -1);
             Destroy(target.gameObject);
         }
 
         activeTargets = 0;
 
-        foreach (SpawnEntry entry in entries)
-            entry.active = 0;
+        for (int i = 0; i < activePerEntry.Length; i++)
+            activePerEntry[i] = 0;
 
         spawnTimer = 0f;
     }
