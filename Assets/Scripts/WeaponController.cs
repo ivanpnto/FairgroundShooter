@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -9,6 +10,10 @@ using UnityEngine;
 public class WeaponController : MonoBehaviour
 {
     [SerializeField] private WeaponData startingWeapon;
+    // La lista vive aquí y no en la UI: es dato de juego, y así los selectores del menú
+    // de inicio y del Game Over comparten una única lista en lugar de una copia cada uno
+    [Tooltip("Armas que se pueden elegir en los menús, en el orden en que se recorren")]
+    [SerializeField] private WeaponData[] availableWeapons;
 
     [Header("Referencias")]
     [SerializeField] private Transform weaponHolder;
@@ -16,6 +21,9 @@ public class WeaponController : MonoBehaviour
     [SerializeField] private WeaponVisual weaponVisual;
 
     public WeaponData CurrentWeapon { get; private set; }
+
+    // De solo lectura: quien la use puede recorrerla pero no cambiarla
+    public IReadOnlyList<WeaponData> AvailableWeapons => availableWeapons;
 
     // Avisa de que hay un arma nueva lista para usar. Con un evento, WeaponController no
     // necesita conocer a quien reacciona (PlayerShoot reinicia su cadencia, y en el futuro
