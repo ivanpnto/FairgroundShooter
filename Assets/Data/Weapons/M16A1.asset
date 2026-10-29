@@ -40,3 +40,4 @@ MonoBehaviour:
   pitchVariation: 0.05
   muzzleFlashScale: 0.9
   muzzleFlashLight: 1
+  impactScale: 0.9

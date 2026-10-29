@@ -1,8 +1,9 @@
 using UnityEngine;
 
 /// <summary>
-/// Efectos del arma: sonidos (disparo y recarga) y fogonazo con luz en la boca del cañón.
-/// Solo presentación: LEE el estado de WeaponAmmo, WeaponVisual y PlayerScope, como
+/// Efectos del arma: sonidos (disparo, recarga e impacto en objetivo), fogonazo con luz en la
+/// boca del cañón y partículas de impacto.
+/// Solo presentación: LEE el estado de WeaponAmmo, WeaponVisual, PlayerScope y PlayerShoot, como
 /// WeaponVisual lee el de WeaponAmmo. Va en Player. Clips, volúmenes y escala del fogonazo
 /// salen del WeaponData del arma equipada.
 /// </summary>
@@ -14,8 +15,11 @@ public class WeaponEffects : MonoBehaviour
     // Puntos con los que se muestrea magazineCurve al empezar cada recarga
     private const int CurveSamples = 200;
 
-    [Tooltip("Fuentes para los disparos. 4 bastan: el clip más largo de un arma automática dura 0,4 s y la más rápida dispara cada 77 ms")]
-    [Min(1)] [SerializeField] private int shotSourceCount = 4;
+    // 6 y no 4: el sonido de impacto en objetivo usa el mismo pool, así que al acertar en
+    // ráfaga se gastan dos fuentes por disparo. Con 4, en la MP5 (cada 77 ms, clip de 0,35 s)
+    // una fuente se reutilizaría a los ~154 ms con su disparo aún sonando
+    [Tooltip("Fuentes compartidas por disparos e impactos en objetivo, usadas por turnos")]
+    [Min(1)] [SerializeField] private int shotSourceCount = 6;
 
     [Header("Fogonazo")]
     [Tooltip("Prefab con el ParticleSystem del destello (Assets/Prefabs/VFX/MuzzleFlash)")]
@@ -29,11 +33,30 @@ public class WeaponEffects : MonoBehaviour
     [Tooltip("Segundos que la luz está encendida. Con tan poco tiempo se ve 1-2 frames, como un destello real")]
     [SerializeField] private float flashLightDuration = 0.03f;
 
+    [Header("Impacto")]
+    [Tooltip("Chispas o polvo al dar en una superficie (Assets/Prefabs/VFX/ImpactSurface)")]
+    [SerializeField] private ParticleSystem impactSurfacePrefab;
+    [Tooltip("Confeti al dar en un objetivo (Assets/Prefabs/VFX/ImpactTarget)")]
+    [SerializeField] private ParticleSystem impactTargetPrefab;
+    [Tooltip("Partículas por impacto en superficie con impactScale = 1")]
+    [Min(1)] [SerializeField] private int surfaceBaseCount = 10;
+    [Tooltip("Partículas por impacto en objetivo con impactScale = 1")]
+    [Min(1)] [SerializeField] private int targetBaseCount = 25;
+    // Aquí y no en WeaponData: acertar suena igual con cualquier arma
+    [Tooltip("Sonido al acertar a un objetivo (opcional: vacío = no suena)")]
+    [SerializeField] private AudioClip targetHitSound;
+    [Range(0f, 1f)] [SerializeField] private float targetHitVolume = 1f;
+
     private WeaponAmmo weaponAmmo;
     private WeaponController weaponController;
     private WeaponVisual weaponVisual;
     private PlayerScope playerScope;
+    private PlayerShoot playerShoot;
     private GameManager gameManager;
+
+    // Una sola instancia de cada efecto de impacto para toda la partida (ver HandleHit)
+    private ParticleSystem impactSurface;
+    private ParticleSystem impactTarget;
 
     // Fogonazo y luz del arma actual. Cuelgan de su muzzle: se mueven con el arma (retroceso,
     // recarga) y se ocultan solos cuando PlayerScope desactiva WeaponHolder
@@ -69,6 +92,7 @@ public class WeaponEffects : MonoBehaviour
         weaponController = GetComponent<WeaponController>();
         weaponVisual = GetComponentInChildren<WeaponVisual>(true);
         playerScope = GetComponent<PlayerScope>();
+        playerShoot = GetComponent<PlayerShoot>();
         gameManager = FindFirstObjectByType<GameManager>();
 
         shotSources = new AudioSource[shotSourceCount];
@@ -76,6 +100,18 @@ public class WeaponEffects : MonoBehaviour
             shotSources[i] = CreateSource();
 
         reloadSource = CreateSource();
+
+        // Sin padre (en la raíz de la escena): si colgaran de Player, se moverían con la
+        // cámara, y con la mira se ocultarían junto al arma
+        if (impactSurfacePrefab != null) impactSurface = Instantiate(impactSurfacePrefab);
+        if (impactTargetPrefab != null) impactTarget = Instantiate(impactTargetPrefab);
+    }
+
+    // Al no tener padre no se destruyen con Player: se limpian a mano
+    private void OnDestroy()
+    {
+        if (impactSurface != null) Destroy(impactSurface.gameObject);
+        if (impactTarget != null) Destroy(impactTarget.gameObject);
     }
 
     // Creadas por código y no en la escena: son un detalle interno de este componente, y
@@ -96,12 +132,14 @@ public class WeaponEffects : MonoBehaviour
     {
         if (weaponAmmo != null) weaponAmmo.OnShot += HandleShot;
         if (weaponController != null) weaponController.OnWeaponEquipped += HandleWeaponEquipped;
+        if (playerShoot != null) playerShoot.OnHit += HandleHit;
     }
 
     private void OnDisable()
     {
         if (weaponAmmo != null) weaponAmmo.OnShot -= HandleShot;
         if (weaponController != null) weaponController.OnWeaponEquipped -= HandleWeaponEquipped;
+        if (playerShoot != null) playerShoot.OnHit -= HandleHit;
     }
 
     private void HandleShot()
@@ -119,11 +157,49 @@ public class WeaponEffects : MonoBehaviour
         if (weapon.shootSound == null)
             return;
 
+        PlayPooled(weapon.shootSound, weapon.shootVolume,
+            Random.Range(1f - weapon.pitchVariation, 1f + weapon.pitchVariation));
+    }
+
+    // La siguiente fuente del pool, por turnos (ver el comentario de shotSources)
+    private void PlayPooled(AudioClip clip, float volume, float pitch)
+    {
         AudioSource source = shotSources[nextShotSource];
         nextShotSource = (nextShotSource + 1) % shotSources.Length;
 
-        source.pitch = Random.Range(1f - weapon.pitchVariation, 1f + weapon.pitchVariation);
-        source.PlayOneShot(weapon.shootSound, weapon.shootVolume);
+        source.pitch = pitch;
+        source.PlayOneShot(clip, volume);
+    }
+
+    /// <summary>
+    /// Partículas (y sonido, si se acierta) en el punto de impacto. Siempre se reutiliza la
+    /// misma instancia de cada efecto: nada de Instantiate/Destroy por disparo.
+    /// Funciona porque los dos prefabs simulan en espacio World: cada partícula guarda su
+    /// posición en coordenadas del mundo al nacer, así que mover el sistema al siguiente
+    /// impacto solo cambia dónde nacen las nuevas; las del impacto anterior siguen donde
+    /// estaban. Y Emit() añade partículas sin reiniciar el sistema, así que varios impactos
+    /// seguidos conviven hasta que se acaba su vida (Max Particles pone el tope).
+    /// </summary>
+    private void HandleHit(RaycastHit hit, bool hitTarget)
+    {
+        WeaponData weapon = weaponController != null ? weaponController.CurrentWeapon : null;
+        float scale = weapon != null ? weapon.impactScale : 1f;
+
+        ParticleSystem system = hitTarget ? impactTarget : impactSurface;
+        int baseCount = hitTarget ? targetBaseCount : surfaceBaseCount;
+
+        if (system != null)
+        {
+            // Un centímetro fuera de la superficie para que las partículas no nazcan dentro;
+            // el +Z del prefab (eje de su cono) queda alineado con la normal
+            system.transform.SetPositionAndRotation(hit.point + hit.normal * 0.01f,
+                Quaternion.LookRotation(hit.normal));
+            system.Emit(Mathf.Max(1, Mathf.RoundToInt(baseCount * scale)));
+        }
+
+        // Tono fijo: el sonido de acertar es el mismo con cualquier arma
+        if (hitTarget && targetHitSound != null)
+            PlayPooled(targetHitSound, targetHitVolume, 1f);
     }
 
     private void PlayMuzzleFlash()

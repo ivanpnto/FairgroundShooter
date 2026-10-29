@@ -19,6 +19,10 @@ public class PlayerShoot : MonoBehaviour
     // Momento (en Time.time) a partir del cual se permite el siguiente disparo
     private float nextFireTime;
 
+    // Avisa de cada impacto del raycast para los efectos (partículas, sonido), igual que
+    // WeaponAmmo.OnShot avisa del disparo. hitTarget = el collider tenía un Target
+    public event System.Action<RaycastHit, bool> OnHit;
+
     private void Awake()
     {
         gameManager = FindFirstObjectByType<GameManager>();
@@ -155,6 +159,11 @@ public class PlayerShoot : MonoBehaviour
             {
                 target.Hit();
             }
+
+            // Después de Hit(): los puntos se suman antes que cualquier efecto. Que Hit()
+            // destruya el objetivo no afecta: RaycastHit es una copia (struct) y su punto y
+            // su normal siguen valiendo
+            OnHit?.Invoke(hit, target != null);
         }
     }
 }

@@ -86,6 +86,10 @@ public class WeaponData : ScriptableObject
     [Tooltip("Encender una luz puntual naranja muy breve en cada disparo")]
     public bool muzzleFlashLight = true;
 
+    [Header("Impacto")]
+    [Tooltip("Multiplica las partículas de cada impacto (chispas en superficies, confeti en objetivos)")]
+    [Min(0f)] public float impactScale = 1f;
+
     // Propiedad calculada: el controlador trabajará con segundos entre disparos.
     // Se guarda la cadencia en disparos/segundo porque es más intuitiva al editarla
     public float TimeBetweenShots => 1f / fireRate;
