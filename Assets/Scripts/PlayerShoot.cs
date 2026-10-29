@@ -56,6 +56,12 @@ public class PlayerShoot : MonoBehaviour
         if (weaponController == null || weaponController.CurrentWeapon == null)
             return;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Antes de leer CurrentWeapon: si se cambia de arma este frame, el disparo
+        // de este mismo frame ya usa los datos de la nueva
+        HandleDebugWeaponKeys();
+#endif
+
         WeaponData weapon = weaponController.CurrentWeapon;
 
         // NUEVO: Mouse/Keyboard.current pueden ser null si no hay dispositivo conectado
@@ -101,6 +107,37 @@ public class PlayerShoot : MonoBehaviour
             weaponAmmo.TryReload();
         }
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    // Atajo de depuración: 1–5 equipan las armas de AvailableWeapons en plena partida.
+    // Solo existe en el editor y en builds de desarrollo; en una build normal no se
+    // compila, así que no sirve para hacer trampas (Equip rellena el cargador)
+    private void HandleDebugWeaponKeys()
+    {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null)
+            return;
+
+        var weapons = weaponController.AvailableWeapons;
+        if (weapons == null)
+            return;
+
+        for (int i = 0; i < weapons.Count && i < 5; i++)
+        {
+            // Fila superior y teclado numérico: Key.Digit1..5 y Key.Numpad1..5 son consecutivas
+            if (!keyboard[Key.Digit1 + i].wasPressedThisFrame && !keyboard[Key.Numpad1 + i].wasPressedThisFrame)
+                continue;
+
+            // La misma arma no se reequipa: rellenaría el cargador gratis
+            if (weapons[i] != null && weapons[i] != weaponController.CurrentWeapon)
+            {
+                weaponController.Equip(weapons[i]);
+                Debug.Log($"Depuración: equipada {weapons[i].displayName} (tecla {i + 1})");
+            }
+            return;
+        }
+    }
+#endif
 
     private void Shoot()
     {
