@@ -68,7 +68,7 @@ public class GameManager : MonoBehaviour
 
         leaderboardManager.AddScore(playerName, finalScore);
 
-        finalScoreText.text = $"SCORE: {finalScore}";
+        finalScoreText.text = $"PUNTOS: {finalScore}";
 
         hud.SetActive(false);
         gameOverPanel.SetActive(true);
