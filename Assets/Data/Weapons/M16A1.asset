@@ -33,3 +33,8 @@ MonoBehaviour:
   cameraRecoverySpeed: 7
   hasScope: 0
   scopeFov: 20
+  shootSound: {fileID: 8300000, guid: 87c8ee6d317ec4889aa9066b69e946bc, type: 3}
+  magOutSound: {fileID: 8300000, guid: d326ebea5fe5d0782bc557f61fa35cd4, type: 3}
+  magInSound: {fileID: 8300000, guid: d17562c4ca3d70714a2a785d4995e50d, type: 3}
+  shootVolume: 0.75
+  pitchVariation: 0.05

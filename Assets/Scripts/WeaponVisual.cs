@@ -113,6 +113,13 @@ public class WeaponVisual : MonoBehaviour
 
     private void HandleShot() => recoil = 1f;
 
+    /// <summary>
+    /// Cuánto está fuera el cargador (0..1) en un momento de la recarga. Lo usa WeaponEffects
+    /// para que el sonido salga de la misma curva que la animación, sin duplicarla. Es un
+    /// método y no una propiedad con la curva: una AnimationCurve se podría modificar desde fuera.
+    /// </summary>
+    public float MagazineOutAmount(float reloadProgress) => magazineCurve.Evaluate(reloadProgress);
+
     private void Update()
     {
         if (weaponAmmo == null)
