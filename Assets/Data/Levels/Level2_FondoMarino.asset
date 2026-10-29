@@ -13,33 +13,33 @@ MonoBehaviour:
   m_Name: Level2_FondoMarino
   m_EditorClassIdentifier: Assembly-CSharp::LevelConfig
   levelName: Fondo marino
-  environmentId: Pond
+  environmentId: Sea
   duration: 60
   entries:
-  - label: Pato
-    prefab: {fileID: 3177492658283166799, guid: 82751ea26bd5d5145a7208e1c1b2cdf7, type: 3}
-    laneId: Duck
+  - label: Pez payaso
+    prefab: {fileID: 1923112617276313945, guid: 104ed9803dec24f46bbab4302c549a77, type: 3}
+    laneId: Sea_Fish
     weight: 3
     maxActive: 2
-  - label: Pez
-    prefab: {fileID: 281615788582607217, guid: 234b0c6e374d61646b68502aa37f34ff, type: 3}
-    laneId: Fish
-    weight: 2
+  - label: Medusa
+    prefab: {fileID: 4595728634970797782, guid: 52919e123e0b98146bd3c144f7e1b6af, type: 3}
+    laneId: Sea_Jelly
+    weight: 2.5
+    maxActive: 2
+  - label: Tortuga
+    prefab: {fileID: 8790973385919696551, guid: b2379613200be4049873a8d93b4efb52, type: 3}
+    laneId: Sea_Turtle
+    weight: 1
     maxActive: 1
-  - label: Pajaro
-    prefab: {fileID: 6937787947357308795, guid: af873c609adb8531d9312c6947d27630, type: 3}
-    laneId: Bird
-    weight: 2
-    maxActive: 1
-  - label: Pato lejano
-    prefab: {fileID: 8477471941749627576, guid: 7fc4c10f88501e54fbd0c75945022a74, type: 3}
-    laneId: FarDuck
+  - label: Neumatico
+    prefab: {fileID: 1095068116342393269, guid: cd66cfc193036c746b127cf756b3a8d0, type: 3}
+    laneId: Sea_Tyre
     weight: 1.5
     maxActive: 1
   spawnInterval: 1.1
   maxActiveTargets: 6
   pointsMultiplier: 1.5
-  speedMultiplier: 1.25
+  speedMultiplier: 1.15
   lifetimeMultiplier: 0.9
   timeBonusChance: 0.04
   ammoBonusChance: 0.04

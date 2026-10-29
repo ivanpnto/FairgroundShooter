@@ -397,6 +397,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 556869267916456039}
+  - component: {fileID: 8844740293795014662}
   m_Layer: 0
   m_Name: Lighting_Night
   m_TagString: Untagged
@@ -428,6 +429,25 @@ Transform:
   - {fileID: 4690175400879083766}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8844740293795014662
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5217228770521195971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0753a56fed2e6eb40a890c4b07429a75, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnvironmentAtmosphere
+  skyColor: {r: 0.1, g: 0.12, b: 0.24, a: 1}
+  equatorColor: {r: 0.1, g: 0.08, b: 0.14, a: 1}
+  groundColor: {r: 0.04, g: 0.03, b: 0.04, a: 1}
+  fog: 0
+  fogColor: {r: 0.03, g: 0.18, b: 0.3, a: 1}
+  fogStart: 6
+  fogEnd: 22
 --- !u!1 &6614375604965167725
 GameObject:
   m_ObjectHideFlags: 0

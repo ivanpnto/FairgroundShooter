@@ -23,8 +23,10 @@ public class GameManager : MonoBehaviour
 
     [Header("Transición entre niveles (panel opcional)")]
     [SerializeField] private GameObject levelTransitionPanel;
-    [SerializeField] private TMP_Text levelTransitionText;
-    [SerializeField, Min(0f)] private float transitionDuration = 3f;
+    [SerializeField] private TMP_Text levelTransitionTitle;   // "¡NIVEL 1 SUPERADO!"
+    [SerializeField] private TMP_Text levelTransitionScore;   // "PUNTOS: 1234"
+    [SerializeField] private TMP_Text levelTransitionNext;    // "SIGUIENTE: FONDO MARINO · 3"
+    [SerializeField, Min(1)] private int transitionSeconds = 3;
 
     private ScoreManager scoreManager;
     private GameTimer gameTimer;
@@ -118,26 +120,36 @@ public class GameManager : MonoBehaviour
         targetSpawner.ResetSpawner();   // ningún objetivo pasa de un nivel al siguiente
 
         int finished = levelManager.CurrentIndex + 1;
-        LevelConfig next = levelManager.NextLevel;
-        string message = $"¡NIVEL {finished} COMPLETADO!\nPUNTOS: {scoreManager.GetScore()}\n\nSIGUIENTE: {next.levelName.ToUpper()}";
+        string nextName = levelManager.NextLevel.levelName.ToUpper();
 
+        SetText(levelTransitionTitle, $"¡NIVEL {finished} SUPERADO!");
+        SetText(levelTransitionScore, $"PUNTOS: {scoreManager.GetScore()}");
+
+        hud.SetActive(false);
         if (levelTransitionPanel != null)
-        {
-            if (levelTransitionText != null)
-                levelTransitionText.text = message;
-
             levelTransitionPanel.SetActive(true);
+
+        Debug.Log($"Nivel {finished} superado. Puntos: {scoreManager.GetScore()}. Siguiente: {nextName}");
+
+        // Cuenta atrás visible: el jugador sabe cuándo vuelve la acción
+        for (int s = transitionSeconds; s > 0; s--)
+        {
+            SetText(levelTransitionNext, $"SIGUIENTE: {nextName}\nEMPIEZA EN {s}");
+            yield return new WaitForSeconds(1f);
         }
-
-        Debug.Log(message.Replace('\n', ' '));
-
-        yield return new WaitForSeconds(transitionDuration);
 
         if (levelTransitionPanel != null)
             levelTransitionPanel.SetActive(false);
+        hud.SetActive(true);
 
         levelManager.StartLevel(levelManager.CurrentIndex + 1);
         CurrentState = GameState.Playing;
+    }
+
+    private static void SetText(TMP_Text text, string value)
+    {
+        if (text != null)
+            text.text = value;
     }
 
     public void EndGame()
