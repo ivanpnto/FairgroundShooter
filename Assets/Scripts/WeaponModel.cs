@@ -12,7 +12,12 @@ public class WeaponModel : MonoBehaviour
     [SerializeField] private Transform magazine;
     [Tooltip("Corredera (opcional)")]
     [SerializeField] private Transform slide;
+    // Hijo vacío añadido en la variante (no existe en PolyOne): la posición sale de la
+    // cara delantera de la malla, y su +Z apunta en la dirección del disparo
+    [Tooltip("Punta del cañón, con su eje Z local hacia delante (opcional: sin él no hay fogonazo)")]
+    [SerializeField] private Transform muzzle;
 
     public Transform Magazine => magazine;
     public Transform Slide => slide;
+    public Transform Muzzle => muzzle;
 }

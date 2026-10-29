@@ -1,9 +1,10 @@
 using UnityEngine;
 
 /// <summary>
-/// Sonidos del arma: disparo y recarga (cargador fuera / dentro). Solo presentación:
-/// LEE el estado de WeaponAmmo y WeaponVisual, como WeaponVisual lee el de WeaponAmmo.
-/// Va en Player. Los clips y volúmenes salen del WeaponData del arma equipada.
+/// Efectos del arma: sonidos (disparo y recarga) y fogonazo con luz en la boca del cañón.
+/// Solo presentación: LEE el estado de WeaponAmmo, WeaponVisual y PlayerScope, como
+/// WeaponVisual lee el de WeaponAmmo. Va en Player. Clips, volúmenes y escala del fogonazo
+/// salen del WeaponData del arma equipada.
 /// </summary>
 public class WeaponEffects : MonoBehaviour
 {
@@ -16,10 +17,29 @@ public class WeaponEffects : MonoBehaviour
     [Tooltip("Fuentes para los disparos. 4 bastan: el clip más largo de un arma automática dura 0,4 s y la más rápida dispara cada 77 ms")]
     [Min(1)] [SerializeField] private int shotSourceCount = 4;
 
+    [Header("Fogonazo")]
+    [Tooltip("Prefab con el ParticleSystem del destello (Assets/Prefabs/VFX/MuzzleFlash)")]
+    [SerializeField] private ParticleSystem muzzleFlashPrefab;
+    [SerializeField] private Color flashLightColor = new Color(1f, 0.6f, 0.25f);
+    // Baja a propósito: la escena no tiene otras luces (solo la de entorno), así que una
+    // luz fuerte quemaría el puesto entero en cada disparo
+    [SerializeField] private float flashLightIntensity = 2f;
+    [Tooltip("Alcance de la luz (metros). Se multiplica por muzzleFlashScale del arma")]
+    [SerializeField] private float flashLightRange = 3f;
+    [Tooltip("Segundos que la luz está encendida. Con tan poco tiempo se ve 1-2 frames, como un destello real")]
+    [SerializeField] private float flashLightDuration = 0.03f;
+
     private WeaponAmmo weaponAmmo;
     private WeaponController weaponController;
     private WeaponVisual weaponVisual;
+    private PlayerScope playerScope;
     private GameManager gameManager;
+
+    // Fogonazo y luz del arma actual. Cuelgan de su muzzle: se mueven con el arma (retroceso,
+    // recarga) y se ocultan solos cuando PlayerScope desactiva WeaponHolder
+    private ParticleSystem muzzleFlash;
+    private Light flashLight;
+    private float flashLightOffTime;
 
     // Un pool de fuentes usadas por turnos, en lugar de una sola con PlayOneShot: el pitch
     // es una propiedad del AudioSource, no de cada PlayOneShot. Si todos los disparos
@@ -48,6 +68,7 @@ public class WeaponEffects : MonoBehaviour
         weaponAmmo = GetComponent<WeaponAmmo>();
         weaponController = GetComponent<WeaponController>();
         weaponVisual = GetComponentInChildren<WeaponVisual>(true);
+        playerScope = GetComponent<PlayerScope>();
         gameManager = FindFirstObjectByType<GameManager>();
 
         shotSources = new AudioSource[shotSourceCount];
@@ -86,7 +107,16 @@ public class WeaponEffects : MonoBehaviour
     private void HandleShot()
     {
         WeaponData weapon = weaponController != null ? weaponController.CurrentWeapon : null;
-        if (weapon == null || weapon.shootSound == null)
+        if (weapon == null)
+            return;
+
+        PlayShotSound(weapon);
+        PlayMuzzleFlash();
+    }
+
+    private void PlayShotSound(WeaponData weapon)
+    {
+        if (weapon.shootSound == null)
             return;
 
         AudioSource source = shotSources[nextShotSource];
@@ -96,17 +126,94 @@ public class WeaponEffects : MonoBehaviour
         source.PlayOneShot(weapon.shootSound, weapon.shootVolume);
     }
 
-    // Equip cancela la recarga (WeaponAmmo.Configure): se corta lo que sonaba del arma
-    // anterior y se marcan sus sonidos como ya reproducidos para que no suenen los que faltaban
+    private void PlayMuzzleFlash()
+    {
+        // Con la mira puesta el modelo está oculto: el fogonazo y la luz quedarían flotando
+        // delante del visor. Se usa el mismo estado con el que PlayerScope oculta el arma
+        if (playerScope != null && playerScope.IsOverlayVisible)
+            return;
+
+        if (muzzleFlash != null)
+        {
+            // Play() no hace nada si el sistema ya está reproduciéndose, así que primero se
+            // para: en la MP5 cada disparo tiene su destello aunque el anterior no haya
+            // terminado. StopEmitting y no StopEmittingAndClear: el humo del disparo anterior
+            // se deja terminar en lugar de desaparecer de golpe en plena ráfaga
+            muzzleFlash.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+            muzzleFlash.Play(true);
+        }
+
+        if (flashLight != null)
+        {
+            flashLight.enabled = true;
+            flashLightOffTime = Time.time + flashLightDuration;
+        }
+    }
+
     private void HandleWeaponEquipped(WeaponData data)
     {
+        // Equip cancela la recarga (WeaponAmmo.Configure): se corta lo que sonaba del arma
+        // anterior y se marcan sus sonidos como ya reproducidos para que no suenen los que faltaban
         reloadSource.Stop();
         magOutPlayed = true;
         magInPlayed = true;
+
+        SetupMuzzleFlash(data);
+    }
+
+    /// <summary>
+    /// Crea el fogonazo (y la luz, si el arma la usa) en el muzzle del arma recién equipada.
+    /// Se crean una vez por arma y no en cada disparo: instanciar en ráfaga generaría basura.
+    /// </summary>
+    private void SetupMuzzleFlash(WeaponData data)
+    {
+        // Los anteriores ya se destruirían con el modelo viejo (son hijos suyos), pero así no
+        // depende de eso y las referencias quedan a null al momento
+        if (muzzleFlash != null) Destroy(muzzleFlash.gameObject);
+        if (flashLight != null) Destroy(flashLight.gameObject);
+        muzzleFlash = null;
+        flashLight = null;
+
+        WeaponModel model = weaponController != null ? weaponController.CurrentModel : null;
+        Transform muzzle = model != null ? model.Muzzle : null;
+
+        // Sin muzzle (o sin prefab asignado) el arma simplemente no tiene fogonazo
+        if (muzzle == null)
+            return;
+
+        if (muzzleFlashPrefab != null)
+        {
+            muzzleFlash = Instantiate(muzzleFlashPrefab, muzzle);
+            muzzleFlash.transform.localPosition = Vector3.zero;
+            muzzleFlash.transform.localRotation = Quaternion.identity;
+            // El prefab usa Scaling Mode = Hierarchy en sus dos sistemas: así esta escala
+            // agranda también el humo hijo, no solo el destello
+            muzzleFlash.transform.localScale = Vector3.one * data.muzzleFlashScale;
+        }
+
+        if (data.muzzleFlashLight)
+        {
+            GameObject lightObject = new GameObject("MuzzleFlashLight");
+            lightObject.transform.SetParent(muzzle, false);
+
+            flashLight = lightObject.AddComponent<Light>();
+            flashLight.type = LightType.Point;
+            flashLight.color = flashLightColor;
+            flashLight.intensity = flashLightIntensity;
+            flashLight.range = flashLightRange * data.muzzleFlashScale;
+            // Sin sombras: es lo que haría caro un destello que se enciende en cada disparo
+            flashLight.shadows = LightShadows.None;
+            flashLight.enabled = false;
+        }
     }
 
     private void Update()
     {
+        // Antes de comprobar el estado: si la partida acaba justo al disparar, la luz no
+        // debe quedarse encendida en el Game Over
+        if (flashLight != null && flashLight.enabled && Time.time >= flashLightOffTime)
+            flashLight.enabled = false;
+
         if (gameManager == null || gameManager.CurrentState != GameManager.GameState.Playing)
             return;
 

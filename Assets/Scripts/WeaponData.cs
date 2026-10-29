@@ -80,6 +80,12 @@ public class WeaponData : ScriptableObject
     [Tooltip("Variación aleatoria del tono en cada disparo (0.05 = entre 0.95 y 1.05): evita que una ráfaga suene a bucle")]
     [Range(0f, 0.3f)] public float pitchVariation = 0.05f;
 
+    [Header("Fogonazo")]
+    [Tooltip("Escala del prefab MuzzleFlash en la boca del cañón (1 = tamaño de diseño, pensado para un fusil)")]
+    [Min(0f)] public float muzzleFlashScale = 1f;
+    [Tooltip("Encender una luz puntual naranja muy breve en cada disparo")]
+    public bool muzzleFlashLight = true;
+
     // Propiedad calculada: el controlador trabajará con segundos entre disparos.
     // Se guarda la cadencia en disparos/segundo porque es más intuitiva al editarla
     public float TimeBetweenShots => 1f / fireRate;

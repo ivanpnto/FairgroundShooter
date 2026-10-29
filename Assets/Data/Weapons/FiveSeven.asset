@@ -38,3 +38,5 @@ MonoBehaviour:
   magInSound: {fileID: 8300000, guid: 58fd6e8ea0e063ce18a15d16c390a9ef, type: 3}
   shootVolume: 0.65
   pitchVariation: 0.05
+  muzzleFlashScale: 0.6
+  muzzleFlashLight: 1

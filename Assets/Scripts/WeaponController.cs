@@ -22,6 +22,10 @@ public class WeaponController : MonoBehaviour
 
     public WeaponData CurrentWeapon { get; private set; }
 
+    // El modelo instanciado del arma actual (null si su prefab no tiene WeaponModel).
+    // Lo lee WeaponEffects para colocar el fogonazo en su muzzle
+    public WeaponModel CurrentModel { get; private set; }
+
     // De solo lectura: quien la use puede recorrerla pero no cambiarla
     public IReadOnlyList<WeaponData> AvailableWeapons => availableWeapons;
 
@@ -69,6 +73,7 @@ public class WeaponController : MonoBehaviour
         weaponAmmo.Configure(data.magazineSize, data.reloadTime);
 
         WeaponModel model = currentModel.GetComponent<WeaponModel>();
+        CurrentModel = model;
 
         // Sin WeaponModel el arma funciona igual, solo que sin cargador ni corredera animados
         if (model == null)
