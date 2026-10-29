@@ -25,9 +25,9 @@ MonoBehaviour:
   reloadOffset: {x: -0.1, y: 0.07, z: 0.2}
   reloadRotation: {x: -15, y: 10, z: -40}
   magazineOutOffset: {x: 0, y: -0.25, z: 0}
-  recoilKick: 0.06
-  recoilAngle: 10
-  recoverySpeed: 12
+  recoilKick: 0.04
+  recoilAngle: 9
+  recoverySpeed: 15
   cameraKick: 1.2
   cameraKickSide: 0.35
   cameraRecoverySpeed: 8
