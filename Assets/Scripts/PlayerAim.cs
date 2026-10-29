@@ -22,10 +22,12 @@ public class PlayerAim : MonoBehaviour
 
     private GameManager gameManager;
     private GameManager.GameState lastState;
+    private PlayerScope playerScope;
 
     private void Awake()
     {
         gameManager = FindFirstObjectByType<GameManager>();
+        playerScope = GetComponent<PlayerScope>(); // opcional: sin él, sensibilidad normal
 
         if (gameManager != null)
         {
@@ -57,8 +59,11 @@ public class PlayerAim : MonoBehaviour
 
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
 
-        float horizontal = mouseDelta.x * sensitivity;
-        float vertical = mouseDelta.y * sensitivity;
+        // Con la mira puesta se reduce la sensibilidad en proporción al zoom
+        float currentSensitivity = sensitivity * (playerScope != null ? playerScope.SensitivityScale : 1f);
+
+        float horizontal = mouseDelta.x * currentSensitivity;
+        float vertical = mouseDelta.y * currentSensitivity;
 
         horizontalRotation += horizontal;
         verticalRotation -= vertical;
