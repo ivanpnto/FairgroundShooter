@@ -41,6 +41,6 @@ MonoBehaviour:
   pointsMultiplier: 1
   speedMultiplier: 1
   lifetimeMultiplier: 1
-  timeBonusChance: 0.643
+  timeBonusChance: 0.05
   ammoBonusChance: 0.05
   timeBonusSeconds: 3
