@@ -12,18 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2149dd0dd9fd4704487a38e66c66fb12, type: 3}
   m_Name: Level1_Estanque
   m_EditorClassIdentifier: Assembly-CSharp::LevelConfig
-  levelName: Estanque
-  environmentId: Pond
+  levelName: Bosque
+  environmentId: Forest
   duration: 60
   entries:
-  - label: Pato
-    prefab: {fileID: 3177492658283166799, guid: 82751ea26bd5d5145a7208e1c1b2cdf7, type: 3}
-    laneId: Duck
+  - label: Zorro
+    prefab: {fileID: 1679959058992252095, guid: e33f4119c87741b48845d253235be39b, type: 3}
+    laneId: Forest_Fox
     weight: 3
     maxActive: 2
-  - label: Pez
-    prefab: {fileID: 281615788582607217, guid: 234b0c6e374d61646b68502aa37f34ff, type: 3}
-    laneId: Fish
+  - label: Conejo
+    prefab: {fileID: 1790279968755509595, guid: 8a18bbbc796ab6a40bc3ae4b89e62808, type: 3}
+    laneId: Forest_Rabbit
+    weight: 2.5
+    maxActive: 1
+  - label: Buho
+    prefab: {fileID: 2834708955499654938, guid: d2e8c95056f521341a25722c63485fc0, type: 3}
+    laneId: Forest_Owl
     weight: 2
     maxActive: 1
   - label: Pajaro
@@ -31,10 +36,15 @@ MonoBehaviour:
     laneId: Bird
     weight: 2
     maxActive: 1
-  - label: Pato lejano
-    prefab: {fileID: 8477471941749627576, guid: 7fc4c10f88501e54fbd0c75945022a74, type: 3}
-    laneId: FarDuck
-    weight: 1.5
+  - label: Zorro lejano
+    prefab: {fileID: 520881531753138277, guid: 45e662d1a89f7794ab4f8ff99f89e845, type: 3}
+    laneId: Forest_FarFox
+    weight: 1.2
+    maxActive: 1
+  - label: Mofeta
+    prefab: {fileID: 5433160951029243825, guid: 92e7bbe3b2f3b84499d60d5279bf011a, type: 3}
+    laneId: Forest_Skunk
+    weight: 1.2
     maxActive: 1
   spawnInterval: 1.3
   maxActiveTargets: 5
