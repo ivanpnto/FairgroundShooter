@@ -5,7 +5,10 @@ public class PlayerAim : MonoBehaviour
 {
     [SerializeField] private float sensitivity = 0.1f;
     [SerializeField] private float horizontalLimit = 60f;
-    [SerializeField] private float verticalLimit = 45f;
+    [Tooltip("Grados que se puede mirar hacia arriba")]
+    [SerializeField] private float verticalLimit = 35f;
+    [Tooltip("Grados que se puede mirar hacia abajo (hacia abajo solo hay mostrador: no hace falta tanto)")]
+    [SerializeField] private float verticalLimitDown = 20f;
 
     public bool canAim = false;
 
@@ -77,7 +80,7 @@ public class PlayerAim : MonoBehaviour
         verticalRotation = Mathf.Clamp(
             verticalRotation,
             -verticalLimit,
-            verticalLimit
+            verticalLimitDown
         );
 
         // Solo se recupera cuando se deja de disparar: si recuperase también durante la ráfaga,
@@ -93,7 +96,7 @@ public class PlayerAim : MonoBehaviour
         // Los límites se aplican a la suma: el retroceso no puede sacar la vista de rango.
         // En el eje X de Unity, un ángulo negativo mira hacia arriba
         transform.localRotation = Quaternion.Euler(
-            Mathf.Clamp(verticalRotation - recoilPitch, -verticalLimit, verticalLimit),
+            Mathf.Clamp(verticalRotation - recoilPitch, -verticalLimit, verticalLimitDown),
             Mathf.Clamp(horizontalRotation + recoilYaw, -horizontalLimit, horizontalLimit),
             0f
         );
