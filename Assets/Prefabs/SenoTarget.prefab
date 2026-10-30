@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8873314749915680733}
   - component: {fileID: -6145156027716357066}
   - component: {fileID: 4758653847964355885}
+  - component: {fileID: 2489219144252532602}
   m_Layer: 0
   m_Name: SenoTarget
   m_TagString: Untagged
@@ -71,7 +72,7 @@ MonoBehaviour:
   points: 20
   lifetime: 5.6
   hitsToKill: 1
-  destroyDelay: 0
+  destroyDelay: 1.0899999
   outlineMaterialName: M_T_Outline
   tintOutline: 0
   haloScale: 1.12
@@ -92,6 +93,27 @@ MonoBehaviour:
   horizontalSpeed: 2.6
   verticalAmplitude: 0.35
   frequency: 3
+--- !u!114 &2489219144252532602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6937787947357308795}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f79560c7769fb34ba2d914c43872b32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TargetFall
+  fallDuration: 0.35
+  fallAngle: 90
+  bounceAngle: 10
+  bounceDuration: 0.14
+  sinkDelay: 0.15
+  sinkDuration: 0.4
+  sinkDistance: 0.8
+  wobbleAngle: 18
+  wobbleDuration: 0.22
 --- !u!1001 &900135219348668415
 PrefabInstance:
   m_ObjectHideFlags: 0

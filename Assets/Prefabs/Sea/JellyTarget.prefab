@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 74393446649477699}
   - component: {fileID: 1388249250101614054}
   - component: {fileID: 3975249966515139276}
+  - component: {fileID: 4593752701967987258}
   m_Layer: 0
   m_Name: JellyTarget
   m_TagString: Untagged
@@ -71,7 +72,7 @@ MonoBehaviour:
   points: 25
   lifetime: 7
   hitsToKill: 1
-  destroyDelay: 0
+  destroyDelay: 1.0899999
   outlineMaterialName: M_T_Outline
   tintOutline: 0
   haloScale: 1.12
@@ -96,6 +97,27 @@ MonoBehaviour:
   swayAmplitude: 0.25
   swayFrequency: 0.6
   maxHeight: 3.4
+--- !u!114 &4593752701967987258
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4595728634970797782}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f79560c7769fb34ba2d914c43872b32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TargetFall
+  fallDuration: 0.35
+  fallAngle: 90
+  bounceAngle: 10
+  bounceDuration: 0.14
+  sinkDelay: 0.15
+  sinkDuration: 0.4
+  sinkDistance: 0.8
+  wobbleAngle: 18
+  wobbleDuration: 0.22
 --- !u!1001 &4960754722395782794
 PrefabInstance:
   m_ObjectHideFlags: 0

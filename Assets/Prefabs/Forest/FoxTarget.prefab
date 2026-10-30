@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5472711464131990761}
   - component: {fileID: 1251592788564235480}
   - component: {fileID: 5886694198387152684}
+  - component: {fileID: 2496018753668855662}
   m_Layer: 0
   m_Name: FoxTarget
   m_TagString: Untagged
@@ -71,7 +72,7 @@ MonoBehaviour:
   points: 10
   lifetime: 6
   hitsToKill: 1
-  destroyDelay: 0
+  destroyDelay: 1.0899999
   outlineMaterialName: M_T_Outline
   tintOutline: 0
   haloScale: 1.12
@@ -92,6 +93,27 @@ MonoBehaviour:
   horizontalSpeed: 2.6
   verticalAmplitude: 0.06
   frequency: 14
+--- !u!114 &2496018753668855662
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1679959058992252095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f79560c7769fb34ba2d914c43872b32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TargetFall
+  fallDuration: 0.35
+  fallAngle: 90
+  bounceAngle: 10
+  bounceDuration: 0.14
+  sinkDelay: 0.15
+  sinkDuration: 0.4
+  sinkDistance: 0.8
+  wobbleAngle: 18
+  wobbleDuration: 0.22
 --- !u!1001 &4829975097461980376
 PrefabInstance:
   m_ObjectHideFlags: 0
