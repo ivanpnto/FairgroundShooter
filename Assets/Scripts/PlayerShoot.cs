@@ -1,6 +1,30 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+// Resultado de UN disparo, ya resuelto. Lo consumen la racha (Fase 5), el hitmarker y los
+// efectos de impacto. Es un struct de solo lectura: se copia al pasarlo y nadie puede alterarlo.
+public readonly struct ShotResult
+{
+    public readonly bool HitSomething;   // el rayo chocó con algún collider (dentro del alcance)
+    public readonly bool HitTarget;      // ...y era un objetivo vivo. false = FALLO (aunque dé al decorado)
+    public readonly bool HitScenery;     // chocó con la capa Scenery (caseta, decorado, suelo)
+    public readonly Vector3 Point;       // punto de impacto (o el final del alcance si no chocó)
+    public readonly Vector3 Normal;
+    public readonly Collider Collider;   // null si no chocó con nada
+    public readonly Target Target;       // null si no era un objetivo
+
+    public ShotResult(bool hitSomething, bool hitScenery, Vector3 point, Vector3 normal, Collider collider, Target target)
+    {
+        HitSomething = hitSomething;
+        HitTarget = target != null;
+        HitScenery = hitScenery;
+        Point = point;
+        Normal = normal;
+        Collider = collider;
+        Target = target;
+    }
+}
+
 public class PlayerShoot : MonoBehaviour
 {
     [SerializeField] private Camera playerCamera;
@@ -22,6 +46,13 @@ public class PlayerShoot : MonoBehaviour
     // Avisa de cada impacto del raycast para los efectos (partículas, sonido), igual que
     // WeaponAmmo.OnShot avisa del disparo. hitTarget = el collider tenía un Target
     public event System.Action<RaycastHit, bool> OnHit;
+
+    // Se lanza en TODOS los disparos, también en los que no chocan con nada (OnHit no lo hace).
+    // Es el "evento de disparo resuelto" del contrato de la Fase 5: acierto / fallo + punto de impacto
+    public event System.Action<ShotResult> ShotResolved;
+
+    [Tooltip("Capas que cuentan como decorado (caseta, escenario, suelo). Solo sirve para clasificar el impacto")]
+    [SerializeField] private LayerMask sceneryMask = 1 << 8;   // capa Scenery
 
     private void Awake()
     {
@@ -149,12 +180,13 @@ public class PlayerShoot : MonoBehaviour
             new Vector3(0.5f, 0.5f, 0f)
         );
 
-        if (Physics.Raycast(ray, out RaycastHit hit, weaponController.CurrentWeapon.maxDistance, hitMask, QueryTriggerInteraction.Ignore))
-        {
-            Debug.Log("Impacto en: " + hit.collider.gameObject.name);
+        float range = weaponController.CurrentWeapon.maxDistance;
 
+        if (Physics.Raycast(ray, out RaycastHit hit, range, hitMask, QueryTriggerInteraction.Ignore))
+        {
             Target target = hit.collider.GetComponent<Target>();
 
+            // Un objetivo que ya está cayendo desactiva su collider, así que aquí nunca llega uno muerto
             if (target != null)
             {
                 target.Hit();
@@ -164,6 +196,14 @@ public class PlayerShoot : MonoBehaviour
             // destruya el objetivo no afecta: RaycastHit es una copia (struct) y su punto y
             // su normal siguen valiendo
             OnHit?.Invoke(hit, target != null);
+
+            bool scenery = (sceneryMask.value & (1 << hit.collider.gameObject.layer)) != 0;
+            ShotResolved?.Invoke(new ShotResult(true, scenery, hit.point, hit.normal, hit.collider, target));
+        }
+        else
+        {
+            // No ha chocado con nada (p. ej. apuntando al exterior de la feria, que no tiene colliders)
+            ShotResolved?.Invoke(new ShotResult(false, false, ray.GetPoint(range), -ray.direction, null, null));
         }
     }
 }
