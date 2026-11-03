@@ -959,6 +959,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponEffects
   shotSourceCount: 4
+  muzzleFlashPrefab: {fileID: 7301452558866455880, guid: 9c665b46935bed68ea00225399d675d3, type: 3}
+  flashLightColor: {r: 1, g: 0.6, b: 0.25, a: 1}
+  flashLightIntensity: 2
+  flashLightRange: 3
+  flashLightDuration: 0.03
+  impactSurfacePrefab: {fileID: 8656620896466379676, guid: 86c411f7a33a9bd6ebea18d9eed033f4, type: 3}
+  impactTargetPrefab: {fileID: 4672563283430354400, guid: f1bce5514b63a02918ab3401b390ae01, type: 3}
+  surfaceBaseCount: 10
+  targetBaseCount: 25
+  targetHitSound: {fileID: 0}
+  targetHitVolume: 1
 --- !u!1 &368483331
 GameObject:
   m_ObjectHideFlags: 0
