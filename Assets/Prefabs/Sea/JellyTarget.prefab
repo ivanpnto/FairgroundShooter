@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1388249250101614054}
   - component: {fileID: 3975249966515139276}
   - component: {fileID: 4593752701967987258}
+  - component: {fileID: 2991815419719877751}
   m_Layer: 0
   m_Name: JellyTarget
   m_TagString: Untagged
@@ -118,6 +119,24 @@ MonoBehaviour:
   sinkDistance: 0.8
   wobbleAngle: 18
   wobbleDuration: 0.22
+--- !u!114 &2991815419719877751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4595728634970797782}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6113c19ad1f47c4f9cea3f29b38008a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TargetAppear
+  fromDirection: {x: 0, y: -1, z: 0}
+  distance: 1
+  animateAppear: 1
+  appearDuration: 0.35
+  overshoot: 1.6
+  disappearDuration: 0.3
 --- !u!1001 &4960754722395782794
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -173,10 +192,130 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2003486178803168045, guid: 5209986c3fe899d4d9f73f167b7728f8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7637964129201571024}
+    - targetCorrespondingSourceObject: {fileID: 2247152524563308680, guid: 5209986c3fe899d4d9f73f167b7728f8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 674782594279465189}
+    - targetCorrespondingSourceObject: {fileID: -6836926798093103069, guid: 5209986c3fe899d4d9f73f167b7728f8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5924141329509913460}
+    - targetCorrespondingSourceObject: {fileID: -7751484175216303792, guid: 5209986c3fe899d4d9f73f167b7728f8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4278960154149750743}
   m_SourcePrefab: {fileID: 100100000, guid: 5209986c3fe899d4d9f73f167b7728f8, type: 3}
 --- !u!4 &4851112777705625953 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 5209986c3fe899d4d9f73f167b7728f8, type: 3}
   m_PrefabInstance: {fileID: 4960754722395782794}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &5815578774075760602 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -7751484175216303792, guid: 5209986c3fe899d4d9f73f167b7728f8, type: 3}
+  m_PrefabInstance: {fileID: 4960754722395782794}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4278960154149750743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5815578774075760602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 581914aaaf6426147b5f126597cb102c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IdleOscillator
+  channel: 0
+  wave: 0
+  axis: {x: 0, y: 0, z: 1}
+  amplitude: 12
+  frequency: 1.2
+  phaseOffset: 0.65999997
+  randomPhase: 0
+  blinkInterval: {x: 1.5, y: 4}
+  blinkDuration: 0.14
+  linked: []
+--- !u!1 &6626863729982709250 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2247152524563308680, guid: 5209986c3fe899d4d9f73f167b7728f8, type: 3}
+  m_PrefabInstance: {fileID: 4960754722395782794}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &674782594279465189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6626863729982709250}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 581914aaaf6426147b5f126597cb102c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IdleOscillator
+  channel: 0
+  wave: 0
+  axis: {x: 0, y: 0, z: 1}
+  amplitude: 12
+  frequency: 1.2
+  phaseOffset: 0.22
+  randomPhase: 0
+  blinkInterval: {x: 1.5, y: 4}
+  blinkDuration: 0.14
+  linked: []
+--- !u!1 &6851650910306323879 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2003486178803168045, guid: 5209986c3fe899d4d9f73f167b7728f8, type: 3}
+  m_PrefabInstance: {fileID: 4960754722395782794}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7637964129201571024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6851650910306323879}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 581914aaaf6426147b5f126597cb102c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IdleOscillator
+  channel: 0
+  wave: 0
+  axis: {x: 0, y: 0, z: 1}
+  amplitude: 12
+  frequency: 1.2
+  phaseOffset: 0
+  randomPhase: 0
+  blinkInterval: {x: 1.5, y: 4}
+  blinkDuration: 0.14
+  linked: []
+--- !u!1 &7333689162139315881 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -6836926798093103069, guid: 5209986c3fe899d4d9f73f167b7728f8, type: 3}
+  m_PrefabInstance: {fileID: 4960754722395782794}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5924141329509913460
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7333689162139315881}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 581914aaaf6426147b5f126597cb102c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IdleOscillator
+  channel: 0
+  wave: 0
+  axis: {x: 0, y: 0, z: 1}
+  amplitude: 12
+  frequency: 1.2
+  phaseOffset: 0.44
+  randomPhase: 0
+  blinkInterval: {x: 1.5, y: 4}
+  blinkDuration: 0.14
+  linked: []

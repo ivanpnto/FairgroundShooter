@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1251592788564235480}
   - component: {fileID: 5886694198387152684}
   - component: {fileID: 2496018753668855662}
+  - component: {fileID: 6082305737324764112}
   m_Layer: 0
   m_Name: FoxTarget
   m_TagString: Untagged
@@ -114,6 +115,24 @@ MonoBehaviour:
   sinkDistance: 0.8
   wobbleAngle: 18
   wobbleDuration: 0.22
+--- !u!114 &6082305737324764112
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1679959058992252095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6113c19ad1f47c4f9cea3f29b38008a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TargetAppear
+  fromDirection: {x: 0, y: -1, z: 0}
+  distance: 1.2
+  animateAppear: 1
+  appearDuration: 0.35
+  overshoot: 1.6
+  disappearDuration: 0.3
 --- !u!1001 &4829975097461980376
 PrefabInstance:
   m_ObjectHideFlags: 0

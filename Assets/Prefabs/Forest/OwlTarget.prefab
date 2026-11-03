@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 4322607450389250539}
   - component: {fileID: 3302545814997462293}
   - component: {fileID: 7626460098633572020}
+  - component: {fileID: 7834238667111163755}
   m_Layer: 0
   m_Name: OwlTarget
   m_TagString: Untagged
@@ -95,7 +96,7 @@ MonoBehaviour:
   holdTime: 1.1
   hideTime: 0.3
   waitRange: {x: 0.5, y: 1.2}
-  hittableFrom: 0.6
+  hittableFrom: 0.3
 --- !u!114 &7626460098633572020
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -117,6 +118,24 @@ MonoBehaviour:
   sinkDistance: 0.8
   wobbleAngle: 18
   wobbleDuration: 0.22
+--- !u!114 &7834238667111163755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2834708955499654938}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6113c19ad1f47c4f9cea3f29b38008a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TargetAppear
+  fromDirection: {x: 0, y: -1, z: 0}
+  distance: 1.2
+  animateAppear: 0
+  appearDuration: 0.35
+  overshoot: 1.6
+  disappearDuration: 0.3
 --- !u!1001 &4967720707169846724
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -172,8 +191,44 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5572057524674529300, guid: 6b07ad8f77a5b564eba58a4fa34d525f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7393486591413544186}
   m_SourcePrefab: {fileID: 100100000, guid: 6b07ad8f77a5b564eba58a4fa34d525f, type: 3}
+--- !u!1 &694415682408975824 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5572057524674529300, guid: 6b07ad8f77a5b564eba58a4fa34d525f, type: 3}
+  m_PrefabInstance: {fileID: 4967720707169846724}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7393486591413544186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 694415682408975824}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 581914aaaf6426147b5f126597cb102c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IdleOscillator
+  channel: 1
+  wave: 1
+  axis: {x: 0, y: 1, z: 0}
+  amplitude: 0.9
+  frequency: 3
+  phaseOffset: 0
+  randomPhase: 1
+  blinkInterval: {x: 1.5, y: 4}
+  blinkDuration: 0.14
+  linked:
+  - {fileID: 2213232865265882493}
+--- !u!4 &2213232865265882493 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -2718458691218927431, guid: 6b07ad8f77a5b564eba58a4fa34d525f, type: 3}
+  m_PrefabInstance: {fileID: 4967720707169846724}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &4862298617509798447 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6b07ad8f77a5b564eba58a4fa34d525f, type: 3}

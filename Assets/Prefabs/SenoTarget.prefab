@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: -6145156027716357066}
   - component: {fileID: 4758653847964355885}
   - component: {fileID: 2489219144252532602}
+  - component: {fileID: 2915431984715863303}
   m_Layer: 0
   m_Name: SenoTarget
   m_TagString: Untagged
@@ -114,6 +115,24 @@ MonoBehaviour:
   sinkDistance: 0.8
   wobbleAngle: 18
   wobbleDuration: 0.22
+--- !u!114 &2915431984715863303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6937787947357308795}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6113c19ad1f47c4f9cea3f29b38008a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TargetAppear
+  fromDirection: {x: 0, y: -1, z: 0}
+  distance: 1.2
+  animateAppear: 1
+  appearDuration: 0.35
+  overshoot: 1.6
+  disappearDuration: 0.3
 --- !u!1001 &900135219348668415
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -169,10 +188,40 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7615027366874786842, guid: 797bf4b6c3525714e856c8c27b54ce2d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2715264932745178956}
   m_SourcePrefab: {fileID: 100100000, guid: 797bf4b6c3525714e856c8c27b54ce2d, type: 3}
 --- !u!4 &862251634303244308 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 797bf4b6c3525714e856c8c27b54ce2d, type: 3}
   m_PrefabInstance: {fileID: 900135219348668415}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7337471264168825829 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7615027366874786842, guid: 797bf4b6c3525714e856c8c27b54ce2d, type: 3}
+  m_PrefabInstance: {fileID: 900135219348668415}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2715264932745178956
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7337471264168825829}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 581914aaaf6426147b5f126597cb102c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IdleOscillator
+  channel: 0
+  wave: 0
+  axis: {x: 0, y: 0, z: 1}
+  amplitude: 30
+  frequency: 3.5
+  phaseOffset: 0
+  randomPhase: 1
+  blinkInterval: {x: 1.5, y: 4}
+  blinkDuration: 0.14
+  linked: []
