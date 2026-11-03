@@ -35,6 +35,12 @@ public class Target : MonoBehaviour
     // Puntos de extensión para efectos (destello, caída, sonido) sin tocar esta lógica
     public event System.Action<Target, int> Damaged;   // impactos restantes
     public event System.Action<Target> Killed;
+    public event System.Action<Target> Expired;          // se acabó su tiempo sin que lo derribaran
+
+    // Segundos que tarda en irse cuando expira (la animación de bajada). Lo fija TargetAppear en su Awake;
+    // sin ese componente vale 0 y el objetivo desaparece de golpe, como antes
+    public float ExpireDuration { get; set; }
+    public bool IsExpiring { get; private set; }
 
     public TargetBonus Bonus { get; private set; } = TargetBonus.None;
     public bool CanHaveBonus => points > 0;   // un objetivo de penalización nunca es especial
@@ -53,9 +59,35 @@ public class Target : MonoBehaviour
         hitsRemaining = hitsToKill;
     }
 
+    // Antes era Destroy(gameObject, lifetime): desaparecía de golpe. Ahora, al acabarse el tiempo,
+    // se avisa (Expired) para que la animación lo baje tras el decorado y se destruye al terminar.
+    // Invoke en lugar de Destroy diferido: si lo derriban antes, Expire() comprueba IsDead y no hace nada
     private void Start()
     {
-        Destroy(gameObject, lifetime);
+        Invoke(nameof(Expire), lifetime);
+    }
+
+    private void Expire()
+    {
+        if (IsDead)
+            return;
+
+        IsExpiring = true;
+        StopInteraction();   // mientras baja no se le puede acertar: ya "se ha ido"
+
+        Expired?.Invoke(this);
+        Destroy(gameObject, ExpireDuration);
+    }
+
+    // Colliders fuera (no bloquea ni recibe disparos) y movimiento parado
+    private void StopInteraction()
+    {
+        foreach (Collider col in GetComponents<Collider>())
+            col.enabled = false;
+
+        TargetMovement movement = GetComponent<TargetMovement>();
+        if (movement != null)
+            movement.enabled = false;
     }
 
     public void SetSpawner(TargetSpawner targetSpawner, int entryIndex)
@@ -155,7 +187,7 @@ public class Target : MonoBehaviour
 
     public void Hit()
     {
-        if (IsDead)
+        if (IsDead || IsExpiring)
             return;
 
         hitsRemaining--;
@@ -167,6 +199,7 @@ public class Target : MonoBehaviour
         }
 
         IsDead = true;
+        CancelInvoke(nameof(Expire));
 
         scoreManager.AddScore(Mathf.RoundToInt(points * pointsMultiplier));
         GiveBonusReward();
@@ -180,12 +213,7 @@ public class Target : MonoBehaviour
         }
 
         // Mientras cae: que no se le pueda volver a dar ni siga con su movimiento
-        foreach (Collider col in GetComponents<Collider>())
-            col.enabled = false;
-
-        TargetMovement movement = GetComponent<TargetMovement>();
-        if (movement != null)
-            movement.enabled = false;
+        StopInteraction();
 
         Destroy(gameObject, destroyDelay);
     }

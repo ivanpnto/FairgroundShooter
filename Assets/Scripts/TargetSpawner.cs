@@ -14,6 +14,7 @@ public class TargetSpawner : MonoBehaviour
     private int[] activePerEntry = new int[0];
     private int activeTargets;
     private float spawnTimer;
+    private float levelElapsed;   // segundos jugados de este nivel (sin contar transición)
 
     private GameManager gameManager;
 
@@ -68,15 +69,24 @@ public class TargetSpawner : MonoBehaviour
         if (level == null || gameManager.CurrentState != GameManager.GameState.Playing)
             return;
 
+        levelElapsed += Time.deltaTime;
         spawnTimer -= Time.deltaTime;
 
         if (spawnTimer > 0f)
             return;
 
-        spawnTimer = level.spawnInterval;
+        spawnTimer = CurrentSpawnInterval();
 
         if (activeTargets < level.maxActiveTargets)
             SpawnTarget();
+    }
+
+    // El tiempo jugado lo cuenta el propio spawner y no se lee de GameTimer: el bonus dorado SUMA tiempo
+    // al reloj, y si el ritmo dependiera de él, acertar un dorado haría que el nivel se relajara
+    private float CurrentSpawnInterval()
+    {
+        float progress = level.duration > 0f ? Mathf.Clamp01(levelElapsed / level.duration) : 0f;
+        return level.spawnInterval * Mathf.Lerp(1f, level.endSpawnIntervalFactor, progress);
     }
 
     private void SpawnTarget()
@@ -192,5 +202,6 @@ public class TargetSpawner : MonoBehaviour
             activePerEntry[i] = 0;
 
         spawnTimer = 0f;
+        levelElapsed = 0f;
     }
 }

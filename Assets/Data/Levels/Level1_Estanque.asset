@@ -47,6 +47,7 @@ MonoBehaviour:
     weight: 1.2
     maxActive: 1
   spawnInterval: 1.3
+  endSpawnIntervalFactor: 0.7
   maxActiveTargets: 5
   pointsMultiplier: 1
   speedMultiplier: 1

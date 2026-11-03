@@ -11,6 +11,8 @@ public abstract class TargetMovement : MonoBehaviour
     private BoxCollider boxCollider;
     private Vector3 colliderCenter;   // centro original, con el modelo mirando a +X
     private Vector3 modelPosition;    // posición local original del modelo
+    private float facing = 1f;        // 1 = mira a +X, -1 = volteado
+    private Vector3 modelOffset;      // desplazamiento extra del modelo (aparición/desaparición)
 
     // En Awake y no en Start: las clases hijas llaman a FaceDirection desde su Start,
     // y para entonces estos valores ya tienen que estar guardados
@@ -71,11 +73,30 @@ public abstract class TargetMovement : MonoBehaviour
             scale.x = Mathf.Abs(scale.x) * sign;
             model.localScale = scale;
 
-            // Igual que haría el volteo de la raíz si el modelo no estuviera centrado
-            model.localPosition = new Vector3(modelPosition.x * sign, modelPosition.y, modelPosition.z);
         }
+
+        facing = sign;
+        ApplyModelPosition();
 
         if (boxCollider != null)
             boxCollider.center = new Vector3(colliderCenter.x * sign, colliderCenter.y, colliderCenter.z);
+    }
+
+    // TargetAppear baja/sube SOLO el modelo hijo (la raíz la mueve este script cada frame y la
+    // sobrescribiría). Como FaceDirection también escribe la posición del modelo, los dos pasan
+    // por aquí: si cada uno escribiera por su cuenta, un volteo a mitad de la subida la "teletransportaría"
+    public void SetModelOffset(Vector3 offset)
+    {
+        modelOffset = offset;
+        ApplyModelPosition();
+    }
+
+    private void ApplyModelPosition()
+    {
+        if (model == null)
+            return;
+
+        // Igual que haría el volteo de la raíz si el modelo no estuviera centrado
+        model.localPosition = new Vector3(modelPosition.x * facing, modelPosition.y, modelPosition.z) + modelOffset;
     }
 }

@@ -27,6 +27,9 @@ public class LevelConfig : ScriptableObject
     [Header("Aparición")]
     public SpawnEntry[] entries;
     [Min(0.1f)] public float spawnInterval = 1.3f;
+    [Tooltip("Ritmo creciente: al final del nivel el intervalo vale spawnInterval × este factor " +
+             "(se interpola linealmente con el tiempo jugado). 1 = ritmo constante")]
+    [Range(0.2f, 1f)] public float endSpawnIntervalFactor = 0.6f;
     [Min(1)] public int maxActiveTargets = 5;
 
     [Header("Dificultad (multiplicadores sobre los valores del prefab)")]
