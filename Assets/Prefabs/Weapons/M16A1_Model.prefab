@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3693442714449628409}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Sight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -40,7 +40,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1496232706025242910}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Muzzle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -78,6 +78,10 @@ PrefabInstance:
       propertyPath: m_LocalPosition.y
       value: -0.061
       objectReference: {fileID: 0}
+    - target: {fileID: 1089812501607129200, guid: 6c7859e017cea78489d643b95bb38ec3, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 1310168114088343060, guid: 6c7859e017cea78489d643b95bb38ec3, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -90,13 +94,29 @@ PrefabInstance:
       propertyPath: m_Name
       value: M16A1_Model
       objectReference: {fileID: 0}
+    - target: {fileID: 3852799265655734254, guid: 6c7859e017cea78489d643b95bb38ec3, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 5159507561291641426, guid: 6c7859e017cea78489d643b95bb38ec3, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 7deee5839bc8b104286b06c6268d459a, type: 2}
     - target: {fileID: 6456741237754558206, guid: 6c7859e017cea78489d643b95bb38ec3, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 6456741237754558206, guid: 6c7859e017cea78489d643b95bb38ec3, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6613306538204665193, guid: 6c7859e017cea78489d643b95bb38ec3, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 7249113443657463342, guid: 6c7859e017cea78489d643b95bb38ec3, type: 3}
+      propertyPath: m_Layer
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 8005316354712685914, guid: 6c7859e017cea78489d643b95bb38ec3, type: 3}
       propertyPath: m_LocalPosition.x
