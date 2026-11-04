@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56da18c25a1d38857bc3ce995ab5a491, type: 3}
+  m_Name: ScoreMultiplier
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
+  id: score
+  displayName: Multiplicador de puntos
+  description: +10 % de puntos por nivel al derribar objetivos (las penalizaciones
+    no cambian).
+  icon: {fileID: 0}
+  effect: 2
+  maxLevel: 3
+  costPerLevel: 78000000f000000090010000
+  valuePerLevel: 0.1

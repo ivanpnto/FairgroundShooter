@@ -18,7 +18,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject hud;
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private TMP_Text finalScoreText;
-    [SerializeField] private TMP_InputField nameInputField;
 
     [Header("Transición entre niveles (panel opcional)")]
     [SerializeField] private GameObject levelTransitionPanel;
@@ -57,16 +56,17 @@ public class GameManager : MonoBehaviour
         if (CurrentState != GameState.Waiting)
             return;
 
-        playerName = nameInputField.text;
-
-        if (string.IsNullOrWhiteSpace(playerName))
+        // Se juega siempre con un perfil (lo elige la pantalla de perfiles): ahí van créditos y récord.
+        // Sin ProfileManager en la escena se juega igual, como antes de la Fase 5
+        if (profileManager != null && profileManager.Current == null)
         {
-            playerName = "Jugador";
+            Debug.LogWarning("GameManager: elige un perfil antes de jugar.", this);
+            MenuController menu = FindFirstObjectByType<MenuController>();
+            if (menu != null) menu.ShowProfiles();
+            return;
         }
 
-        // El nombre escrito elige su perfil (o lo crea): créditos, mejoras y récord van a ese perfil
-        if (profileManager != null && !profileManager.SelectProfile(playerName))
-            profileManager.CreateProfile(playerName);
+        playerName = profileManager != null ? profileManager.Current.name : "Jugador";
 
         BeginRun();
 
