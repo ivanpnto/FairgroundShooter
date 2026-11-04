@@ -15,9 +15,17 @@ public enum ScopeType { IronSights, Telescopic }
 public class WeaponData : ScriptableObject
 {
     [Header("General")]
+    [Tooltip("Identificador único y estable: es la clave de las armas desbloqueadas en profiles.json")]
+    public string id;
     public string displayName = "Arma";
     [Tooltip("Prefab del modelo (carpeta PolyOne/Free Gun/Prefabs)")]
     public GameObject modelPrefab;
+
+    [Header("Progresión (Fase 5)")]
+    [Tooltip("Créditos que cuesta desbloquearla en la tienda")]
+    [Min(0)] public int price;
+    [Tooltip("Daño por disparo sin mejoras. La vida de los objetivos se mide en impactos de daño 1")]
+    [Min(0f)] public float baseDamage = 1f;
 
     [Header("Colocación en la mano (relativa a WeaponHolder)")]
     // Cada modelo tiene un tamaño y un pivote distintos, así que cada arma
