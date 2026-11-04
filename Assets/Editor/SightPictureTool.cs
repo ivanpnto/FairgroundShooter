@@ -15,11 +15,33 @@ using UnityEngine;
 //   proyectando y no con la distancia, porque las alzas tienen anchos muy distintos;
 // - qué parte de la pantalla tapa el arma (y de la mitad de arriba, donde se apunta);
 // - el vértice visible más cercano al ojo (debe quedar por encima del plano cercano);
-// - dónde corta la malla el rayo que sale del Sight por +Z (sin cortes = línea de mira libre).
+// - el ángulo de la línea de mira respecto al cañón (Sight frente a Muzzle);
+// - si la punta del guion se ve: rayo desde el ojo hasta ella contra los triángulos del modelo.
 public static class SightPictureTool
 {
     private const float ReferenceAspect = 16f / 9f;
     private const float NearClip = 0.01f;   // el de la cámara de Player
+
+    // La punta del guion se busca sola, sin datos por arma: es el vértice más lejano que cae sobre el
+    // eje de la cámara, porque el Sight está definido por la recta alza → punta del guion. En vertical
+    // la tolerancia es pequeña (la punta está en la recta); en lateral, mayor, porque los vértices de
+    // la punta están a los lados del eje (el guion de la FiveSeven mide 2,7 mm de ancho). Los hombros
+    // del alza, la capucha del guion o la boca quedan muy fuera de estas tolerancias
+    private const float TipMinDistance = 0.05f;   // m por delante del Sight
+    private const float TipMaxSlopeX = 0.008f;    // rad
+    private const float TipMaxSlopeY = 0.0015f;   // rad
+
+    // Los cortes a menos de esta distancia de la punta son el propio guion (el rayo roza su cara
+    // superior o, el que va por debajo de la punta, entra por ella), no un obstáculo. Mayor que el
+    // guion más largo: la cara superior del de la FiveSeven mide 2,8 mm
+    private const float TipTolerance = 0.005f;
+
+    // Cuánto guion por debajo de la punta tiene que verse para darlo por visible
+    private const float TipVisibleDepth = 0.0005f;
+
+    // Con la malla original de PolyOne, el tambor del dióptero del MP5 tapa el guion: es un aviso esperado
+    // hasta que el prefab use la malla corregida (HK_MP5_Body_Fixed)
+    private const string ExpectedObstructedMesh = "HK_MP5_Body";
 
     // "Alza" = lo que rodea al guion en la imagen: los vértices de los primeros 3 cm por delante del
     // Sight (la cara trasera está a 1 cm) y a menos de 5 mm de la línea de mira. Con una franja más
@@ -47,7 +69,7 @@ public static class SightPictureTool
 
     private static string MeasureWeapon(WeaponData data)
     {
-        string header = $"• {data.displayName} ({data.scopeType}, scopeFov {data.scopeFov}, eyeRelief {data.eyeRelief:F3})";
+        string header = $"• {data.displayName} ({data.scopeType}, scopeFov {data.scopeFov}, eyeRelief {data.eyeRelief:F4})";
 
         WeaponModel model = data.modelPrefab != null ? data.modelPrefab.GetComponent<WeaponModel>() : null;
         if (model == null || model.Sight == null)
@@ -95,22 +117,99 @@ public static class SightPictureTool
         float covered, coveredTop;
         Rasterize(points, triangles, tanH, tanV, out covered, out coveredTop);
 
-        // 4. Línea de mira: cortes del rayo Sight → +Z, en metros desde el Sight
-        var hits = new List<float>();
-        Vector3 origin = new Vector3(0f, 0f, data.eyeRelief);
+        // 4. Ángulo de la línea de mira respecto al cañón. Positivo = al apuntar, la boca queda por
+        // encima de la línea de mira (lo normal: la recta alza → guion baja hacia la boca)
+        string angle = "";
+        if (model.Muzzle != null)
+        {
+            Vector3 barrel = Quaternion.Inverse(model.Sight.rotation) * model.Muzzle.forward;
+            angle = $", línea de mira {Mathf.Atan2(barrel.y, barrel.z) * Mathf.Rad2Deg:F2}° respecto al cañón";
+        }
+
+        // 5. Visibilidad de la punta del guion (solo miras abiertas: el visor no tiene guion)
+        string sight = data.scopeType == ScopeType.IronSights
+            ? CheckFrontSight(data, points, triangles, tanH, tanV, UsesMesh(root, ExpectedObstructedMesh))
+            : "visor: sin guion que comprobar";
+
+        return $"{header}: {alza}, arma {covered:P1} de la pantalla ({coveredTop:P1} de la mitad de arriba), {near}{angle}, {sight}";
+    }
+
+    // Busca la punta del guion y lanza un rayo desde el ojo (el origen) hasta ella. Si un triángulo del
+    // modelo lo corta antes, el guion queda tapado: se avisa también con un warning para que no pase
+    // desapercibido en el informe
+    private static string CheckFrontSight(WeaponData data, List<Vector3> points, List<int> triangles,
+        float tanH, float tanV, bool obstructionExpected)
+    {
+        var candidates = new List<Vector3>();
+        float farthest = float.MinValue;
+        foreach (Vector3 p in points)
+        {
+            if (p.z < data.eyeRelief + TipMinDistance || Mathf.Abs(p.x / p.z) > TipMaxSlopeX || Mathf.Abs(p.y / p.z) > TipMaxSlopeY)
+                continue;
+            candidates.Add(p);
+            farthest = Mathf.Max(farthest, p.z);
+        }
+
+        // Los vértices de la punta van por pares a los lados del eje: se promedian los del último
+        // milímetro para tomar el centro de la punta y no una de sus esquinas
+        Vector3 tip = Vector3.zero;
+        int count = 0;
+        foreach (Vector3 p in candidates)
+            if (p.z > farthest - 0.001f)
+            {
+                tip += p;
+                count++;
+            }
+        if (count == 0)
+        {
+            Debug.LogWarning($"{data.displayName}: no se encuentra la punta del guion sobre el eje de la cámara (¿Sight mal colocado?)");
+            return "¡punta del guion NO encontrada en el eje!";
+        }
+        tip /= count;
+
+        // Dónde queda la punta en pantalla, en % de media pantalla (0 = centro exacto)
+        string onScreen = $"punta del guion a {tip.z:F3} m, desvío ({tip.x / tip.z / tanH:P2}, {tip.y / tip.z / tanV:P2})";
+
+        // Dos rayos: a la punta y a TipVisibleDepth por debajo. Con solo el primero, una línea que roza
+        // el fondo de la muesca daría "visible" aunque en pantalla apenas asome el borde del guion
+        float obstacle = Mathf.Min(
+            FirstObstacle(tip, points, triangles),
+            FirstObstacle(tip + Vector3.down * TipVisibleDepth, points, triangles));
+        float tipDistance = tip.magnitude;
+
+        if (obstacle == float.MaxValue)
+            return $"{onScreen}, guion VISIBLE";
+
+        string message = $"{data.displayName}: el propio modelo tapa la punta del guion a {obstacle:F4} m del ojo (guion a {tipDistance:F4} m)";
+        if (obstructionExpected)
+            return $"{onScreen}, guion TAPADO a {obstacle:F4} m del ojo (esperado: malla original del dióptero)";
+        Debug.LogWarning(message);
+        return $"{onScreen}, ¡guion TAPADO a {obstacle:F4} m del ojo!";
+    }
+
+    // Distancia desde el ojo al primer triángulo que corta el rayo hacia target antes de llegar a él
+    // (float.MaxValue si no hay ninguno)
+    private static float FirstObstacle(Vector3 target, List<Vector3> points, List<int> triangles)
+    {
+        float distance = target.magnitude;
+        Vector3 direction = target / distance;
+        float obstacle = float.MaxValue;
         for (int t = 0; t < triangles.Count; t += 3)
         {
             float d;
-            if (RayTriangle(origin, Vector3.forward, points[triangles[t]], points[triangles[t + 1]], points[triangles[t + 2]], out d))
-                hits.Add(d);
+            if (RayTriangle(Vector3.zero, direction, points[triangles[t]], points[triangles[t + 1]], points[triangles[t + 2]], out d)
+                && d < distance - TipTolerance)
+                obstacle = Mathf.Min(obstacle, d);
         }
-        hits.Sort();
-        var hitText = new StringBuilder();
-        for (int i = 0; i < hits.Count && i < 8; i++)
-            hitText.Append(i == 0 ? "" : " ").Append(hits[i].ToString("F4"));
-        string ray = hits.Count == 0 ? "rayo del Sight libre" : $"rayo del Sight corta en [{hitText}{(hits.Count > 8 ? " …" : "")}] m";
+        return obstacle;
+    }
 
-        return $"{header}: {alza}, arma {covered:P1} de la pantalla ({coveredTop:P1} de la mitad de arriba), {near}, {ray}";
+    private static bool UsesMesh(Transform root, string meshName)
+    {
+        foreach (MeshFilter filter in root.GetComponentsInChildren<MeshFilter>(true))
+            if (filter.sharedMesh != null && filter.sharedMesh.name == meshName)
+                return true;
+        return false;
     }
 
     // Vértices (ya en el espacio de la cámara) y triángulos de todas las mallas visibles del modelo

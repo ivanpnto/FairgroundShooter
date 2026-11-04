@@ -33,7 +33,7 @@ MonoBehaviour:
   cameraRecoverySpeed: 8
   scopeType: 0
   scopeFov: 28
-  eyeRelief: 0.058
+  eyeRelief: 0.0475
   aimRecoilFactor: 0.4
   shootSound: {fileID: 8300000, guid: 480494ccb355554fd8614ae189ba5205, type: 3}
   magOutSound: {fileID: 8300000, guid: d9bfe5022c7e44c7999fe85bdf5d37b9, type: 3}
