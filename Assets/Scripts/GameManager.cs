@@ -26,6 +26,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text levelTransitionTitle;   // "¡NIVEL 1 SUPERADO!"
     [SerializeField] private TMP_Text levelTransitionScore;   // "PUNTOS: 1234"
     [SerializeField] private TMP_Text levelTransitionNext;    // "SIGUIENTE: FONDO MARINO · 3"
+    [SerializeField] private TMP_Text levelTransitionBonus;   // "BONUS DE PRECISIÓN: +87 (87 %)"
     [SerializeField, Min(1)] private int transitionSeconds = 3;
 
     private ScoreManager scoreManager;
@@ -69,7 +70,6 @@ public class GameManager : MonoBehaviour
     public void RestartGame()
     {
         StopAllCoroutines();   // por si se reinicia en mitad de una transición
-        scoreManager.ResetScore();
 
         BeginRun();
 
@@ -79,6 +79,8 @@ public class GameManager : MonoBehaviour
     // Una partida = todos los niveles seguidos con la puntuación acumulada
     private void BeginRun()
     {
+        // Puntos, racha y contadores de disparos a cero, también en la primera partida
+        scoreManager.ResetScore();
         weaponAmmo.ResetAmmo();
 
         if (levelManager != null)
@@ -102,11 +104,22 @@ public class GameManager : MonoBehaviour
             levelTransitionPanel.SetActive(false);
     }
 
+    // Bonus de precisión del último nivel terminado (lo muestra la pantalla de fin)
+    public int LastAccuracyBonus { get; private set; }
+    public float LastLevelAccuracy { get; private set; }
+
     // Lo llama GameTimer cuando el tiempo del nivel llega a 0
     public void OnTimeUp()
     {
         if (CurrentState != GameState.Playing)
             return;
+
+        // Antes de cambiar de estado: el bonus se calcula con los disparos de este nivel
+        float levelMultiplier = levelManager != null && levelManager.CurrentLevel != null
+            ? levelManager.CurrentLevel.pointsMultiplier : 1f;
+        LastLevelAccuracy = scoreManager.LevelAccuracy;
+        LastAccuracyBonus = scoreManager.ApplyAccuracyBonus(levelMultiplier);
+        Debug.Log($"Bonus de precisión: +{LastAccuracyBonus} ({LastLevelAccuracy:P0} de {scoreManager.ShotsFired} disparos)");
 
         if (levelManager != null && levelManager.HasNextLevel)
             StartCoroutine(LevelTransitionRoutine());
@@ -124,6 +137,7 @@ public class GameManager : MonoBehaviour
 
         SetText(levelTransitionTitle, $"¡NIVEL {finished} SUPERADO!");
         SetText(levelTransitionScore, $"PUNTOS: {scoreManager.GetScore()}");
+        SetText(levelTransitionBonus, $"BONUS DE PRECISIÓN: +{LastAccuracyBonus} ({LastLevelAccuracy:P0})");
 
         hud.SetActive(false);
         if (levelTransitionPanel != null)

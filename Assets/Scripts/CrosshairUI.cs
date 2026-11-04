@@ -93,10 +93,7 @@ public class CrosshairUI : MonoBehaviour
         if (!shot.HitTarget)
             return;
 
-        // Target no expone si es de penalización: se deduce de CanHaveBonus (points > 0),
-        // porque un objetivo de penalización nunca es especial. Hoy equivale a points < 0
-        // (ningún prefab tiene 0 puntos); si aparecieran objetivos de 0 puntos saldrían en rojo
-        bool penalty = shot.Target != null && !shot.Target.CanHaveBonus;
+        bool penalty = shot.Target != null && shot.Target.IsPenalty;
         Color color = penalty ? penaltyColor : hitColor;
         if (hitmarkerImages != null)
             foreach (Image image in hitmarkerImages)

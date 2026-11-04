@@ -50,6 +50,7 @@ public class Target : MonoBehaviour
 
     public TargetBonus Bonus { get; private set; } = TargetBonus.None;
     public bool CanHaveBonus => points > 0;   // un objetivo de penalización nunca es especial
+    public bool IsPenalty => points < 0;      // resta puntos y rompe la racha
     public bool IsDead { get; private set; }
     public int MaxHealth { get; private set; }     // vida con el multiplicador del nivel ya aplicado
     public float Health => currentHealth;
