@@ -1077,6 +1077,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerScope
   weaponHolder: {fileID: 1127249791}
   zoomSpeed: 20
+  forceAim: 0
 --- !u!114 &354793042
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4047,6 +4048,7 @@ GameObject:
   - component: {fileID: 1197756585}
   - component: {fileID: 1197756586}
   - component: {fileID: 1197756587}
+  - component: {fileID: 1197756588}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -4145,6 +4147,20 @@ MonoBehaviour:
     - {fileID: 4271640025326507286}
     - {fileID: 5828081615253687184}
   levelText: {fileID: 0}
+--- !u!114 &1197756588
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1197756582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16f4a237f57fcc31a8818618dfab1fd0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProfileManager
+  starterWeapon: {fileID: 11400000, guid: ad4356d7b22abd458bd588441b672045, type: 2}
+  upgrades: []
 --- !u!1 &1200148949
 GameObject:
   m_ObjectHideFlags: 0

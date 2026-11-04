@@ -12,8 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35d26c045ee039b259010c0a62bf5db1, type: 3}
   m_Name: AK47
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  id: ak47
   displayName: AK-47
   modelPrefab: {fileID: 1124963470565848674, guid: b430bba859e379047a036bc67d1a6c43, type: 3}
+  price: 600
+  baseDamage: 1.5
   holdPosition: {x: 0, y: 0.015, z: 0.083}
   holdRotation: {x: 0, y: 90, z: 0}
   holdScale: {x: 1, y: 1, z: 1}

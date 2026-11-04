@@ -103,6 +103,7 @@ public class PlayerShoot : MonoBehaviour
 #endif
 
         WeaponData weapon = weaponController.CurrentWeapon;
+        WeaponStats stats = weaponController.CurrentStats;   // cadencia (con mejoras); el modo sale de WeaponData
 
         // NUEVO: Mouse/Keyboard.current pueden ser null si no hay dispositivo conectado
         if (Mouse.current != null)
@@ -123,10 +124,10 @@ public class PlayerShoot : MonoBehaviour
                 // Pero si nextFireTime se ha quedado atrás más de un intervalo (el jugador
                 // llevaba un rato sin disparar), sumar sin más dejaría "disparos acumulados"
                 // que saldrían seguidos al volver a pulsar; por eso antes se trae al presente.
-                if (Time.time - nextFireTime > weapon.TimeBetweenShots)
+                if (Time.time - nextFireTime > stats.TimeBetweenShots)
                     nextFireTime = Time.time;
 
-                nextFireTime += weapon.TimeBetweenShots;
+                nextFireTime += stats.TimeBetweenShots;
 
                 Shoot();
 
@@ -137,7 +138,7 @@ public class PlayerShoot : MonoBehaviour
                 // disparo debe ser un golpe que se asienta antes del siguiente, no acumularse
                 if (playerAim != null)
                     playerAim.AddRecoil(weapon.cameraKick, weapon.cameraKickSide,
-                        weapon.cameraRecoverySpeed, Mathf.Min(weapon.TimeBetweenShots * 1.5f, 0.25f));
+                        weapon.cameraRecoverySpeed, Mathf.Min(stats.TimeBetweenShots * 1.5f, 0.25f));
             }
         }
 
@@ -168,8 +169,9 @@ public class PlayerShoot : MonoBehaviour
             if (!keyboard[Key.Digit1 + i].wasPressedThisFrame && !keyboard[Key.Numpad1 + i].wasPressedThisFrame)
                 continue;
 
-            // La misma arma no se reequipa: rellenaría el cargador gratis
-            if (weapons[i] != null && weapons[i] != weaponController.CurrentWeapon)
+            // La misma arma no se reequipa: rellenaría el cargador gratis. Las bloqueadas en el perfil,
+            // tampoco: el atajo es para probar, no para saltarse la tienda (para eso está el menú de depuración)
+            if (weapons[i] != null && weapons[i] != weaponController.CurrentWeapon && weaponController.IsUnlocked(weapons[i]))
             {
                 weaponController.Equip(weapons[i]);
                 Debug.Log($"Depuración: equipada {weapons[i].displayName} (tecla {i + 1})");
@@ -185,7 +187,8 @@ public class PlayerShoot : MonoBehaviour
             new Vector3(0.5f, 0.5f, 0f)
         );
 
-        float range = weaponController.CurrentWeapon.maxDistance;
+        WeaponStats stats = weaponController.CurrentStats;
+        float range = stats.Range;
 
         if (Physics.Raycast(ray, out RaycastHit hit, range, hitMask, QueryTriggerInteraction.Ignore))
         {
@@ -193,7 +196,7 @@ public class PlayerShoot : MonoBehaviour
 
             // Un objetivo que ya está cayendo desactiva su collider, así que aquí nunca llega uno muerto.
             // El daño sale de las estadísticas efectivas del arma, no de WeaponData
-            float damage = WeaponStatsCalculator.Compute(weaponController.CurrentWeapon, null, null).Damage;
+            float damage = stats.Damage;
             if (target != null)
             {
                 target.TakeDamage(damage);

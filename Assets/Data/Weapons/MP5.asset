@@ -12,8 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35d26c045ee039b259010c0a62bf5db1, type: 3}
   m_Name: MP5
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  id: mp5
   displayName: HK MP5
   modelPrefab: {fileID: 5731537676131412485, guid: 4e324861ce3d61e91a14e78ae7ed8394, type: 3}
+  price: 300
+  baseDamage: 1
   holdPosition: {x: 0, y: 0.032, z: 0}
   holdRotation: {x: 0, y: 90, z: 0}
   holdScale: {x: 1, y: 1, z: 1}

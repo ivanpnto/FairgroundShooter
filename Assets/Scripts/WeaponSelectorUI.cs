@@ -29,6 +29,7 @@ public class WeaponSelectorUI : MonoBehaviour
             return;
 
         weaponController.OnWeaponEquipped += Refresh;
+        weaponController.StatsChanged += RefreshStats;
 
         // Mientras el panel estaba oculto no recibíamos el evento: puede haber cambiado.
         // Si WeaponController aún no ha hecho su Start, CurrentWeapon es null y el
@@ -40,7 +41,10 @@ public class WeaponSelectorUI : MonoBehaviour
     private void OnDisable()
     {
         if (weaponController != null)
+        {
             weaponController.OnWeaponEquipped -= Refresh;
+            weaponController.StatsChanged -= RefreshStats;
+        }
     }
 
     // Para el OnClick de los botones ◀ ▶
@@ -67,10 +71,19 @@ public class WeaponSelectorUI : MonoBehaviour
         if (index < 0)
             index = direction > 0 ? -1 : 0;
 
-        // Módulo positivo para dar la vuelta en ambos sentidos (en C#, -1 % 5 es -1)
-        int next = ((index + direction) % weapons.Count + weapons.Count) % weapons.Count;
+        // Avanza saltando las armas bloqueadas en el perfil (se compran en la tienda). Como mucho una
+        // vuelta: si solo hay una desbloqueada, se vuelve a ella y no se reequipa
+        int next = index;
+        for (int step = 0; step < weapons.Count; step++)
+        {
+            // Módulo positivo para dar la vuelta en ambos sentidos (en C#, -1 % 5 es -1)
+            next = ((next + direction) % weapons.Count + weapons.Count) % weapons.Count;
+            if (weaponController.IsUnlocked(weapons[next]))
+                break;
+        }
 
-        weaponController.Equip(weapons[next]);
+        if (weapons[next] != weaponController.CurrentWeapon && weaponController.IsUnlocked(weapons[next]))
+            weaponController.Equip(weapons[next]);
     }
 
     private static int IndexOf(System.Collections.Generic.IReadOnlyList<WeaponData> list, WeaponData item)
@@ -86,10 +99,17 @@ public class WeaponSelectorUI : MonoBehaviour
         if (nameText != null)
             nameText.text = data.displayName;
 
-        if (statsText != null)
-        {
-            string mode = data.isAutomatic ? "Automática" : "Semiautomática";
-            statsText.text = $"{data.magazineSize} balas · {data.fireRate:0.#} disp/s · {mode}";
-        }
+        RefreshStats(weaponController.CurrentStats);
+    }
+
+    // Las estadísticas efectivas (con las mejoras), no las de WeaponData: es lo que el jugador tendrá
+    private void RefreshStats(WeaponStats stats)
+    {
+        WeaponData data = weaponController.CurrentWeapon;
+        if (statsText == null || data == null)
+            return;
+
+        string mode = data.isAutomatic ? "Automática" : "Semiautomática";
+        statsText.text = $"{stats.MagazineSize} balas · {1f / stats.TimeBetweenShots:0.#} disp/s · {mode}";
     }
 }

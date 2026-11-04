@@ -13,6 +13,8 @@ public class UpgradeLevel
         this.id = id;
         this.level = level;
     }
+
+    public UpgradeLevel() { }   // para JsonUtility
 }
 
 // Progreso de un jugador entre partidas. Solo datos: quien lo modifica es ProfileManager,
@@ -31,6 +33,9 @@ public class PlayerProfile
     {
         this.name = name;
     }
+
+    // Para JsonUtility, que crea los objetos al leer profiles.json
+    public PlayerProfile() { }
 
     // Lectura sin efectos secundarios: la necesita WeaponStatsCalculator, que recibe el perfil
     // y no el ProfileManager. Una mejora nunca comprada está a nivel 0

@@ -22,6 +22,10 @@ public class WeaponController : MonoBehaviour
 
     public WeaponData CurrentWeapon { get; private set; }
 
+    // Estadísticas EFECTIVAS del arma equipada (WeaponData + mejoras del perfil). Munición, cadencia,
+    // alcance y daño se leen de aquí; WeaponData queda para lo visual, el sonido y el modo de disparo
+    public WeaponStats CurrentStats { get; private set; }
+
     // El modelo instanciado del arma actual (null si su prefab no tiene WeaponModel).
     // Lo lee WeaponEffects para colocar el fogonazo en su muzzle
     public WeaponModel CurrentModel { get; private set; }
@@ -34,13 +38,79 @@ public class WeaponController : MonoBehaviour
     // podrían suscribirse el HUD o el sonido)
     public event System.Action<WeaponData> OnWeaponEquipped;
 
+    // Las estadísticas han cambiado sin cambiar de arma (se ha comprado una mejora o se ha cambiado de
+    // perfil). Al equipar también se recalculan, pero eso ya lo avisa OnWeaponEquipped
+    public event System.Action<WeaponStats> StatsChanged;
+
+    private ProfileManager profileManager;
+
     // Guardamos el modelo que hemos creado nosotros en lugar de vaciar WeaponHolder:
     // así no destruimos otros hijos que se le añadan en el futuro (fogonazo, mira...)
     private GameObject currentModel;
 
+    private void Awake()
+    {
+        profileManager = FindFirstObjectByType<ProfileManager>();
+    }
+
+    private void OnEnable()
+    {
+        if (profileManager != null) profileManager.ProfileChanged += HandleProfileChanged;
+    }
+
+    private void OnDisable()
+    {
+        if (profileManager != null) profileManager.ProfileChanged -= HandleProfileChanged;
+    }
+
     private void Start()
     {
-        Equip(startingWeapon);
+        Equip(IsUnlocked(startingWeapon) ? startingWeapon : FirstUnlocked());
+    }
+
+    // Sin ProfileManager en la escena todo está desbloqueado, como antes de la Fase 5
+    public bool IsUnlocked(WeaponData data)
+    {
+        if (data == null)
+            return false;
+        return profileManager == null || profileManager.IsWeaponUnlocked(data.id);
+    }
+
+    private WeaponData FirstUnlocked()
+    {
+        foreach (WeaponData data in availableWeapons)
+            if (IsUnlocked(data))
+                return data;
+        return startingWeapon;
+    }
+
+    private WeaponStats ComputeStats(WeaponData data) => profileManager != null
+        ? WeaponStatsCalculator.Compute(data, profileManager.Current, profileManager.Upgrades)
+        : WeaponStatsCalculator.Compute(data, null, null);
+
+    private void HandleProfileChanged()
+    {
+        if (CurrentWeapon == null)
+            return;
+
+        // Al cambiar de perfil el arma equipada puede no estar desbloqueada en el nuevo
+        if (!IsUnlocked(CurrentWeapon))
+        {
+            Equip(FirstUnlocked());
+            return;
+        }
+
+        WeaponStats stats = ComputeStats(CurrentWeapon);
+        if (stats.Equals(CurrentStats))
+            return;   // p. ej. solo han cambiado los créditos
+
+        CurrentStats = stats;
+
+        // La tienda solo está fuera de la partida: reconfigurar llena el cargador, que es lo esperado
+        // tras comprar munición. Si cambia el tamaño en mitad de la partida no regala balas extra… salvo
+        // con el menú de depuración, que es justo para eso
+        weaponAmmo.Configure(stats.MagazineSize, stats.ReloadTime);
+        StatsChanged?.Invoke(stats);
     }
 
     public void Equip(WeaponData data)
@@ -58,7 +128,8 @@ public class WeaponController : MonoBehaviour
         // La pose (hold* y apuntado) la escribe WeaponVisual en SetModel y en cada frame
         currentModel = Instantiate(data.modelPrefab, weaponHolder);
 
-        weaponAmmo.Configure(data.magazineSize, data.reloadTime);
+        CurrentStats = ComputeStats(data);
+        weaponAmmo.Configure(CurrentStats.MagazineSize, CurrentStats.ReloadTime);
 
         WeaponModel model = currentModel.GetComponent<WeaponModel>();
         CurrentModel = model;

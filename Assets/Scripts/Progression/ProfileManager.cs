@@ -1,57 +1,330 @@
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
-// CONTRATO (Etapa 0): solo firmas. La implementación llega en la Etapa 4.
-//
 // Único dueño de los perfiles: los carga de profiles.json (Application.persistentDataPath), es el único
-// que los modifica y guarda tras cada cambio. Va en un objeto de la escena y se busca con
+// que los modifica y guarda tras cada cambio. Va en el objeto GameManager de la escena y se busca con
 // FindFirstObjectByType, como el resto de sistemas.
 //
-// Persistencia prevista:
-// - Guardado seguro: se escribe en profiles.json.tmp y luego se reemplaza profiles.json, dejando la
-//   versión anterior como profiles.json.bak. Un cierre a mitad de escritura no deja el archivo a medias.
+// Persistencia:
+// - Guardado: se escribe profiles.json.tmp entero y luego se cambia por profiles.json, dejando el anterior
+//   como profiles.json.bak. Un cierre a mitad de escritura solo puede romper el .tmp.
 // - Carga: si profiles.json no se puede leer o no es JSON válido, se copia aparte como
-//   profiles.corrupt-<fecha>.json (para no perderlo) y se intenta profiles.json.bak; si tampoco vale,
-//   se empieza sin perfiles. Nunca se sobrescribe un archivo roto sin haberlo copiado antes.
+//   profiles.corrupt-<fecha>.json (para no perderlo) y se intenta el .bak; si tampoco vale, se empieza sin
+//   perfiles. Nunca se sobrescribe un archivo roto sin haberlo copiado antes.
 public class ProfileManager : MonoBehaviour
 {
+    [Tooltip("Arma que todo perfil tiene desbloqueada desde el principio")]
+    [SerializeField] private WeaponData starterWeapon;
+
+    // El catálogo vive aquí y no en la tienda: lo leen WeaponController (estadísticas), ScoreManager
+    // (multiplicador de puntos) y la tienda, y así todos usan la misma lista
+    [Tooltip("Mejoras que existen en el juego (las que salen en la tienda)")]
+    [SerializeField] private UpgradeData[] upgrades;
+
+    private const string FileName = "profiles.json";
+
+    private ProfileDatabase database = new ProfileDatabase();
+
     // El perfil activo (null hasta que se elige o se crea uno)
-    public PlayerProfile Current => throw new System.NotImplementedException("Etapa 4");
-    public int Credits => throw new System.NotImplementedException("Etapa 4");
-    public IReadOnlyList<PlayerProfile> AllProfiles => throw new System.NotImplementedException("Etapa 4");
+    public PlayerProfile Current { get; private set; }
+    public int Credits => Current != null ? Current.credits : 0;
+    public IReadOnlyList<PlayerProfile> AllProfiles => database.profiles;
+    public IReadOnlyList<UpgradeData> Upgrades => upgrades;
+    public WeaponData StarterWeapon => starterWeapon;
 
     // Cualquier cambio del perfil activo (créditos, mejoras, armas) o cambio de perfil.
     // WeaponController recalcula las estadísticas y la tienda se repinta al recibirlo
-#pragma warning disable CS0067   // aún no se lanza: el contrato no tiene implementación (Etapa 4)
     public event System.Action ProfileChanged;
-#pragma warning restore CS0067
+
+    private string FilePath => Path.Combine(Application.persistentDataPath, FileName);
+    private string BackupPath => FilePath + ".bak";
+    private string TempPath => FilePath + ".tmp";
+
+    private void Awake()
+    {
+        Load();
+
+        // El último perfil usado queda elegido al arrancar
+        if (!string.IsNullOrEmpty(database.selectedProfile))
+            SelectProfile(database.selectedProfile);
+    }
+
+    // ── Perfiles ────────────────────────────────────────────────────────────────
 
     // false (y no crea nada) si el nombre está vacío o ya existe (sin distinguir mayúsculas)
-    public bool CreateProfile(string profileName) => throw new System.NotImplementedException("Etapa 4");
+    public bool CreateProfile(string profileName)
+    {
+        string clean = profileName != null ? profileName.Trim() : "";
+        if (clean.Length == 0 || Find(clean) != null)
+            return false;
 
-    public bool SelectProfile(string profileName) => throw new System.NotImplementedException("Etapa 4");
+        database.profiles.Add(new PlayerProfile(clean));
+        return SelectProfile(clean);   // selecciona, guarda y avisa
+    }
+
+    public bool SelectProfile(string profileName)
+    {
+        PlayerProfile profile = Find(profileName);
+        if (profile == null)
+            return false;
+
+        Current = profile;
+        database.selectedProfile = profile.name;
+        EnsureStarterWeapon(profile);
+
+        Commit();
+        return true;
+    }
+
+    private PlayerProfile Find(string profileName)
+    {
+        if (string.IsNullOrWhiteSpace(profileName))
+            return null;
+
+        string clean = profileName.Trim();
+        foreach (PlayerProfile profile in database.profiles)
+            if (string.Equals(profile.name, clean, System.StringComparison.OrdinalIgnoreCase))
+                return profile;
+        return null;
+    }
+
+    // También con perfiles antiguos o editados a mano: sin el arma inicial no habría con qué jugar
+    private void EnsureStarterWeapon(PlayerProfile profile)
+    {
+        if (starterWeapon != null && !string.IsNullOrEmpty(starterWeapon.id) && !profile.IsWeaponUnlocked(starterWeapon.id))
+            profile.unlockedWeapons.Add(starterWeapon.id);
+    }
+
+    // ── Créditos ────────────────────────────────────────────────────────────────
 
     // Resta los créditos solo si hay suficientes; false si no
-    public bool TrySpend(int amount) => throw new System.NotImplementedException("Etapa 4");
+    public bool TrySpend(int amount)
+    {
+        if (Current == null || amount < 0 || Current.credits < amount)
+            return false;
 
-    public void AddCredits(int amount) => throw new System.NotImplementedException("Etapa 4");
+        Current.credits -= amount;
+        Commit();
+        return true;
+    }
 
-    public int GetUpgradeLevel(string id) => throw new System.NotImplementedException("Etapa 4");
+    public void AddCredits(int amount)
+    {
+        if (Current == null || amount <= 0)
+            return;
+
+        Current.credits += amount;
+        Commit();
+    }
+
+    // ── Mejoras ─────────────────────────────────────────────────────────────────
+
+    public int GetUpgradeLevel(string id) => Current != null ? Current.GetUpgradeLevel(id) : 0;
 
     // Cobra el siguiente nivel y lo sube; false si está al máximo o no hay créditos
-    public bool BuyUpgradeLevel(UpgradeData upgrade) => throw new System.NotImplementedException("Etapa 4");
+    public bool BuyUpgradeLevel(UpgradeData upgrade)
+    {
+        if (Current == null || upgrade == null || string.IsNullOrEmpty(upgrade.id))
+            return false;
 
-    public bool IsWeaponUnlocked(string id) => throw new System.NotImplementedException("Etapa 4");
+        int level = Current.GetUpgradeLevel(upgrade.id);
+        int cost = upgrade.NextLevelCost(level);
+        if (cost < 0 || Current.credits < cost)
+            return false;
+
+        Current.credits -= cost;
+        SetUpgradeLevel(Current, upgrade.id, level + 1);
+        Commit();
+        return true;
+    }
+
+    private static void SetUpgradeLevel(PlayerProfile profile, string id, int level)
+    {
+        foreach (UpgradeLevel entry in profile.upgradeLevels)
+        {
+            if (entry.id != id)
+                continue;
+            entry.level = level;
+            return;
+        }
+        profile.upgradeLevels.Add(new UpgradeLevel(id, level));
+    }
+
+    // ── Armas ───────────────────────────────────────────────────────────────────
+
+    // Sin perfil elegido solo está disponible el arma inicial: así los menús funcionan antes de elegir perfil
+    public bool IsWeaponUnlocked(string id)
+    {
+        if (string.IsNullOrEmpty(id))
+            return false;
+        if (Current == null)
+            return starterWeapon != null && starterWeapon.id == id;
+        return Current.IsWeaponUnlocked(id);
+    }
 
     // Desbloquea sin cobrar (arma inicial de un perfil nuevo, menú de depuración)
-    public void UnlockWeapon(string id) => throw new System.NotImplementedException("Etapa 4");
+    public void UnlockWeapon(string id)
+    {
+        if (Current == null || string.IsNullOrEmpty(id) || Current.IsWeaponUnlocked(id))
+            return;
 
-    // PROPUESTA: cobra weapon.price y desbloquea; false si ya está desbloqueada o no hay créditos
-    public bool BuyWeapon(WeaponData weapon) => throw new System.NotImplementedException("Etapa 4");
+        Current.unlockedWeapons.Add(id);
+        Commit();
+    }
 
-    // PROPUESTA: al acabar la partida. Suma max(0, puntuación) / 10 créditos, actualiza bestScore y
+    // Cobra weapon.price y desbloquea; false si ya está desbloqueada o no hay créditos
+    public bool BuyWeapon(WeaponData weapon)
+    {
+        if (Current == null || weapon == null || string.IsNullOrEmpty(weapon.id)
+            || Current.IsWeaponUnlocked(weapon.id) || Current.credits < weapon.price)
+            return false;
+
+        Current.credits -= weapon.price;
+        Current.unlockedWeapons.Add(weapon.id);
+        Commit();
+        return true;
+    }
+
+    // Al acabar la partida (Etapa 4): suma max(0, puntuación) / 10 créditos, actualiza bestScore y
     // gamesPlayed, guarda y devuelve los créditos ganados (para el GameOverPanel)
     public int RecordGameResult(int finalScore) => throw new System.NotImplementedException("Etapa 4");
 
-    public void Save() => throw new System.NotImplementedException("Etapa 4");
+    // ── Persistencia ────────────────────────────────────────────────────────────
+
+    // Guardar y avisar van siempre juntos: cualquier cambio del perfil queda en disco al momento
+    private void Commit()
+    {
+        Save();
+        ProfileChanged?.Invoke();
+    }
+
+    public void Save()
+    {
+        database.version = ProfileDatabase.CurrentVersion;
+
+        try
+        {
+            File.WriteAllText(TempPath, JsonUtility.ToJson(database, true));
+
+            // El anterior pasa a ser la copia de seguridad. Si el juego se cierra entre los dos Move,
+            // no hay profiles.json pero sí .bak, y Load lo recupera
+            if (File.Exists(FilePath))
+            {
+                if (File.Exists(BackupPath))
+                    File.Delete(BackupPath);
+                File.Move(FilePath, BackupPath);
+            }
+            File.Move(TempPath, FilePath);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"ProfileManager: no se han podido guardar los perfiles en {FilePath}: {e.Message}", this);
+        }
+    }
+
+    private void Load()
+    {
+        if (TryRead(FilePath, out ProfileDatabase loaded, out bool corrupt))
+        {
+            database = loaded;
+            return;
+        }
+
+        if (corrupt)
+        {
+            // Se guarda aparte antes de que el próximo Save lo sobrescriba
+            string copy = Path.Combine(Application.persistentDataPath,
+                $"profiles.corrupt-{System.DateTime.Now:yyyyMMdd-HHmmss}.json");
+            try { File.Copy(FilePath, copy, true); }
+            catch (System.Exception e) { Debug.LogError($"ProfileManager: no se ha podido copiar el archivo dañado: {e.Message}", this); }
+            Debug.LogWarning($"ProfileManager: {FileName} está dañado; copiado en {copy}. Se intenta la copia de seguridad.", this);
+        }
+
+        if (TryRead(BackupPath, out loaded, out _))
+        {
+            database = loaded;
+            Debug.LogWarning("ProfileManager: perfiles recuperados de la copia de seguridad.", this);
+            return;
+        }
+
+        database = new ProfileDatabase();
+    }
+
+    // false si el archivo no existe o no se puede usar; corrupt = existe pero no es válido
+    private static bool TryRead(string path, out ProfileDatabase result, out bool corrupt)
+    {
+        result = null;
+        corrupt = false;
+
+        if (!File.Exists(path))
+            return false;
+
+        try
+        {
+            ProfileDatabase db = JsonUtility.FromJson<ProfileDatabase>(File.ReadAllText(path));
+            if (db == null || db.profiles == null)
+                throw new System.FormatException("sin lista de perfiles");
+
+            if (db.version > ProfileDatabase.CurrentVersion)
+                Debug.LogWarning($"ProfileManager: {path} es de una versión más nueva ({db.version}); se lee lo que se entiende.");
+
+            Sanitize(db);
+            result = db;
+            return true;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"ProfileManager: no se puede leer {path}: {e.Message}");
+            corrupt = true;
+            return false;
+        }
+    }
+
+    // Un JSON editado a mano (o de otra versión) puede traer huecos: se rellenan para no tener nulls
+    private static void Sanitize(ProfileDatabase db)
+    {
+        db.profiles.RemoveAll(p => p == null || string.IsNullOrWhiteSpace(p.name));
+        foreach (PlayerProfile p in db.profiles)
+        {
+            if (p.upgradeLevels == null) p.upgradeLevels = new List<UpgradeLevel>();
+            if (p.unlockedWeapons == null) p.unlockedWeapons = new List<string>();
+            p.upgradeLevels.RemoveAll(u => u == null || string.IsNullOrEmpty(u.id));
+            p.credits = Mathf.Max(0, p.credits);
+        }
+    }
+
+#if UNITY_EDITOR
+    // Ayudas para probar desde el Inspector (menú ⋮ del componente) hasta que exista la pantalla de
+    // perfiles (Etapa 5) y el menú de depuración (Etapa 4). Solo en el editor
+    [ContextMenu("Depuración/Crear o elegir perfil 'Prueba'")]
+    private void DebugTestProfile()
+    {
+        if (!SelectProfile("Prueba"))
+            CreateProfile("Prueba");
+    }
+
+    [ContextMenu("Depuración/Desbloquear todas las armas")]
+    private void DebugUnlockAllWeapons()
+    {
+        WeaponController controller = FindFirstObjectByType<WeaponController>();
+        if (controller == null || Current == null)
+            return;
+        foreach (WeaponData weapon in controller.AvailableWeapons)
+            if (weapon != null && !Current.IsWeaponUnlocked(weapon.id))
+                Current.unlockedWeapons.Add(weapon.id);
+        Commit();
+    }
+
+    [ContextMenu("Depuración/Mejoras al máximo")]
+    private void DebugMaxUpgrades()
+    {
+        if (Current == null || upgrades == null)
+            return;
+        foreach (UpgradeData upgrade in upgrades)
+            if (upgrade != null)
+                SetUpgradeLevel(Current, upgrade.id, upgrade.maxLevel);
+        Commit();
+    }
+#endif
 }
