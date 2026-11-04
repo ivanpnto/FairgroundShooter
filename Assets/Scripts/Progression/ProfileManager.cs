@@ -24,6 +24,9 @@ public class ProfileManager : MonoBehaviour
 
     private const string FileName = "profiles.json";
 
+    // Créditos = max(0, puntuación final) / ScorePerCredit (división entera)
+    public const int ScorePerCredit = 10;
+
     private ProfileDatabase database = new ProfileDatabase();
 
     // El perfil activo (null hasta que se elige o se crea uno)
@@ -186,9 +189,64 @@ public class ProfileManager : MonoBehaviour
         return true;
     }
 
-    // Al acabar la partida (Etapa 4): suma max(0, puntuación) / 10 créditos, actualiza bestScore y
-    // gamesPlayed, guarda y devuelve los créditos ganados (para el GameOverPanel)
-    public int RecordGameResult(int finalScore) => throw new System.NotImplementedException("Etapa 4");
+    // Al acabar la partida: suma max(0, puntuación) / 10 créditos, actualiza bestScore y gamesPlayed,
+    // guarda y devuelve los créditos ganados (para el GameOverPanel). Sin perfil no se gana nada
+    public int RecordGameResult(int finalScore)
+    {
+        if (Current == null)
+            return 0;
+
+        int earned = Mathf.Max(0, finalScore) / ScorePerCredit;
+        Current.credits += earned;
+        Current.gamesPlayed++;
+        Current.bestScore = Mathf.Max(Current.bestScore, finalScore);
+
+        Commit();
+        return earned;
+    }
+
+    // Perfiles con al menos una partida, de mayor a menor récord (pantalla de Récords)
+    public List<PlayerProfile> GetRecords()
+    {
+        List<PlayerProfile> records = database.profiles.FindAll(p => p.gamesPlayed > 0);
+        records.Sort((a, b) => b.bestScore.CompareTo(a.bestScore));
+        return records;
+    }
+
+    // ── Depuración (menú de ProgressionDebugMenu y del Inspector) ────────────────
+
+    // Vuelve el perfil actual a como recién creado (conserva el nombre)
+    public void ResetCurrentProfile()
+    {
+        if (Current == null)
+            return;
+
+        int index = database.profiles.IndexOf(Current);
+        PlayerProfile fresh = new PlayerProfile(Current.name);
+        database.profiles[index] = fresh;
+        Current = fresh;
+        EnsureStarterWeapon(fresh);
+        Commit();
+    }
+
+    // Todas las armas desbloqueadas y todas las mejoras al máximo
+    public void UnlockEverything(IEnumerable<WeaponData> weapons)
+    {
+        if (Current == null)
+            return;
+
+        if (weapons != null)
+            foreach (WeaponData weapon in weapons)
+                if (weapon != null && !string.IsNullOrEmpty(weapon.id) && !Current.IsWeaponUnlocked(weapon.id))
+                    Current.unlockedWeapons.Add(weapon.id);
+
+        if (upgrades != null)
+            foreach (UpgradeData upgrade in upgrades)
+                if (upgrade != null && !string.IsNullOrEmpty(upgrade.id))
+                    SetUpgradeLevel(Current, upgrade.id, upgrade.maxLevel);
+
+        Commit();
+    }
 
     // ── Persistencia ────────────────────────────────────────────────────────────
 
@@ -236,8 +294,14 @@ public class ProfileManager : MonoBehaviour
             // Se guarda aparte antes de que el próximo Save lo sobrescriba
             string copy = Path.Combine(Application.persistentDataPath,
                 $"profiles.corrupt-{System.DateTime.Now:yyyyMMdd-HHmmss}.json");
-            try { File.Copy(FilePath, copy, true); }
-            catch (System.Exception e) { Debug.LogError($"ProfileManager: no se ha podido copiar el archivo dañado: {e.Message}", this); }
+            // Una vez copiado se borra: si no, el siguiente Save lo rotaría a .bak y pisaría la copia
+            // de seguridad buena con el archivo roto
+            try
+            {
+                File.Copy(FilePath, copy, true);
+                File.Delete(FilePath);
+            }
+            catch (System.Exception e) { Debug.LogError($"ProfileManager: no se ha podido apartar el archivo dañado: {e.Message}", this); }
             Debug.LogWarning($"ProfileManager: {FileName} está dañado; copiado en {copy}. Se intenta la copia de seguridad.", this);
         }
 
@@ -304,27 +368,11 @@ public class ProfileManager : MonoBehaviour
             CreateProfile("Prueba");
     }
 
-    [ContextMenu("Depuración/Desbloquear todas las armas")]
-    private void DebugUnlockAllWeapons()
+    [ContextMenu("Depuración/Desbloquear todo")]
+    private void DebugUnlockEverything()
     {
         WeaponController controller = FindFirstObjectByType<WeaponController>();
-        if (controller == null || Current == null)
-            return;
-        foreach (WeaponData weapon in controller.AvailableWeapons)
-            if (weapon != null && !Current.IsWeaponUnlocked(weapon.id))
-                Current.unlockedWeapons.Add(weapon.id);
-        Commit();
-    }
-
-    [ContextMenu("Depuración/Mejoras al máximo")]
-    private void DebugMaxUpgrades()
-    {
-        if (Current == null || upgrades == null)
-            return;
-        foreach (UpgradeData upgrade in upgrades)
-            if (upgrade != null)
-                SetUpgradeLevel(Current, upgrade.id, upgrade.maxLevel);
-        Commit();
+        UnlockEverything(controller != null ? controller.AvailableWeapons : null);
     }
 #endif
 }

@@ -19,7 +19,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private TMP_Text finalScoreText;
     [SerializeField] private TMP_InputField nameInputField;
-    [SerializeField] private LeaderboardUI leaderboardUI;
 
     [Header("Transición entre niveles (panel opcional)")]
     [SerializeField] private GameObject levelTransitionPanel;
@@ -35,7 +34,10 @@ public class GameManager : MonoBehaviour
     private TargetSpawner targetSpawner;
     private LevelManager levelManager;
     private string playerName;
-    private LeaderboardManager leaderboardManager;
+    private ProfileManager profileManager;
+
+    // Resultado de la última partida, para la pantalla de fin
+    public int LastCreditsEarned { get; private set; }
 
     private void Awake()
     {
@@ -44,7 +46,7 @@ public class GameManager : MonoBehaviour
         weaponAmmo = FindFirstObjectByType<WeaponAmmo>();
         targetSpawner = FindFirstObjectByType<TargetSpawner>();
         levelManager = FindFirstObjectByType<LevelManager>();
-        leaderboardManager = FindFirstObjectByType<LeaderboardManager>();
+        profileManager = FindFirstObjectByType<ProfileManager>();
 
         if (levelTransitionPanel != null)
             levelTransitionPanel.SetActive(false);
@@ -61,6 +63,10 @@ public class GameManager : MonoBehaviour
         {
             playerName = "Jugador";
         }
+
+        // El nombre escrito elige su perfil (o lo crea): créditos, mejoras y récord van a ese perfil
+        if (profileManager != null && !profileManager.SelectProfile(playerName))
+            profileManager.CreateProfile(playerName);
 
         BeginRun();
 
@@ -176,15 +182,19 @@ public class GameManager : MonoBehaviour
 
         int finalScore = scoreManager.GetScore();
 
-        leaderboardManager.AddScore(playerName, finalScore);
+        // Créditos, récord y partidas jugadas van al perfil (sustituye al ranking de scores.json)
+        LastCreditsEarned = profileManager != null ? profileManager.RecordGameResult(finalScore) : 0;
+        string profileName = profileManager != null && profileManager.Current != null ? profileManager.Current.name : playerName;
+        int totalCredits = profileManager != null ? profileManager.Credits : 0;
 
         finalScoreText.text = $"PUNTOS: {finalScore}";
 
         hud.SetActive(false);
         gameOverPanel.SetActive(true);
 
-        leaderboardUI.UpdateRanking();
-
-        Debug.Log($"Jugador: {playerName} | Puntuación: {finalScore}");
+        // Resumen para equilibrar precios y créditos (Fase 5, hito 6)
+        Debug.Log($"Fin de partida · {profileName} · puntos {finalScore} · créditos +{LastCreditsEarned} (total {totalCredits}) · " +
+                  $"precisión {scoreManager.RunAccuracy:P0} ({scoreManager.RunShotsHit}/{scoreManager.RunShotsFired}) · " +
+                  $"racha máxima {scoreManager.MaxStreak}");
     }
 }

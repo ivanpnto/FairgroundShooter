@@ -389,50 +389,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8031368316923002401, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
   m_PrefabInstance: {fileID: 302293286756406301}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &93568219
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 93568221}
-  - component: {fileID: 93568220}
-  m_Layer: 0
-  m_Name: LeaderboardManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &93568220
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 93568219}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 65582f026e88ad74789d710818af8939, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LeaderboardManager
---- !u!4 &93568221
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 93568219}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 422.99307, y: 0.00001, z: 1002.8564}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &156798418
 GameObject:
   m_ObjectHideFlags: 0
@@ -4073,11 +4029,11 @@ MonoBehaviour:
   gameOverPanel: {fileID: 1458234244}
   finalScoreText: {fileID: 1060709260}
   nameInputField: {fileID: 1837442751}
-  leaderboardUI: {fileID: 1458234248}
   levelTransitionPanel: {fileID: 1284662674}
   levelTransitionTitle: {fileID: 1638713629}
   levelTransitionScore: {fileID: 2016406981}
   levelTransitionNext: {fileID: 2138904522}
+  levelTransitionBonus: {fileID: 0}
   transitionSeconds: 3
 --- !u!4 &1197756584
 Transform:
@@ -4824,17 +4780,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 828510127246149292, guid: 4ec4fd5460cc63c978a2bbe6e841bb97, type: 3}
   m_PrefabInstance: {fileID: 5747865961146144566}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1458234248 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4634333520064474279, guid: 4ec4fd5460cc63c978a2bbe6e841bb97, type: 3}
-  m_PrefabInstance: {fileID: 5747865961146144566}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1458234244}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eb8e499cb5ade5941bf1e496ef24ef7b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LeaderboardUI
 --- !u!1 &1458951570 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4506857453536330986, guid: 81d8d6410ad487f4cb85d82c3e0d4b22, type: 3}
@@ -9176,7 +9121,6 @@ SceneRoots:
   - {fileID: 1197756584}
   - {fileID: 454783658}
   - {fileID: 21507338}
-  - {fileID: 93568221}
   - {fileID: 1881688306700913548}
   - {fileID: 393807351217623684}
   - {fileID: 4271640025326507285}
