@@ -277,6 +277,7 @@ public static class SeaLevelSetup
         level.pointsMultiplier = 1.5f;
         level.speedMultiplier = 1.15f;
         level.lifetimeMultiplier = 0.9f;
+        level.healthMultiplier = 1.5f;
         level.timeBonusChance = 0.04f;
         level.ammoBonusChance = 0.04f;
         level.timeBonusSeconds = 3f;

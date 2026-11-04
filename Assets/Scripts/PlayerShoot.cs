@@ -12,8 +12,11 @@ public readonly struct ShotResult
     public readonly Vector3 Normal;
     public readonly Collider Collider;   // null si no chocó con nada
     public readonly Target Target;       // null si no era un objetivo
+    public readonly float Damage;        // daño aplicado al objetivo (0 si no dio a ninguno)
+    public readonly bool KilledTarget;   // este disparo lo derribó (false si solo lo dañó)
 
-    public ShotResult(bool hitSomething, bool hitScenery, Vector3 point, Vector3 normal, Collider collider, Target target)
+    public ShotResult(bool hitSomething, bool hitScenery, Vector3 point, Vector3 normal, Collider collider, Target target,
+        float damage = 0f, bool killedTarget = false)
     {
         HitSomething = hitSomething;
         HitTarget = target != null;
@@ -22,6 +25,8 @@ public readonly struct ShotResult
         Normal = normal;
         Collider = collider;
         Target = target;
+        Damage = target != null ? damage : 0f;
+        KilledTarget = killedTarget;
     }
 }
 
@@ -186,10 +191,12 @@ public class PlayerShoot : MonoBehaviour
         {
             Target target = hit.collider.GetComponent<Target>();
 
-            // Un objetivo que ya está cayendo desactiva su collider, así que aquí nunca llega uno muerto
+            // Un objetivo que ya está cayendo desactiva su collider, así que aquí nunca llega uno muerto.
+            // El daño sale de las estadísticas efectivas del arma, no de WeaponData
+            float damage = WeaponStatsCalculator.Compute(weaponController.CurrentWeapon, null, null).Damage;
             if (target != null)
             {
-                target.Hit();
+                target.TakeDamage(damage);
             }
 
             // Después de Hit(): los puntos se suman antes que cualquier efecto. Que Hit()
@@ -198,7 +205,8 @@ public class PlayerShoot : MonoBehaviour
             OnHit?.Invoke(hit, target != null);
 
             bool scenery = (sceneryMask.value & (1 << hit.collider.gameObject.layer)) != 0;
-            ShotResolved?.Invoke(new ShotResult(true, scenery, hit.point, hit.normal, hit.collider, target));
+            ShotResolved?.Invoke(new ShotResult(true, scenery, hit.point, hit.normal, hit.collider, target,
+                damage, target != null && target.IsDead));
         }
         else
         {

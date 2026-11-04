@@ -143,7 +143,7 @@ public class TargetSpawner : MonoBehaviour
 
         // 4. Dificultad del nivel. Se aplica antes de su Start(), que es donde arranca el lifetime
         target.SetSpawner(this, chosen);
-        target.ApplyLevel(level.pointsMultiplier, level.lifetimeMultiplier);
+        target.ApplyLevel(level.pointsMultiplier, level.lifetimeMultiplier, level.healthMultiplier);
 
         TargetMovement movement = targetObject.GetComponent<TargetMovement>();
         if (movement != null)

@@ -201,6 +201,7 @@ public static class ForestLevelSetup
         level.pointsMultiplier = 1f;
         level.speedMultiplier = 1f;
         level.lifetimeMultiplier = 1f;
+        level.healthMultiplier = 1f;
         level.entries = new[]
         {
             new LevelConfig.SpawnEntry { label = "Zorro",         prefab = fox,    laneId = "Forest_Fox",    weight = 3f,   maxActive = 2 },

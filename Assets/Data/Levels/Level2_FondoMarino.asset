@@ -42,6 +42,7 @@ MonoBehaviour:
   pointsMultiplier: 1.5
   speedMultiplier: 1.15
   lifetimeMultiplier: 0.9
+  healthMultiplier: 1.5
   timeBonusChance: 0.04
   ammoBonusChance: 0.04
   timeBonusSeconds: 3

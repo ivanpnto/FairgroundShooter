@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public enum TargetBonus
 {
@@ -13,8 +14,11 @@ public class Target : MonoBehaviour
     [SerializeField] private int points = 10;
     [SerializeField] private float lifetime = 5f;
 
-    [Tooltip("Disparos necesarios para derribarlo (p. ej. la tortuga = 3)")]
-    [SerializeField, Min(1)] private int hitsToKill = 1;
+    // Antes hitsToKill (disparos para derribarlo). La vida se mide en impactos de daño 1, así que los
+    // prefabs se migran solos con el mismo número (la tortuga conserva 3)
+    [Tooltip("Vida base, en impactos de daño 1 (p. ej. la tortuga = 3). El nivel la multiplica")]
+    [FormerlySerializedAs("hitsToKill")]
+    [SerializeField, Min(1)] private int health = 1;
 
     [Tooltip("Segundos entre el impacto final y la destrucción, para animaciones de caída (0 = inmediato)")]
     [SerializeField, Min(0f)] private float destroyDelay = 0f;
@@ -33,7 +37,9 @@ public class Target : MonoBehaviour
     [SerializeField, Min(0f)] private float haloDepth = 0.07f;
 
     // Puntos de extensión para efectos (destello, caída, sonido) sin tocar esta lógica
-    public event System.Action<Target, int> Damaged;   // impactos restantes
+    // Impactos restantes ESTIMADOS con el daño del disparo que acaba de recibir (Ceil(vida / daño)).
+    // Se mantiene la firma de antes de la vida numérica para no cambiar a sus suscriptores (TargetFall)
+    public event System.Action<Target, int> Damaged;
     public event System.Action<Target> Killed;
     public event System.Action<Target> Expired;          // se acabó su tiempo sin que lo derribaran
 
@@ -45,18 +51,26 @@ public class Target : MonoBehaviour
     public TargetBonus Bonus { get; private set; } = TargetBonus.None;
     public bool CanHaveBonus => points > 0;   // un objetivo de penalización nunca es especial
     public bool IsDead { get; private set; }
+    public int MaxHealth { get; private set; }     // vida con el multiplicador del nivel ya aplicado
+    public float Health => currentHealth;
 
     private ScoreManager scoreManager;
     private TargetSpawner spawner;
     private int spawnEntryIndex = -1;   // Qué tipo de la lista del nivel es este objetivo
     private float pointsMultiplier = 1f;
     private float timeBonusSeconds;
-    private int hitsRemaining;
+    private float currentHealth;
+
+    // Por debajo de esto la vida cuenta como 0: el daño de las mejoras (1.25, 1.75…) suma en float
+    private const float HealthEpsilon = 0.001f;
 
     private void Awake()
     {
         scoreManager = FindFirstObjectByType<ScoreManager>();
-        hitsRemaining = hitsToKill;
+
+        // Sin ApplyLevel (p. ej. un objetivo colocado a mano en la escena) vale la vida del prefab
+        MaxHealth = health;
+        currentHealth = health;
     }
 
     // Antes era Destroy(gameObject, lifetime): desaparecía de golpe. Ahora, al acabarse el tiempo,
@@ -96,11 +110,18 @@ public class Target : MonoBehaviour
         spawnEntryIndex = entryIndex;
     }
 
-    // Lo llama el spawner justo después de instanciar (antes de Start)
-    public void ApplyLevel(float levelPointsMultiplier, float levelLifetimeMultiplier)
+    // Lo llama el spawner justo después de instanciar (antes de Start).
+    // Vida entera hacia arriba: con ×1.5 un objetivo de vida 1 pasa a 2 y la tortuga (3) a 5.
+    // Los de penalización no ganan vida: dañarlo sin derribarlo no restaría nada, y la penalización
+    // debe llegar en el primer impacto, como hasta ahora
+    public void ApplyLevel(float levelPointsMultiplier, float levelLifetimeMultiplier, float levelHealthMultiplier = 1f)
     {
         pointsMultiplier = levelPointsMultiplier;
         lifetime *= levelLifetimeMultiplier;
+
+        float healthMultiplier = CanHaveBonus ? levelHealthMultiplier : 1f;
+        MaxHealth = Mathf.Max(1, Mathf.CeilToInt(health * healthMultiplier));
+        currentHealth = MaxHealth;
     }
 
     public void ApplyBonus(TargetBonus bonus, Material outline, float seconds)
@@ -185,16 +206,19 @@ public class Target : MonoBehaviour
             gameObject.AddComponent<BonusGlow>().Init(haloRenderers.ToArray(), material.GetColor("_BaseColor"));
     }
 
-    public void Hit()
+    // Se conserva para no romper a quien lo llame: un impacto de daño 1, como antes
+    public void Hit() => TakeDamage(1f);
+
+    public void TakeDamage(float damage)
     {
-        if (IsDead || IsExpiring)
+        if (IsDead || IsExpiring || damage <= 0f)
             return;
 
-        hitsRemaining--;
+        currentHealth -= damage;
 
-        if (hitsRemaining > 0)
+        if (currentHealth > HealthEpsilon)
         {
-            Damaged?.Invoke(this, hitsRemaining);
+            Damaged?.Invoke(this, Mathf.CeilToInt(currentHealth / damage));
             return;
         }
 
