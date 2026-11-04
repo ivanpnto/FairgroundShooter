@@ -32,7 +32,7 @@ MonoBehaviour:
   cameraKickSide: 1.2
   cameraRecoverySpeed: 3
   scopeType: 1
-  scopeFov: 20
+  scopeFov: 15
   eyeRelief: 0.05
   aimRecoilFactor: 0.4
   shootSound: {fileID: 8300000, guid: 8647f2efe18d4ee1ab69aaeb0f1f0494, type: 3}
