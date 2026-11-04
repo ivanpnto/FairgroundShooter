@@ -34,12 +34,18 @@ public class WeaponEffects : MonoBehaviour
     [SerializeField] private float flashLightDuration = 0.03f;
 
     [Header("Impacto")]
-    [Tooltip("Chispas o polvo al dar en una superficie (Assets/Prefabs/VFX/ImpactSurface)")]
+    [Tooltip("Chispas al dar en una superficie que no es decorado (Assets/Prefabs/VFX/ImpactSurface)")]
     [SerializeField] private ParticleSystem impactSurfacePrefab;
+    [Tooltip("Polvo al dar en la capa Scenery (Assets/Prefabs/VFX/ImpactDust). Vacío = chispas también ahí")]
+    [SerializeField] private ParticleSystem impactDustPrefab;
     [Tooltip("Confeti al dar en un objetivo (Assets/Prefabs/VFX/ImpactTarget)")]
     [SerializeField] private ParticleSystem impactTargetPrefab;
     [Tooltip("Partículas por impacto en superficie con impactScale = 1")]
     [Min(1)] [SerializeField] private int surfaceBaseCount = 10;
+    // 12: con impactScale da 7 (MP5) – 24 (Barrett), alrededor de las 8–15 partículas pedidas
+    // para las armas medias. No se recorta a ese rango para que el calibre siga notándose
+    [Tooltip("Partículas por impacto de polvo con impactScale = 1")]
+    [Min(1)] [SerializeField] private int dustBaseCount = 12;
     [Tooltip("Partículas por impacto en objetivo con impactScale = 1")]
     [Min(1)] [SerializeField] private int targetBaseCount = 25;
     // Aquí y no en WeaponData: acertar suena igual con cualquier arma
@@ -57,6 +63,11 @@ public class WeaponEffects : MonoBehaviour
     // Una sola instancia de cada efecto de impacto para toda la partida (ver HandleHit)
     private ParticleSystem impactSurface;
     private ParticleSystem impactTarget;
+    private ParticleSystem impactDust;
+
+    // Índice de la capa Scenery, cacheado: NameToLayer busca por nombre (string) y no hace
+    // falta repetirlo en cada disparo. -1 si la capa no existe
+    private int sceneryLayer = -1;
 
     // Fogonazo y luz del arma actual. Cuelgan de su muzzle: se mueven con el arma (retroceso,
     // recarga) y se ocultan solos cuando PlayerScope desactiva WeaponHolder
@@ -105,6 +116,11 @@ public class WeaponEffects : MonoBehaviour
         // cámara, y con la mira se ocultarían junto al arma
         if (impactSurfacePrefab != null) impactSurface = Instantiate(impactSurfacePrefab);
         if (impactTargetPrefab != null) impactTarget = Instantiate(impactTargetPrefab);
+        if (impactDustPrefab != null) impactDust = Instantiate(impactDustPrefab);
+
+        sceneryLayer = LayerMask.NameToLayer("Scenery");
+        if (sceneryLayer < 0)
+            Debug.LogWarning("WeaponEffects: no existe la capa Scenery; los impactos en el decorado usarán chispas");
     }
 
     // Al no tener padre no se destruyen con Player: se limpian a mano
@@ -112,6 +128,7 @@ public class WeaponEffects : MonoBehaviour
     {
         if (impactSurface != null) Destroy(impactSurface.gameObject);
         if (impactTarget != null) Destroy(impactTarget.gameObject);
+        if (impactDust != null) Destroy(impactDust.gameObject);
     }
 
     // Creadas por código y no en la escena: son un detalle interno de este componente, y
@@ -132,14 +149,14 @@ public class WeaponEffects : MonoBehaviour
     {
         if (weaponAmmo != null) weaponAmmo.OnShot += HandleShot;
         if (weaponController != null) weaponController.OnWeaponEquipped += HandleWeaponEquipped;
-        if (playerShoot != null) playerShoot.OnHit += HandleHit;
+        if (playerShoot != null) playerShoot.ShotResolved += HandleHit;
     }
 
     private void OnDisable()
     {
         if (weaponAmmo != null) weaponAmmo.OnShot -= HandleShot;
         if (weaponController != null) weaponController.OnWeaponEquipped -= HandleWeaponEquipped;
-        if (playerShoot != null) playerShoot.OnHit -= HandleHit;
+        if (playerShoot != null) playerShoot.ShotResolved -= HandleHit;
     }
 
     private void HandleShot()
@@ -179,21 +196,44 @@ public class WeaponEffects : MonoBehaviour
     /// impacto solo cambia dónde nacen las nuevas; las del impacto anterior siguen donde
     /// estaban. Y Emit() añade partículas sin reiniciar el sistema, así que varios impactos
     /// seguidos conviven hasta que se acaba su vida (Max Particles pone el tope).
+    /// Escucha ShotResolved y no OnHit porque es el evento acordado para saber si un disparo
+    /// acertó; los disparos que no chocan con nada no tienen dónde mostrar un impacto.
     /// </summary>
-    private void HandleHit(RaycastHit hit, bool hitTarget)
+    private void HandleHit(ShotResult shot)
     {
+        if (!shot.HitSomething)
+            return;
+
         WeaponData weapon = weaponController != null ? weaponController.CurrentWeapon : null;
         float scale = weapon != null ? weapon.impactScale : 1f;
+        bool hitTarget = shot.HitTarget;
 
-        ParticleSystem system = hitTarget ? impactTarget : impactSurface;
-        int baseCount = hitTarget ? targetBaseCount : surfaceBaseCount;
+        ParticleSystem system;
+        int baseCount;
+        if (hitTarget)
+        {
+            system = impactTarget;
+            baseCount = targetBaseCount;
+        }
+        // El decorado (madera, cartón, suelo) levanta polvo; las chispas quedan para el resto
+        // (metal, etc.). Sin prefab de polvo se cae a las chispas, como antes de existir
+        else if (impactDust != null && shot.Collider.gameObject.layer == sceneryLayer)
+        {
+            system = impactDust;
+            baseCount = dustBaseCount;
+        }
+        else
+        {
+            system = impactSurface;
+            baseCount = surfaceBaseCount;
+        }
 
         if (system != null)
         {
             // Un centímetro fuera de la superficie para que las partículas no nazcan dentro;
             // el +Z del prefab (eje de su cono) queda alineado con la normal
-            system.transform.SetPositionAndRotation(hit.point + hit.normal * 0.01f,
-                Quaternion.LookRotation(hit.normal));
+            system.transform.SetPositionAndRotation(shot.Point + shot.Normal * 0.01f,
+                Quaternion.LookRotation(shot.Normal));
             system.Emit(Mathf.Max(1, Mathf.RoundToInt(baseCount * scale)));
         }
 
