@@ -31,8 +31,10 @@ MonoBehaviour:
   cameraKick: 7
   cameraKickSide: 1.2
   cameraRecoverySpeed: 3
-  hasScope: 1
+  scopeType: 1
   scopeFov: 20
+  eyeRelief: 0.05
+  aimRecoilFactor: 0.4
   shootSound: {fileID: 8300000, guid: 8647f2efe18d4ee1ab69aaeb0f1f0494, type: 3}
   magOutSound: {fileID: 8300000, guid: d326ebea5fe5d0782bc557f61fa35cd4, type: 3}
   magInSound: {fileID: 8300000, guid: d17562c4ca3d70714a2a785d4995e50d, type: 3}

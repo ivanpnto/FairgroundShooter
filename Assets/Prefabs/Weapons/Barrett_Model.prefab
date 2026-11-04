@@ -31,6 +31,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 569231830232915181}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &4671306925472360316
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3866804587296384430}
+  m_Layer: 0
+  m_Name: Sight
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3866804587296384430
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4671306925472360316}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0.365, y: 0.099, z: -0.007}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 569231830232915181}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1299653366076215240
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -113,6 +144,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1580511185713615653, guid: e255ad384286fce4f876c07a7e5e1d25, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1146128644256782622}
+    - targetCorrespondingSourceObject: {fileID: 1580511185713615653, guid: e255ad384286fce4f876c07a7e5e1d25, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3866804587296384430}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8861018534708125288, guid: e255ad384286fce4f876c07a7e5e1d25, type: 3}
       insertIndex: -1
@@ -143,6 +177,7 @@ MonoBehaviour:
   magazine: {fileID: 8755651853434069001}
   slide: {fileID: 0}
   muzzle: {fileID: 1146128644256782622}
+  sight: {fileID: 3866804587296384430}
 --- !u!4 &8755651853434069001 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7749315215039180737, guid: e255ad384286fce4f876c07a7e5e1d25, type: 3}

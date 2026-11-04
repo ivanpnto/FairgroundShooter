@@ -1,9 +1,12 @@
 using UnityEngine;
 
 /// <summary>
-/// Presentación visual del arma en primera persona: retroceso, corredera y recarga con cargador.
-/// NO contiene lógica de juego: solo LEE el estado de WeaponAmmo (patrón observador).
+/// Presentación visual del arma en primera persona: colocación (hold* y apuntado), retroceso,
+/// corredera y recarga con cargador. Es el ÚNICO script que escribe la pose del arma.
+/// NO contiene lógica de juego: solo LEE el estado de WeaponAmmo y PlayerScope (patrón observador).
 /// Va en el objeto vacío "WeaponHolder", hijo del objeto que rota PlayerAim.
+/// Dos niveles: el modelo (hijo) lleva la pose base, Lerp(hold, apuntado); WeaponHolder lleva
+/// encima la recarga y el retroceso, que así se suman igual con o sin apuntar.
 /// </summary>
 public class WeaponVisual : MonoBehaviour
 {
@@ -48,16 +51,28 @@ public class WeaponVisual : MonoBehaviour
     // Poses de reposo (las que dejes colocadas en el editor)
     private Vector3 restPosition;
     private Quaternion restRotation;
+    private Vector3 restScale;
     private Vector3 magazineRest;
     private Vector3 slideRest;
     private Renderer[] magazineRenderers;
 
     private float recoil; // 1 justo al disparar y decae hacia 0
 
+    // Arma equipada (las pone SetModel). weaponModel puede ser null si el prefab no lo tiene
+    private Transform modelRoot;
+    private WeaponModel weaponModel;
+    private WeaponData weaponData;
+
+    // Player (la cámara) es el padre de WeaponHolder: de ahí sale cuánto se está apuntando
+    private PlayerScope playerScope;
+
     private void Awake()
     {
         restPosition = transform.localPosition;
         restRotation = transform.localRotation;
+        restScale = transform.localScale;
+
+        playerScope = GetComponentInParent<PlayerScope>();
 
         CacheParts();
     }
@@ -67,8 +82,15 @@ public class WeaponVisual : MonoBehaviour
     /// recarga y el retroceso. Los campos serializados se quedan como valores por defecto si
     /// no se llama nunca. Las curvas no se copian: son el ritmo de la animación, común a todas.
     /// </summary>
-    public void SetModel(WeaponModel model, WeaponData data)
+    public void SetModel(Transform root, WeaponModel model, WeaponData data)
     {
+        modelRoot = root;
+        weaponModel = model;
+        weaponData = data;
+        // Ya, y no en el siguiente Update: CacheParts lee las poses de reposo de las piezas
+        // del modelo, y el modelo recién instanciado aún no está en su sitio
+        ApplyModelPose(0f);
+
         magazine = model != null ? model.Magazine : null;
         slide = model != null ? model.Slide : null;
         CacheParts();
@@ -122,11 +144,23 @@ public class WeaponVisual : MonoBehaviour
 
     private void Update()
     {
+        float zoom = playerScope != null ? playerScope.ZoomAmount : 0f;
+
+        // ---------- 0. Pose base del modelo ----------
+        // Cada frame, también sin WeaponAmmo: así los hold* (y el Sight) se pueden calibrar
+        // en el Inspector durante el Play y se ve el resultado al momento
+        ApplyModelPose(zoom);
+
         if (weaponAmmo == null)
             return;
 
         // Decaimiento exponencial: independiente de los FPS (a diferencia de Lerp con deltaTime)
         recoil *= Mathf.Exp(-recoverySpeed * Time.deltaTime);
+
+        // Al apuntar queda solo una parte del retroceso (aimRecoilFactor); se escala el
+        // resultado y no el valor de recoil, para que al dejar de apuntar no "salte"
+        float aimRecoil = weaponData != null ? Mathf.Lerp(1f, weaponData.aimRecoilFactor, zoom) : 1f;
+        float r = recoil * aimRecoil;
 
         float progress = weaponAmmo.ReloadProgress; // 0..1, sincronizado con reloadTime
         bool reloading = weaponAmmo.IsReloading;
@@ -136,11 +170,11 @@ public class WeaponVisual : MonoBehaviour
 
         transform.localPosition = restPosition
                                 + reloadOffset * w
-                                + Vector3.back * (recoilKick * recoil);
+                                + Vector3.back * (recoilKick * r);
 
         transform.localRotation = restRotation
                                 * Quaternion.Euler(reloadRotation * w)
-                                * Quaternion.Euler(-recoilAngle * recoil, 0f, 0f);
+                                * Quaternion.Euler(-recoilAngle * r, 0f, 0f);
 
         // ---------- 2. Cargador ----------
         if (magazine != null)
@@ -164,6 +198,68 @@ public class WeaponVisual : MonoBehaviour
 
             slide.localPosition = slideRest + HolderToPartSpace(slide, Vector3.back * (slideTravel * s));
         }
+    }
+
+    /// <summary>
+    /// Coloca el modelo respecto a WeaponHolder: la pose de hold* mezclada con la de apuntado
+    /// según zoom (posición con Lerp, rotación con Slerp). Sin Sight no hay pose de apuntado
+    /// y el arma se queda en hold*, sin error.
+    /// </summary>
+    private void ApplyModelPose(float zoom)
+    {
+        if (modelRoot == null || weaponData == null)
+            return;
+
+        Vector3 position = weaponData.holdPosition;
+        Quaternion rotation = Quaternion.Euler(weaponData.holdRotation);
+
+        Vector3 aimPosition;
+        Quaternion aimRotation;
+        if (zoom > 0f && TryGetAimPose(out aimPosition, out aimRotation))
+        {
+            position = Vector3.Lerp(position, aimPosition, zoom);
+            rotation = Quaternion.Slerp(rotation, aimRotation, zoom);
+        }
+
+        modelRoot.localPosition = position;
+        modelRoot.localRotation = rotation;
+        modelRoot.localScale = weaponData.holdScale;
+    }
+
+    /// <summary>
+    /// Pose del modelo (en el espacio de WeaponHolder) que deja el Sight en (0, 0, eyeRelief)
+    /// del espacio de la cámara, con su +Z hacia delante y su +Y hacia arriba.
+    /// Se calcula con la pose de REPOSO de WeaponHolder, no con la animada: así el retroceso
+    /// y la recarga se suman encima en lugar de compensarse.
+    /// Supone escalas uniformes (holdScale y la del WeaponHolder): con una escala no uniforme
+    /// la rotación del Sight dejaría de ser una rotación pura.
+    /// </summary>
+    private bool TryGetAimPose(out Vector3 aimPosition, out Quaternion aimRotation)
+    {
+        aimPosition = Vector3.zero;
+        aimRotation = Quaternion.identity;
+
+        Transform sight = weaponModel != null ? weaponModel.Sight : null;
+        if (sight == null)
+            return false;
+
+        // 1. Sight en el espacio del modelo (sin la escala de la raíz: InverseTransformPoint ya
+        //    la quita). Se lee cada frame para poder mover el Sight en Play y verlo al momento
+        Vector3 sightPos = modelRoot.InverseTransformPoint(sight.position);
+        Quaternion sightRot = Quaternion.Inverse(modelRoot.rotation) * sight.rotation;
+
+        // 2. Objetivo del Sight pasado del espacio de la cámara al de WeaponHolder (su padre
+        //    es la cámara): deshacer su posición, su rotación y su escala de reposo
+        Quaternion holderRotInv = Quaternion.Inverse(restRotation);
+        Vector3 eyeInHolder = holderRotInv * (new Vector3(0f, 0f, weaponData.eyeRelief) - restPosition);
+        eyeInHolder = new Vector3(eyeInHolder.x / restScale.x, eyeInHolder.y / restScale.y, eyeInHolder.z / restScale.z);
+
+        // 3. Rotación: holder · modelo · sight = identidad (en la cámara) → modelo = holder⁻¹ · sight⁻¹
+        aimRotation = holderRotInv * Quaternion.Inverse(sightRot);
+
+        // 4. Posición: modelo + rotación · (escala ⊙ sight) = objetivo → se despeja la del modelo
+        aimPosition = eyeInHolder - aimRotation * Vector3.Scale(weaponData.holdScale, sightPos);
+        return true;
     }
 
     /// <summary>

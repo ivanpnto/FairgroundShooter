@@ -1,4 +1,11 @@
 using UnityEngine;
+using UnityEngine.Serialization;
+
+/// <summary>
+/// IronSights = se apunta por el alza y el guion del modelo; el arma sigue a la vista.
+/// Telescopic = visor: al final del zoom se oculta el arma y se ve el overlay de la retícula.
+/// </summary>
+public enum ScopeType { IronSights, Telescopic }
 
 /// <summary>
 /// Datos que definen un arma. No tiene lógica: solo almacena valores.
@@ -62,10 +69,20 @@ public class WeaponData : ScriptableObject
     [Tooltip("Velocidad con la que la vista vuelve a su sitio (mayor = vuelve antes)")]
     public float cameraRecoverySpeed = 8f;
 
+    // Para apuntar hace falta además un Sight en el modelo (WeaponModel.Sight): sin él no se apunta.
+    // FormerlySerializedAs: el antiguo bool hasScope se guardaba como 0/1, que coincide con
+    // IronSights/Telescopic, así que los assets antiguos se migran solos al cargar
     [Header("Mira")]
-    public bool hasScope = false;
+    [FormerlySerializedAs("hasScope")]
+    public ScopeType scopeType = ScopeType.IronSights;
     [Tooltip("Campo de visión al apuntar. La cámara normal tiene 60")]
     [Range(5f, 60f)] public float scopeFov = 20f;
+    [Tooltip("Distancia del ojo (la cámara) al punto Sight del modelo al apuntar (metros)")]
+    [Min(0f)] public float eyeRelief = 0.15f;
+    // Al apuntar el arma está pegada a la cara y alineada con el centro: el retroceso entero
+    // sacaría el guion de la vista en cada disparo. No afecta al retroceso de cámara
+    [Tooltip("Parte del retroceso del modelo que queda al apuntar (1 = el mismo, 0 = nada)")]
+    [Range(0f, 1f)] public float aimRecoilFactor = 0.4f;
 
     // Todos opcionales: un clip sin asignar simplemente no suena (no da error)
     [Header("Sonido")]

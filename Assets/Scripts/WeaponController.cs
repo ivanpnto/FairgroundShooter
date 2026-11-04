@@ -43,18 +43,6 @@ public class WeaponController : MonoBehaviour
         Equip(startingWeapon);
     }
 
-#if UNITY_EDITOR
-    // Solo en el editor: reaplicar la colocación cada frame permite ajustar
-    // holdPosition/holdRotation/holdScale en el Inspector durante el Play y ver el
-    // resultado al momento. Lo que cambies ahí se guarda en el asset, que es justo
-    // lo que se quiere al calibrar cada arma.
-    private void Update()
-    {
-        if (CurrentWeapon != null && currentModel != null)
-            ApplyHoldTransform(CurrentWeapon);
-    }
-#endif
-
     public void Equip(WeaponData data)
     {
         if (data == null || data.modelPrefab == null)
@@ -67,8 +55,8 @@ public class WeaponController : MonoBehaviour
             Destroy(currentModel);
 
         CurrentWeapon = data;
+        // La pose (hold* y apuntado) la escribe WeaponVisual en SetModel y en cada frame
         currentModel = Instantiate(data.modelPrefab, weaponHolder);
-        ApplyHoldTransform(data);
 
         weaponAmmo.Configure(data.magazineSize, data.reloadTime);
 
@@ -79,16 +67,9 @@ public class WeaponController : MonoBehaviour
         if (model == null)
             Debug.LogWarning($"WeaponController: '{data.modelPrefab.name}' no tiene componente WeaponModel", this);
 
-        weaponVisual.SetModel(model, data);
+        weaponVisual.SetModel(currentModel.transform, model, data);
 
         // Al final, cuando munición y visual ya están configurados para el arma nueva
         OnWeaponEquipped?.Invoke(data);
-    }
-
-    private void ApplyHoldTransform(WeaponData data)
-    {
-        currentModel.transform.localPosition = data.holdPosition;
-        currentModel.transform.localRotation = Quaternion.Euler(data.holdRotation);
-        currentModel.transform.localScale = data.holdScale;
     }
 }
