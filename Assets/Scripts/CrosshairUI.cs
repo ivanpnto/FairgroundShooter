@@ -110,7 +110,10 @@ public class CrosshairUI : MonoBehaviour
         // Ocultar con alfa y no con SetActive: así Update sigue corriendo y la apertura
         // vuelve al reposo aunque no se vea (p. ej. al quitar la mira tras un disparo)
         bool playing = gameManager != null && gameManager.CurrentState == GameManager.GameState.Playing;
-        bool scoped = playerScope != null && playerScope.IsOverlayVisible;
+        // Con ZoomAmount y no con IsOverlayVisible: con miras abiertas no hay overlay, pero el
+        // guion ya marca el centro y la cruceta lo taparía. A mitad del zoom, cuando el arma
+        // ya está casi en la cara
+        bool scoped = playerScope != null && playerScope.ZoomAmount > 0.5f;
         canvasGroup.alpha = playing && !scoped ? 1f : 0f;
 
         // Exponencial con Exp(-k·dt), como PlayerScope: el mismo ritmo a cualquier FPS
