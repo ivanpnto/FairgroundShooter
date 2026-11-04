@@ -171,5 +171,5 @@ Packages/packages-lock.json linguist-generated
 LightingData.asset     binary
 
 # Código de terceros / plantilla de Unity: fuera de las estadísticas
-Assets/TextMesh\ Pro/**   linguist-vendored
+Assets/TextMesh[[:space:]]Pro/**   linguist-vendored
 Assets/TutorialInfo/**    linguist-vendored
