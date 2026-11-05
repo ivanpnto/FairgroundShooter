@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2149dd0dd9fd4704487a38e66c66fb12, type: 3}
+  m_Name: Level3_Cielo
+  m_EditorClassIdentifier: Assembly-CSharp::LevelConfig
+  levelName: Cielo
+  environmentId: Sky
+  music: {fileID: 0}
+  duration: 60
+  entries:
+  - label: Aguila
+    prefab: {fileID: 1889973634243407635, guid: fc916390d4dabb74bbeb0a435713a8f4, type: 3}
+    laneId: Sky_Eagle
+    weight: 2.2
+    maxActive: 1
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
+  - label: Bandada
+    prefab: {fileID: 3303833365812237001, guid: 1828b3777f2b97a4ca478d86a1229364, type: 3}
+    laneId: Sky_Flock
+    weight: 1.4
+    maxActive: 4
+    groupSize: 4
+    groupSpacing: {x: 0.75, y: 0.28, z: 0}
+  - label: Globo rojo
+    prefab: {fileID: 4849652309074980200, guid: 7889848bdb6e12a479408d5f7c1c206d, type: 3}
+    laneId: Sky_Balloon
+    weight: 1.1
+    maxActive: 1
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
+  - label: Globo amarillo
+    prefab: {fileID: 3878368554060232801, guid: 4b9fe3559c458bc489aef54e823c5664, type: 3}
+    laneId: Sky_Balloon
+    weight: 1.1
+    maxActive: 1
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
+  - label: Globo azul
+    prefab: {fileID: 5799935898621810921, guid: 76c47921e8caecd489446635b5afacb5, type: 3}
+    laneId: Sky_Balloon
+    weight: 1.1
+    maxActive: 1
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
+  - label: Avioneta
+    prefab: {fileID: 4215011589998775753, guid: 489c4c567c2e6024ba9ad1b50502ead9, type: 3}
+    laneId: Sky_Plane
+    weight: 1
+    maxActive: 1
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
+  spawnInterval: 1
+  endSpawnIntervalFactor: 0.55
+  maxActiveTargets: 6
+  pointsMultiplier: 2
+  speedMultiplier: 1.2
+  lifetimeMultiplier: 0.85
+  healthMultiplier: 1.75
+  timeBonusChance: 0.04
+  ammoBonusChance: 0.04
+  timeBonusSeconds: 3

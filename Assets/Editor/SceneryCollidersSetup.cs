@@ -27,12 +27,15 @@ public static class SceneryCollidersSetup
         "Assets/Prefabs/Enviroments/Booth.prefab",
         "Assets/Prefabs/Enviroments/Env_Forest.prefab",
         "Assets/Prefabs/Enviroments/Env_Sea.prefab",
+        "Assets/Prefabs/Enviroments/Env_Sky.prefab",
     };
 
     // Piezas que NO llevan collider (se compara si el nombre contiene el texto)
     private static readonly string[] Excluded =
     {
         "Bulbs", "Bunting", "Fireflies", "Kelp", "Bubble", "Rays", "Halo",
+        "Sky_Balloon",   // globos aerostáticos del decorado: se mueven (y están muy al fondo)
+        "Curtain",       // el telón se abre y se cierra con el Animator: su collider no le seguiría
     };
 
     [MenuItem("Tools/Fairground/Setup Scenery Colliders")]
@@ -49,6 +52,9 @@ public static class SceneryCollidersSetup
 
         foreach (string path in Prefabs)
         {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null)
+                continue;   // entorno aún no creado
+
             GameObject root = PrefabUtility.LoadPrefabContents(path);
             int added = 0;
 

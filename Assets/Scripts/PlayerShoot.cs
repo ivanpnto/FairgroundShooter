@@ -94,8 +94,8 @@ public class PlayerShoot : MonoBehaviour
     [SerializeField] private LayerMask sceneryMask = 1 << 8;   // capa Scenery
 
     // ---- Mejoras caras (I6.2). Los valores de cada mejora salen de WeaponStats; aquí solo la forma
-    [Tooltip("Separación angular total entre los rayos del disparo doble (grados). 1,2° ≈ 17 cm a cada lado a 8 m")]
-    [SerializeField, Min(0f)] private float multiRaySpread = 1.2f;
+    [Tooltip("Separación angular total entre los rayos del disparo doble (grados). 3,5° ≈ 25 cm a cada lado a 8 m: cubre más área en vez de duplicar el daño casi siempre")]
+    [SerializeField, Min(0f)] private float multiRaySpread = 3.5f;
 
     // Un evento por impacto: con penetración y disparo doble hay varios por disparo. Para efectos
     // (chispas, confeti, polvo) en cada punto. ShotResolved sigue siendo uno por disparo

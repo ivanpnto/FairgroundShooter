@@ -99,7 +99,8 @@ public class TargetSpawner : MonoBehaviour
         {
             LevelConfig.SpawnEntry entry = level.entries[i];
 
-            if (entry.prefab == null || entry.weight <= 0f || activePerEntry[i] >= entry.maxActive)
+            // Una bandada solo sale si caben TODOS sus miembros (si no, saldría a medias)
+            if (entry.prefab == null || entry.weight <= 0f || activePerEntry[i] + Mathf.Max(1, entry.groupSize) > entry.maxActive)
                 continue;
 
             if (!lanes.TryGetValue(entry.laneId, out SpawnLane lane) || !lane.HasPoints)
@@ -127,11 +128,26 @@ public class TargetSpawner : MonoBehaviour
             }
         }
 
-        // 3. Instanciar en un punto de su carril
+        // 3. Instanciar en un punto de su carril (varios si es una bandada)
         LevelConfig.SpawnEntry selected = level.entries[chosen];
         Transform spawnPoint = lanes[selected.laneId].GetRandomPoint();
 
-        GameObject targetObject = Instantiate(selected.prefab, spawnPoint.position, spawnPoint.rotation);
+        int group = Mathf.Max(1, selected.groupSize);
+        float outward = spawnPoint.position.x >= 0f ? 1f : -1f;   // los seguidores entran detrás del líder
+
+        for (int m = 0; m < group; m++)
+        {
+            // Formación en V: el líder en el punto; los demás, más hacia la pared y alternando arriba/abajo
+            int rank = (m + 1) / 2;
+            float side = m % 2 == 1 ? 1f : -1f;
+            Vector3 offset = new Vector3(outward * selected.groupSpacing.x * m, side * selected.groupSpacing.y * rank, selected.groupSpacing.z * rank);
+            SpawnOne(selected, chosen, spawnPoint.position + offset, spawnPoint.rotation);
+        }
+    }
+
+    private void SpawnOne(LevelConfig.SpawnEntry selected, int chosen, Vector3 position, Quaternion rotation)
+    {
+        GameObject targetObject = Instantiate(selected.prefab, position, rotation);
         Target target = targetObject.GetComponent<Target>();
 
         if (target == null)

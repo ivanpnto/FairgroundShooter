@@ -12,7 +12,7 @@ using UnityEngine;
 // centro del ojo): por eso se separan en Blender con el origen ahí antes de exportar.
 public class IdleOscillator : MonoBehaviour
 {
-    public enum Channel { Rotation, Scale }
+    public enum Channel { Rotation, Scale, Position }
     public enum Wave
     {
         Sine,    // vaivén continuo (ala, tentáculos)
@@ -26,7 +26,8 @@ public class IdleOscillator : MonoBehaviour
              "Scale: ejes que se escalan (p. ej. (0,1,0) para cerrar un ojo en vertical)")]
     [SerializeField] private Vector3 axis = Vector3.forward;
 
-    [Tooltip("Rotation: grados a cada lado. Scale: cuánto se reduce en el pulso (0,9 = se queda al 10 %)")]
+    [Tooltip("Rotation: grados a cada lado. Scale: cuánto se reduce en el pulso (0,9 = se queda al 10 %). " +
+             "Position: metros a cada lado a lo largo de axis (p. ej. el vaivén vertical de un globo)")]
     [SerializeField] private float amplitude = 25f;
 
     [Header("Sine")]
@@ -47,6 +48,7 @@ public class IdleOscillator : MonoBehaviour
     private Transform[] parts;            // esta pieza + las enlazadas
     private Quaternion[] baseRotations;
     private Vector3[] baseScales;
+    private Vector3[] basePositions;
     private float phase;      // en radianes
     private float nextBlink;
     private float blinkTime = -1f;
@@ -59,11 +61,13 @@ public class IdleOscillator : MonoBehaviour
 
         baseRotations = new Quaternion[parts.Length];
         baseScales = new Vector3[parts.Length];
+        basePositions = new Vector3[parts.Length];
         for (int i = 0; i < parts.Length; i++)
         {
             if (parts[i] == null) continue;
             baseRotations[i] = parts[i].localRotation;
             baseScales[i] = parts[i].localScale;
+            basePositions[i] = parts[i].localPosition;
         }
     }
 
@@ -83,6 +87,7 @@ public class IdleOscillator : MonoBehaviour
             if (parts[i] == null) continue;
             parts[i].localRotation = baseRotations[i];
             parts[i].localScale = baseScales[i];
+            parts[i].localPosition = basePositions[i];
         }
     }
 
@@ -98,6 +103,10 @@ public class IdleOscillator : MonoBehaviour
             if (channel == Channel.Rotation)
             {
                 parts[i].localRotation = baseRotations[i] * Quaternion.AngleAxis(amplitude * v, axis);
+            }
+            else if (channel == Channel.Position)
+            {
+                parts[i].localPosition = basePositions[i] + axis.normalized * (amplitude * v);
             }
             else
             {

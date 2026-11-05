@@ -14,6 +14,12 @@ public class LevelConfig : ScriptableObject
         public string laneId;
         [Min(0f)] public float weight = 1f;   // Probabilidad relativa frente a los demás tipos
         [Min(1)] public int maxActive = 1;    // Máximo de este tipo a la vez
+
+        [Tooltip("Cuántos aparecen a la vez en formación (bandada). 1 = uno suelto. Cada miembro es un objetivo " +
+                 "independiente; maxActive cuenta miembros, así que debe ser al menos groupSize")]
+        [Min(1)] public int groupSize = 1;
+        [Tooltip("Separación entre miembros: X hacia fuera de la caseta (entran detrás del líder), Y alternando arriba/abajo (forma de V)")]
+        public Vector3 groupSpacing = new Vector3(0.9f, 0.3f, 0f);
     }
 
     [Header("Presentación")]
