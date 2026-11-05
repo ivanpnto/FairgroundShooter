@@ -12,7 +12,7 @@ public readonly struct WeaponStats
     public readonly float ReloadTime;
     public readonly float Range;
 
-    // Fase 6 o posterior. Existen para fijar el contrato, pero con valores neutros
+    // Mejoras caras (I6.2). Sin ellas: 1 objetivo, 1 rayo, sin explosión
     public readonly int Penetration;        // objetivos que atraviesa un disparo (1 = el primero)
     public readonly int Rays;               // rayos por disparo (1 = uno)
     public readonly float ExplosionRadius;  // 0 = sin explosión
@@ -56,12 +56,20 @@ public static class WeaponStatsCalculator
         int magazine = Mathf.Max(1, Mathf.CeilToInt(data.magazineSize * (1f + ammoBonus) - 0.0001f));
         float interval = data.TimeBetweenShots * Mathf.Max(MinFireIntervalFactor, 1f - fireRateBonus);
 
+        // Mejoras caras: suman unidades, no porcentajes. Se redondean porque no hay "medio rayo"
+        int penetration = 1 + Mathf.RoundToInt(Bonus(UpgradeEffect.Penetration, profile, upgrades));
+        int rays = 1 + Mathf.RoundToInt(Bonus(UpgradeEffect.ExtraRays, profile, upgrades));
+        float explosionRadius = Bonus(UpgradeEffect.Explosive, profile, upgrades);
+
         return new WeaponStats(
             data.baseDamage * (1f + damageBonus),
             magazine,
             interval,
             data.reloadTime,
-            data.maxDistance);
+            data.maxDistance,
+            penetration,
+            rays,
+            explosionRadius);
     }
 
     // Multiplicador de puntos de la mejora ScoreMultiplier: 1 + v·n (1 sin mejoras)

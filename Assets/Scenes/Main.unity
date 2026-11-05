@@ -982,6 +982,7 @@ MonoBehaviour:
   sceneryMask:
     serializedVersion: 2
     m_Bits: 256
+  multiRaySpread: 1.2
 --- !u!114 &354793039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4524,6 +4525,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e7c5df876e1d5941096df145536dae78, type: 2}
   - {fileID: 11400000, guid: 239eda5857a247754b96d3fb0e9ef7d9, type: 2}
   - {fileID: 11400000, guid: b20435d6789d1b173886207d47a3ebd2, type: 2}
+  - {fileID: 11400000, guid: dc3fddd8045aa2e47942efa3ee710087, type: 2}
+  - {fileID: 11400000, guid: eeeb9b707f483a04685c0ea58955fd03, type: 2}
+  - {fileID: 11400000, guid: 682d11bbf3931284782b6b66046b8e4c, type: 2}
 --- !u!1 &1200148949
 GameObject:
   m_ObjectHideFlags: 0
@@ -8748,9 +8752,33 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Target
       value: 
       objectReference: {fileID: 354793037}
+    - target: {fileID: 5374780517271464531, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4279179865
+      objectReference: {fileID: 0}
+    - target: {fileID: 5374780517271464531, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 6580043203196673131, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4291422453
+      objectReference: {fileID: 0}
+    - target: {fileID: 6580043203196673131, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 6678152095847050371, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
       propertyPath: m_Name
       value: StartPanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 7839251554909366089, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4283416045
+      objectReference: {fileID: 0}
+    - target: {fileID: 7839251554909366089, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
       objectReference: {fileID: 0}
     - target: {fileID: 8031368316923002401, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
       propertyPath: m_Pivot.x
@@ -8831,6 +8859,22 @@ PrefabInstance:
     - target: {fileID: 8031368316923002401, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8180979878058439993, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4279179865
+      objectReference: {fileID: 0}
+    - target: {fileID: 8180979878058439993, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 9074099613687963012, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4279179865
+      objectReference: {fileID: 0}
+    - target: {fileID: 9074099613687963012, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

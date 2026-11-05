@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56da18c25a1d38857bc3ce995ab5a491, type: 3}
+  m_Name: DoubleShot
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeData
+  id: doubleshot
+  displayName: Disparo doble
+  description: Cada disparo lanza dos balas ligeramente separadas, por el precio
+    de una.
+  icon: {fileID: 0}
+  effect: 5
+  maxLevel: 1
+  costPerLevel: b80b0000
+  valuePerLevel: 1

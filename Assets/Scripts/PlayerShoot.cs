@@ -3,20 +3,31 @@ using UnityEngine.InputSystem;
 
 // Resultado de UN disparo, ya resuelto. Lo consumen la racha (Fase 5), el hitmarker y los
 // efectos de impacto. Es un struct de solo lectura: se copia al pasarlo y nadie puede alterarlo.
+//
+// Desde I6.2 un disparo puede tener varios rayos (disparo doble) y cada rayo varios objetivos
+// (penetración). ShotResult sigue siendo UNO por disparo: es lo que mantiene la regla de la racha
+// ("un disparo = un acierto o un fallo"). Los campos de siempre describen el impacto PRINCIPAL
+// (el primer objetivo alcanzado o, si no hubo ninguno, donde paró el primer rayo); los nuevos
+// resumen todo el disparo. Cada impacto suelto se publica aparte en PlayerShoot.ImpactResolved.
 public readonly struct ShotResult
 {
-    public readonly bool HitSomething;   // el rayo chocó con algún collider (dentro del alcance)
-    public readonly bool HitTarget;      // ...y era un objetivo vivo. false = FALLO (aunque dé al decorado)
-    public readonly bool HitScenery;     // chocó con la capa Scenery (caseta, decorado, suelo)
-    public readonly Vector3 Point;       // punto de impacto (o el final del alcance si no chocó)
+    public readonly bool HitSomething;   // algún rayo chocó con algún collider (dentro del alcance)
+    public readonly bool HitTarget;      // algún rayo dio DIRECTAMENTE a un objetivo vivo. false = FALLO
+    public readonly bool HitScenery;     // el impacto principal es de la capa Scenery
+    public readonly Vector3 Point;       // punto del impacto principal (o el final del alcance)
     public readonly Vector3 Normal;
-    public readonly Collider Collider;   // null si no chocó con nada
-    public readonly Target Target;       // null si no era un objetivo
-    public readonly float Damage;        // daño aplicado al objetivo (0 si no dio a ninguno)
-    public readonly bool KilledTarget;   // este disparo lo derribó (false si solo lo dañó)
+    public readonly Collider Collider;   // collider del impacto principal (null si no chocó)
+    public readonly Target Target;       // primer objetivo alcanzado (null si ninguno)
+    public readonly float Damage;        // daño directo total aplicado a objetivos en este disparo
+    public readonly bool KilledTarget;   // algún impacto directo derribó a su objetivo
+
+    // I6.2
+    public readonly int TargetsHit;      // objetivos distintos alcanzados de forma directa (no por explosión)
+    public readonly bool HitPenalty;     // alguno de ellos era de penalización (rompe la racha)
+    public readonly int ExplosionKills;  // objetivos derribados solo por la onda expansiva
 
     public ShotResult(bool hitSomething, bool hitScenery, Vector3 point, Vector3 normal, Collider collider, Target target,
-        float damage = 0f, bool killedTarget = false)
+        float damage = 0f, bool killedTarget = false, int targetsHit = -1, bool hitPenalty = false, int explosionKills = 0)
     {
         HitSomething = hitSomething;
         HitTarget = target != null;
@@ -27,6 +38,29 @@ public readonly struct ShotResult
         Target = target;
         Damage = target != null ? damage : 0f;
         KilledTarget = killedTarget;
+        // -1 = constructor antiguo (un solo objetivo): se deduce del objetivo principal
+        TargetsHit = targetsHit >= 0 ? targetsHit : (target != null ? 1 : 0);
+        HitPenalty = hitPenalty || (target != null && target.IsPenalty);
+        ExplosionKills = explosionKills;
+    }
+
+    // Acierto para la racha y la precisión: dio a algún objetivo normal y a ninguno de penalización
+    public bool IsCleanHit => HitTarget && !HitPenalty;
+}
+
+// Un impacto concreto de un rayo (objetivo o superficie donde se detuvo). Para efectos por impacto
+public readonly struct ShotImpact
+{
+    public readonly Vector3 Point;
+    public readonly Vector3 Normal;
+    public readonly Collider Collider;
+    public readonly Target Target;       // null si es una superficie
+    public readonly bool HitScenery;
+    public readonly bool Killed;         // el impacto derribó al objetivo
+
+    public ShotImpact(Vector3 point, Vector3 normal, Collider collider, Target target, bool hitScenery, bool killed)
+    {
+        Point = point; Normal = normal; Collider = collider; Target = target; HitScenery = hitScenery; Killed = killed;
     }
 }
 
@@ -58,6 +92,25 @@ public class PlayerShoot : MonoBehaviour
 
     [Tooltip("Capas que cuentan como decorado (caseta, escenario, suelo). Solo sirve para clasificar el impacto")]
     [SerializeField] private LayerMask sceneryMask = 1 << 8;   // capa Scenery
+
+    // ---- Mejoras caras (I6.2). Los valores de cada mejora salen de WeaponStats; aquí solo la forma
+    [Tooltip("Separación angular total entre los rayos del disparo doble (grados). 1,2° ≈ 17 cm a cada lado a 8 m")]
+    [SerializeField, Min(0f)] private float multiRaySpread = 1.2f;
+
+    // Un evento por impacto: con penetración y disparo doble hay varios por disparo. Para efectos
+    // (chispas, confeti, polvo) en cada punto. ShotResolved sigue siendo uno por disparo
+    public event System.Action<ShotImpact> ImpactResolved;
+    // Un evento por rayo (origen, final): para trazas del disparo doble (J6.2)
+    public event System.Action<Vector3, Vector3> RayTraced;
+    // Una onda expansiva (centro, radio): para el efecto de explosión (J6.2)
+    public event System.Action<Vector3, float> Exploded;
+
+    // Listas reutilizadas entre disparos: sin basura para el recolector en cada clic
+    private readonly System.Collections.Generic.List<Target> shotTargets = new System.Collections.Generic.List<Target>();
+    private readonly System.Collections.Generic.List<Target> rayTargets = new System.Collections.Generic.List<Target>();
+    private readonly System.Collections.Generic.List<Target> blastTargets = new System.Collections.Generic.List<Target>();
+    private RaycastHit[] rayHits = new RaycastHit[16];
+    private readonly Collider[] blastHits = new Collider[24];
 
     private void Awake()
     {
@@ -181,40 +234,167 @@ public class PlayerShoot : MonoBehaviour
     }
 #endif
 
+    // Pipeline del disparo (I6.2), con las estadísticas efectivas del arma:
+    //   1. Rays rayos (1 normal, 2 con disparo doble), repartidos en horizontal alrededor del centro.
+    //   2. Cada rayo recorre sus impactos ORDENADOS por distancia: daña objetivos vivos hasta
+    //      Penetration objetivos y se detiene en el primer decorado (la bala no atraviesa paredes).
+    //   3. Con ExplosionRadius > 0, cada impacto directo produce una onda expansiva.
+    //   4. Al final, UN ShotResolved con el resumen (racha, hitmarker) y un ImpactResolved por impacto.
+    // Sin mejoras (Rays 1, Penetration 1, radio 0) el resultado es idéntico al raycast de antes.
     private void Shoot()
     {
-        Ray ray = playerCamera.ViewportPointToRay(
-            new Vector3(0.5f, 0.5f, 0f)
-        );
-
         WeaponStats stats = weaponController.CurrentStats;
         float range = stats.Range;
+        int rays = Mathf.Max(1, stats.Rays);
+        int penetration = Mathf.Max(1, stats.Penetration);
 
-        if (Physics.Raycast(ray, out RaycastHit hit, range, hitMask, QueryTriggerInteraction.Ignore))
+        shotTargets.Clear();
+        bool hitPenalty = false, killedAny = false, hitSomething = false;
+        float totalDamage = 0f;
+        int explosionKills = 0;
+
+        // Impacto principal: el primer objetivo alcanzado o, si no hay, donde paró el primer rayo
+        bool hasPrimary = false, primaryIsTarget = false;
+        ShotImpact primary = default;
+        Ray firstRay = default;
+
+        for (int r = 0; r < rays; r++)
         {
-            Target target = hit.collider.GetComponent<Target>();
+            Ray ray = RayFor(r, rays);
+            if (r == 0) firstRay = ray;
 
-            // Un objetivo que ya está cayendo desactiva su collider, así que aquí nunca llega uno muerto.
-            // El daño sale de las estadísticas efectivas del arma, no de WeaponData
-            float damage = stats.Damage;
-            if (target != null)
+            rayTargets.Clear();
+            Vector3 end = ray.GetPoint(range);
+
+            int count = RaycastSorted(ray, range);
+            for (int i = 0; i < count; i++)
             {
-                target.TakeDamage(damage);
+                RaycastHit hit = rayHits[i];
+                Target target = hit.collider.GetComponent<Target>();
+
+                // Un objetivo con varios colliders, o ya alcanzado por este rayo: no cuenta dos veces
+                if (target != null && (target.IsDead || target.IsExpiring || rayTargets.Contains(target)))
+                    continue;
+
+                hitSomething = true;
+                bool scenery = (sceneryMask.value & (1 << hit.collider.gameObject.layer)) != 0;
+
+                if (target != null)
+                {
+                    rayTargets.Add(target);
+                    if (!shotTargets.Contains(target)) shotTargets.Add(target);
+                    if (target.IsPenalty) hitPenalty = true;
+
+                    // Daño ANTES de publicar nada: los puntos se suman antes que cualquier efecto
+                    target.TakeDamage(stats.Damage);
+                    totalDamage += stats.Damage;
+                    killedAny |= target.IsDead;
+
+                    ShotImpact impact = new ShotImpact(hit.point, hit.normal, hit.collider, target, false, target.IsDead);
+                    Publish(hit, impact);
+                    if (!primaryIsTarget) { primary = impact; hasPrimary = true; primaryIsTarget = true; }
+
+                    if (stats.ExplosionRadius > 0f)
+                        explosionKills += Explode(hit.point, stats.ExplosionRadius, stats.Damage, target);
+
+                    if (rayTargets.Count >= penetration)
+                    {
+                        end = hit.point;
+                        break;
+                    }
+                }
+                else
+                {
+                    // Decorado (o cualquier otra cosa sólida): el rayo se detiene aquí
+                    ShotImpact impact = new ShotImpact(hit.point, hit.normal, hit.collider, null, scenery, false);
+                    Publish(hit, impact);
+                    if (!hasPrimary) { primary = impact; hasPrimary = true; }
+
+                    // La bala explosiva también estalla contra el decorado: puede derribar lo que esté al lado
+                    if (stats.ExplosionRadius > 0f)
+                        explosionKills += Explode(hit.point, stats.ExplosionRadius, stats.Damage, null);
+
+                    end = hit.point;
+                    break;
+                }
             }
 
-            // Después de Hit(): los puntos se suman antes que cualquier efecto. Que Hit()
-            // destruya el objetivo no afecta: RaycastHit es una copia (struct) y su punto y
-            // su normal siguen valiendo
-            OnHit?.Invoke(hit, target != null);
+            RayTraced?.Invoke(ray.origin, end);
+        }
 
-            bool scenery = (sceneryMask.value & (1 << hit.collider.gameObject.layer)) != 0;
-            ShotResolved?.Invoke(new ShotResult(true, scenery, hit.point, hit.normal, hit.collider, target,
-                damage, target != null && target.IsDead));
-        }
-        else
+        ShotResult result = hasPrimary
+            ? new ShotResult(true, primary.HitScenery, primary.Point, primary.Normal, primary.Collider,
+                primaryIsTarget ? primary.Target : null, totalDamage, killedAny, shotTargets.Count, hitPenalty, explosionKills)
+            : new ShotResult(false, false, firstRay.GetPoint(range), -firstRay.direction, null, null,
+                0f, false, 0, false, explosionKills);
+
+        ShotResolved?.Invoke(result);
+    }
+
+    // Rayo i de n: el central si n = 1; si no, repartidos en horizontal entre −spread/2 y +spread/2
+    private Ray RayFor(int index, int count)
+    {
+        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        if (count <= 1)
+            return ray;
+
+        float angle = Mathf.Lerp(-multiRaySpread * 0.5f, multiRaySpread * 0.5f, index / (float)(count - 1));
+        ray.direction = Quaternion.AngleAxis(angle, playerCamera.transform.up) * ray.direction;
+        return ray;
+    }
+
+    // RaycastAll no garantiza el orden: se ordena por distancia para recorrer los impactos como los
+    // encontraría la bala. NonAlloc con un buffer que crece si se llena
+    private int RaycastSorted(Ray ray, float range)
+    {
+        int count = Physics.RaycastNonAlloc(ray, rayHits, range, hitMask, QueryTriggerInteraction.Ignore);
+        if (count == rayHits.Length)
         {
-            // No ha chocado con nada (p. ej. apuntando al exterior de la feria, que no tiene colliders)
-            ShotResolved?.Invoke(new ShotResult(false, false, ray.GetPoint(range), -ray.direction, null, null));
+            rayHits = new RaycastHit[rayHits.Length * 2];
+            count = Physics.RaycastNonAlloc(ray, rayHits, range, hitMask, QueryTriggerInteraction.Ignore);
         }
+        System.Array.Sort(rayHits, 0, count, HitDistanceComparer.Instance);
+        return count;
+    }
+
+    private sealed class HitDistanceComparer : System.Collections.Generic.IComparer<RaycastHit>
+    {
+        public static readonly HitDistanceComparer Instance = new HitDistanceComparer();
+        public int Compare(RaycastHit a, RaycastHit b) => a.distance.CompareTo(b.distance);
+    }
+
+    // Onda expansiva: daño = daño del arma × (1 − d / radio), con d la distancia del centro al punto
+    // más cercano de cada objetivo. El objetivo del impacto directo queda fuera (ya recibió el daño
+    // completo; si no, la bala explosiva haría casi el doble). Devuelve los derribados por la onda.
+    // No cuenta para la racha ni para el hitmarker: solo el impacto directo decide acierto o fallo
+    private int Explode(Vector3 center, float radius, float damage, Target exclude)
+    {
+        Exploded?.Invoke(center, radius);
+
+        int kills = 0;
+        int count = Physics.OverlapSphereNonAlloc(center, radius, blastHits, hitMask, QueryTriggerInteraction.Ignore);
+        blastTargets.Clear();   // para no dañar dos veces al mismo objetivo (varios colliders) en esta onda
+        for (int i = 0; i < count; i++)
+        {
+            Target target = blastHits[i].GetComponent<Target>();
+            if (target == null || target == exclude || target.IsDead || target.IsExpiring || blastTargets.Contains(target))
+                continue;
+            blastTargets.Add(target);
+
+            float distance = Vector3.Distance(center, blastHits[i].ClosestPoint(center));
+            float falloff = Mathf.Clamp01(1f - distance / radius);
+            if (falloff <= 0f)
+                continue;
+
+            target.TakeDamage(damage * falloff);
+            if (target.IsDead) kills++;
+        }
+        return kills;
+    }
+
+    private void Publish(RaycastHit hit, ShotImpact impact)
+    {
+        OnHit?.Invoke(hit, impact.Target != null);
+        ImpactResolved?.Invoke(impact);
     }
 }

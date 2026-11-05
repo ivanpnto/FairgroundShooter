@@ -93,7 +93,7 @@ public class CrosshairUI : MonoBehaviour
         if (!shot.HitTarget)
             return;
 
-        bool penalty = shot.Target != null && shot.Target.IsPenalty;
+        bool penalty = shot.HitPenalty;   // con varios objetivos por disparo, basta con uno
         Color color = penalty ? penaltyColor : hitColor;
         if (hitmarkerImages != null)
             foreach (Image image in hitmarkerImages)

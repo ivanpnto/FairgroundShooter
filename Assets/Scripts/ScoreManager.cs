@@ -95,8 +95,10 @@ public class ScoreManager : MonoBehaviour
 
         // Acierto = objetivo normal (puntos > 0). Dar a uno de penalización cuenta como fallo, también
         // para la precisión: no es un buen disparo. Uno de 0 puntos ni suma ni rompe la racha
-        bool normalHit = shot.HitTarget && shot.Target != null && shot.Target.CanHaveBonus;
-        bool penaltyHit = shot.HitTarget && shot.Target != null && shot.Target.IsPenalty;
+        // Con penetración o disparo doble un disparo puede dar a varios objetivos: sigue contando como
+        // UN acierto (§25), y basta con que uno sea de penalización para que sea un fallo
+        bool penaltyHit = shot.HitTarget && shot.HitPenalty;
+        bool normalHit = shot.HitTarget && !penaltyHit;
 
         if (normalHit)
         {
