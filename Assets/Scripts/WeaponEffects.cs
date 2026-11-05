@@ -154,14 +154,22 @@ public class WeaponEffects : MonoBehaviour
     {
         if (weaponAmmo != null) weaponAmmo.OnShot += HandleShot;
         if (weaponController != null) weaponController.OnWeaponEquipped += HandleWeaponEquipped;
-        if (playerShoot != null) playerShoot.ShotResolved += HandleHit;
+        if (playerShoot != null)
+        {
+            playerShoot.ImpactResolved += HandleImpact;    // partículas: una por impacto
+            playerShoot.ShotResolved += HandleShotResolved; // sonido de acierto: uno por disparo
+        }
     }
 
     private void OnDisable()
     {
         if (weaponAmmo != null) weaponAmmo.OnShot -= HandleShot;
         if (weaponController != null) weaponController.OnWeaponEquipped -= HandleWeaponEquipped;
-        if (playerShoot != null) playerShoot.ShotResolved -= HandleHit;
+        if (playerShoot != null)
+        {
+            playerShoot.ImpactResolved -= HandleImpact;
+            playerShoot.ShotResolved -= HandleShotResolved;
+        }
     }
 
     private void HandleShot()
@@ -201,17 +209,15 @@ public class WeaponEffects : MonoBehaviour
     /// impacto solo cambia dónde nacen las nuevas; las del impacto anterior siguen donde
     /// estaban. Y Emit() añade partículas sin reiniciar el sistema, así que varios impactos
     /// seguidos conviven hasta que se acaba su vida (Max Particles pone el tope).
-    /// Escucha ShotResolved y no OnHit porque es el evento acordado para saber si un disparo
-    /// acertó; los disparos que no chocan con nada no tienen dónde mostrar un impacto.
+    /// Escucha ImpactResolved (I6.2) y no ShotResolved: con penetración o disparo doble un disparo
+    /// tiene varios impactos, y cada uno lleva sus partículas. Los disparos que no chocan con nada
+    /// no publican impactos, así que no hay dónde mostrar nada.
     /// </summary>
-    private void HandleHit(ShotResult shot)
+    private void HandleImpact(ShotImpact shot)
     {
-        if (!shot.HitSomething)
-            return;
-
         WeaponData weapon = weaponController != null ? weaponController.CurrentWeapon : null;
         float scale = weapon != null ? weapon.impactScale : 1f;
-        bool hitTarget = shot.HitTarget;
+        bool hitTarget = shot.Target != null;
 
         ParticleSystem system;
         int baseCount;
@@ -242,8 +248,14 @@ public class WeaponEffects : MonoBehaviour
             system.Emit(Mathf.Max(1, Mathf.RoundToInt(baseCount * scale)));
         }
 
+    }
+
+    // Sonido de acierto: UNO por disparo aunque dé a varios objetivos (dos rayos, penetración);
+    // si no, con disparo doble sonaría doble y gastaría dos fuentes del pool
+    private void HandleShotResolved(ShotResult shot)
+    {
         // Tono fijo: el sonido de acertar es el mismo con cualquier arma
-        if (hitTarget && targetHitSound != null)
+        if (shot.HitTarget && targetHitSound != null)
             PlayPooled(targetHitSound, targetHitVolume, 1f);
     }
 

@@ -1003,6 +1003,7 @@ GameObject:
   - component: {fileID: 354793040}
   - component: {fileID: 354793041}
   - component: {fileID: 354793042}
+  - component: {fileID: 354793043}
   m_Layer: 0
   m_Name: Player
   m_TagString: MainCamera
@@ -1247,6 +1248,36 @@ MonoBehaviour:
   targetBaseCount: 25
   targetHitSound: {fileID: 0}
   targetHitVolume: 1
+--- !u!114 &354793043
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 354793032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1392338a248b5ea46b61768b259a2391, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeEffects
+  explosionPrefab: {fileID: 1032313188535303116, guid: 2d433fae852b3fb40ae5c07883e9c57d, type: 3}
+  designRadius: 0.6
+  flashCount: 3
+  sparksCount: 26
+  smokeCount: 10
+  confettiCount: 30
+  lightColor: {r: 1, g: 0.65, b: 0.3, a: 1}
+  lightIntensity: 5
+  lightRangePerRadius: 6
+  lightDuration: 0.09
+  explosionSound: {fileID: 0}
+  explosionVolume: 0.8
+  sfxGroup: {fileID: 3458100790020658778, guid: 280fe33fbd1bdfa09ad81a7389170c25, type: 2}
+  tracerMaterial: {fileID: 2100000, guid: c41c14d47399aa94994d4bbdf80d8abf, type: 2}
+  tracerColor: {r: 1, g: 0.85, b: 0.55, a: 0.9}
+  tracerWidth: 0.02
+  tracerDuration: 0.07
+  onlyWithMultipleRays: 1
 --- !u!1 &368483331
 GameObject:
   m_ObjectHideFlags: 0
