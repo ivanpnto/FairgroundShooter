@@ -1074,6 +1074,7 @@ MonoBehaviour:
   sceneryMask:
     serializedVersion: 2
     m_Bits: 256
+  multiRaySpread: 1.2
 --- !u!114 &354793039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4674,6 +4675,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e7c5df876e1d5941096df145536dae78, type: 2}
   - {fileID: 11400000, guid: 239eda5857a247754b96d3fb0e9ef7d9, type: 2}
   - {fileID: 11400000, guid: b20435d6789d1b173886207d47a3ebd2, type: 2}
+  - {fileID: 11400000, guid: dc3fddd8045aa2e47942efa3ee710087, type: 2}
+  - {fileID: 11400000, guid: eeeb9b707f483a04685c0ea58955fd03, type: 2}
+  - {fileID: 11400000, guid: 682d11bbf3931284782b6b66046b8e4c, type: 2}
 --- !u!114 &1197756589
 MonoBehaviour:
   m_ObjectHideFlags: 0
