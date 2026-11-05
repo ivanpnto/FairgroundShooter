@@ -21,6 +21,9 @@ public class LevelConfig : ScriptableObject
     [Tooltip("Id del conjunto de entorno que activa el LevelManager (decorado + iluminación)")]
     public string environmentId = "Pond";
 
+    [Tooltip("Música de fondo del nivel (la reproduce MusicManager en bucle). Vacío = silencio")]
+    public AudioClip music;
+
     [Header("Duración")]
     [Min(1f)] public float duration = 60f;
 
