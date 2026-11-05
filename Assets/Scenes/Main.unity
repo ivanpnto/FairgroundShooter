@@ -1047,6 +1047,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponEffects
   shotSourceCount: 4
+  sfxGroup: {fileID: 3458100790020658778, guid: 280fe33fbd1bdfa09ad81a7389170c25, type: 2}
   muzzleFlashPrefab: {fileID: 7301452558866455880, guid: 9c665b46935bed68ea00225399d675d3, type: 3}
   flashLightColor: {r: 1, g: 0.6, b: 0.25, a: 1}
   flashLightIntensity: 2
@@ -4409,6 +4410,7 @@ GameObject:
   - component: {fileID: 1197756586}
   - component: {fileID: 1197756587}
   - component: {fileID: 1197756588}
+  - component: {fileID: 1197756589}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -4524,6 +4526,23 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e7c5df876e1d5941096df145536dae78, type: 2}
   - {fileID: 11400000, guid: 239eda5857a247754b96d3fb0e9ef7d9, type: 2}
   - {fileID: 11400000, guid: b20435d6789d1b173886207d47a3ebd2, type: 2}
+--- !u!114 &1197756589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1197756582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c532b863dc305408c9f1ecef06d24ce9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MusicManager
+  menuMusic: {fileID: 8300000, guid: b279b102e1ea803f0a9fc3992e755dac, type: 3}
+  output: {fileID: -4989561769923336352, guid: 280fe33fbd1bdfa09ad81a7389170c25, type: 2}
+  volume: 0.8
+  fadeTime: 1.5
+  transitionVolume: 0.5
 --- !u!1 &1200148949
 GameObject:
   m_ObjectHideFlags: 0

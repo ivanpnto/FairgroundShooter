@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
 /// <summary>
 /// Efectos del arma: sonidos (disparo, recarga e impacto en objetivo), fogonazo con luz en la
@@ -20,6 +21,8 @@ public class WeaponEffects : MonoBehaviour
     // una fuente se reutilizaría a los ~154 ms con su disparo aún sonando
     [Tooltip("Fuentes compartidas por disparos e impactos en objetivo, usadas por turnos")]
     [Min(1)] [SerializeField] private int shotSourceCount = 6;
+    [Tooltip("Grupo SFX del MainMixer para todas las fuentes de este componente. Vacío = directo al AudioListener")]
+    [SerializeField] private AudioMixerGroup sfxGroup;
 
     [Header("Fogonazo")]
     [Tooltip("Prefab con el ParticleSystem del destello (Assets/Prefabs/VFX/MuzzleFlash)")]
@@ -140,6 +143,8 @@ public class WeaponEffects : MonoBehaviour
         // 2D: el arma está pegada a la cámara, no tiene sentido espacializarla. Así además
         // suena igual en los dos oídos (los clips ya son mono)
         source.spatialBlend = 0f;
+        // Por el mixer y no directo: así el volumen de efectos se ajusta aparte de la música
+        source.outputAudioMixerGroup = sfxGroup;
         return source;
     }
 

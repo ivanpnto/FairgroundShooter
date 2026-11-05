@@ -13,3 +13,13 @@ para el juego; los originales están en `AudioSource/raw/`.
 | Sniper Rifle | SuperPhat | https://freesound.org/s/514228/ | CC0 | Disparo Barrett |
 | Assault Rifle Reload | Kodack | https://freesound.org/s/256912/ | CC0 | Recarga de rifle |
 | pistol reload sound.mp3 | GFL7 | https://freesound.org/s/276959/ | CC0 | Recarga de pistola |
+
+## Música
+Todas de [OpenGameArt](https://opengameart.org). Procesadas (fundidos de 2 ms en la costura y
+normalizado de sonoridad) para el juego; los originales están en `AudioSource/raw/`.
+
+| Título | Autor | Enlace | Licencia | Uso |
+|---|---|---|---|---|
+| Carnival Rides | Écrivain | https://opengameart.org/content/carnival-rides | CC0 | Menús |
+| Children's March Theme | CleytonKauffman | https://opengameart.org/content/childrens-march-theme | CC0 | Nivel 1 (Bosque) |
+| Underwater Theme II | CleytonKauffman | https://opengameart.org/content/underwater-theme-ii | CC0 | Nivel 2 (Fondo marino) |

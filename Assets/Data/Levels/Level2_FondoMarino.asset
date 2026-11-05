@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelConfig
   levelName: Fondo marino
   environmentId: Sea
+  music: {fileID: 8300000, guid: 362d6ddebc5aee6a88754e842e7150b7, type: 3}
   duration: 60
   entries:
   - label: Pez payaso

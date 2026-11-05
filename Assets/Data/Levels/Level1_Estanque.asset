@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelConfig
   levelName: Bosque
   environmentId: Forest
+  music: {fileID: 8300000, guid: 7f88b5d5b014b719c92e6f95d23fb4c6, type: 3}
   duration: 60
   entries:
   - label: Zorro
