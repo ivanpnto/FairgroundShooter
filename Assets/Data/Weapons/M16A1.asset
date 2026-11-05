@@ -15,7 +15,7 @@ MonoBehaviour:
   id: m16a1
   displayName: M16A1
   modelPrefab: {fileID: 4931165053047272072, guid: 248c8e99d8f0c15b9b0c80531c02385a, type: 3}
-  price: 450
+  price: 900
   baseDamage: 1.25
   holdPosition: {x: 0, y: 0.03, z: 0.141}
   holdRotation: {x: 0, y: 90, z: 0}

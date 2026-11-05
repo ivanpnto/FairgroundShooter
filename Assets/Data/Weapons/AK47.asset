@@ -15,7 +15,7 @@ MonoBehaviour:
   id: ak47
   displayName: AK-47
   modelPrefab: {fileID: 1124963470565848674, guid: b430bba859e379047a036bc67d1a6c43, type: 3}
-  price: 600
+  price: 1200
   baseDamage: 1.5
   holdPosition: {x: 0, y: 0.015, z: 0.083}
   holdRotation: {x: 0, y: 90, z: 0}
