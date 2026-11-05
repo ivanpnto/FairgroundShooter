@@ -2,8 +2,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Una fila de Habilidades o de la Armería: título, descripción y botón de compra. Solo presentación:
-// SkillsPanelUI / ArmoryPanelUI deciden los textos, si se puede comprar y qué pasa al pulsar
+// Una fila de la tienda (mejora o arma): título, descripción y botón de compra. Solo presentación:
+// ShopPanelUI decide los textos, si se puede comprar y qué pasa al pulsar
 public class ShopRowUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text titleText;
