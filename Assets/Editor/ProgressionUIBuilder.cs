@@ -7,9 +7,11 @@ using UnityEngine.UI;
 // Construye la interfaz de la Fase 5 con la estética de feria de StartPanel/GameOverPanel (fondo, toldo,
 // cartel con bombillas, tickets, fuente Rye). Menú: Tools > Fairground > Build Progression UI.
 //
-// - Crea (o rehace) los prefabs ProfilePanel, ShopPanel y RecordsPanel en Assets/Prefabs/UI.
-// - Adapta los prefabs StartPanel (fuera el campo de nombre; perfil, créditos, tienda, récords) y
-//   GameOverPanel (créditos, resumen, tienda, récords) si aún no están adaptados.
+// - Crea (o rehace) los prefabs ProfilePanel, SkillsPanel, ArmoryPanel y RecordsPanel en Assets/Prefabs/UI.
+// - Adapta los prefabs StartPanel (fuera el campo de nombre; perfil, créditos, habilidades, armería,
+//   récords) y GameOverPanel (créditos, resumen, habilidades, armería, récords) si aún no están adaptados.
+// - Tools > Fairground > Build Shop Panels rehace solo Habilidades y Armería (y separa el antiguo botón
+//   TIENDA en dos), sin tocar Perfiles ni Récords.
 // - En Main.unity: instancia los paneles nuevos bajo el Canvas UI, añade MenuController al Canvas, el
 //   multiplicador de racha al HUD y el texto del bonus a LevelTransitionPanel, y guarda la escena.
 //
@@ -42,14 +44,37 @@ public static class ProgressionUIBuilder
 
         // Antes de tocar StartPanel: ProfilePanel copia su campo de nombre
         GameObject profilePanel = SavePrefab(BuildProfilePanel(), "ProfilePanel");
-        GameObject shopPanel = SavePrefab(BuildShopPanel(), "ShopPanel");
+        GameObject skillsPanel = SavePrefab(BuildSkillsPanel(), "SkillsPanel");
+        GameObject armoryPanel = SavePrefab(BuildArmoryPanel(), "ArmoryPanel");
         GameObject recordsPanel = SavePrefab(BuildRecordsPanel(), "RecordsPanel");
 
         UpdateStartPanel();
         UpdateGameOverPanel();
-        WireScene(profilePanel, shopPanel, recordsPanel);
+        WireScene(profilePanel, skillsPanel, armoryPanel, recordsPanel);
 
         Debug.Log("ProgressionUIBuilder: interfaz de progresión construida.");
+    }
+
+    // La tienda única (ShopPanel) se separó en Habilidades y Armería. Esto rehace solo esos dos paneles,
+    // cambia el botón TIENDA de Inicio y Game Over por HABILIDADES + ARMERÍA y conecta la escena,
+    // sin regenerar Perfiles ni Récords (que perderían sus retoques a mano)
+    [MenuItem("Tools/Fairground/Build Shop Panels")]
+    public static void BuildShopPanels()
+    {
+        LoadStyle();
+
+        GameObject skillsPanel = SavePrefab(BuildSkillsPanel(), "SkillsPanel");
+        GameObject armoryPanel = SavePrefab(BuildArmoryPanel(), "ArmoryPanel");
+
+        SplitShopButton(UIFolder + "StartPanel.prefab", typeof(StartPanelUI), StartSkillsPos, StartArmoryPos, ShopTicketStart, ShopFontStart);
+        SplitShopButton(UIFolder + "GameOverPanel.prefab", typeof(GameOverSummaryUI), OverSkillsPos, OverArmoryPos, ShopTicketOver, ShopFontOver);
+
+        WireShopPanels(skillsPanel, armoryPanel);
+
+        if (AssetDatabase.LoadAssetAtPath<GameObject>(UIFolder + "ShopPanel.prefab") != null)
+            AssetDatabase.DeleteAsset(UIFolder + "ShopPanel.prefab");
+
+        Debug.Log("ProgressionUIBuilder: paneles de Habilidades y Armería construidos.");
     }
 
     // ── Estilo ──────────────────────────────────────────────────────────────────
@@ -61,7 +86,11 @@ public static class ProgressionUIBuilder
 
         rye = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Rye SDF.asset");
         ryeCartel = AssetDatabase.LoadAssetAtPath<Material>("Assets/Fonts/Rye SDF - Cartel.mat");
-        sans = gameOverAsset.transform.Find("RankingBoard/RankingColumns/RankingNamesText").GetComponent<TMP_Text>().font;
+        // La primera ejecución convierte RankingBoard en SummaryBoard: en las siguientes, la fuente sans
+        // se toma del texto del resumen (es la misma, LiberationSans SDF)
+        Transform sansText = gameOverAsset.transform.Find("RankingBoard/RankingColumns/RankingNamesText")
+            ?? gameOverAsset.transform.Find("SummaryBoard/SummaryText");
+        sans = sansText.GetComponent<TMP_Text>().font;
 
         background = gameOverAsset.GetComponent<Image>().sprite;
         board = gameOverAsset.transform.Find("Sign").GetComponent<Image>().sprite;
@@ -193,9 +222,29 @@ public static class ProgressionUIBuilder
 
     private static GameObject SavePrefab(GameObject root, string name)
     {
+        SyncTmpFields(root);
         GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, UIFolder + name + ".prefab");
         Object.DestroyImmediate(root);
         return prefab;
+    }
+
+    // Los textos creados por código se guardan con m_fontColor32 sin actualizar (blanco) y sin estilo
+    // (m_TextStyleHashCode 0). TMP los recalcula al cargar la instancia de la escena, y cada guardado de
+    // Main.unity los dejaba como overrides. Se igualan aquí a lo que TMP calcularía: el color y el estilo Normal
+    public static void SyncTmpFields(GameObject root)
+    {
+        foreach (TMP_Text text in root.GetComponentsInChildren<TMP_Text>(true))
+        {
+            SerializedObject so = new SerializedObject(text);
+            Color32 color = so.FindProperty("m_fontColor").colorValue;
+            SerializedProperty rgba = so.FindProperty("m_fontColor32.rgba");
+            // rgba guarda los bytes en orden ABGR (r en el byte bajo)
+            rgba.longValue = (uint)(color.r | color.g << 8 | color.b << 16 | color.a << 24);
+            SerializedProperty style = so.FindProperty("m_TextStyleHashCode");
+            if (style.intValue == 0)
+                style.intValue = TMP_Style.NormalStyle.hashCode;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
     }
 
     // ── Perfiles ────────────────────────────────────────────────────────────────
@@ -268,35 +317,62 @@ public static class ProgressionUIBuilder
         return panel;
     }
 
-    // ── Tienda ──────────────────────────────────────────────────────────────────
+    // ── Habilidades y Armería ───────────────────────────────────────────────────
 
-    private static GameObject BuildShopPanel()
+    // Botones HABILIDADES y ARMERÍA apilados a la izquierda de ¡A JUGAR! / OTRA RONDA (RÉCORDS sigue a la
+    // derecha). En el Game Over van más juntos y bajos porque OTRA RONDA está más abajo que ¡A JUGAR!
+    private static readonly Vector2 StartSkillsPos = new Vector2(-500f, -350f);
+    private static readonly Vector2 StartArmoryPos = new Vector2(-500f, -470f);
+    private static readonly Vector2 ShopTicketStart = new Vector2(320f, 100f);
+    private static readonly Vector2 OverSkillsPos = new Vector2(-500f, -412f);
+    private static readonly Vector2 OverArmoryPos = new Vector2(-500f, -498f);
+    private static readonly Vector2 ShopTicketOver = new Vector2(320f, 76f);
+    // HABILIDADES es la palabra más larga de los tickets: a más tamaño toca las muescas
+    private const float ShopFontStart = 30f;
+    private const float ShopFontOver = 28f;
+
+    private static GameObject BuildSkillsPanel()
     {
-        GameObject panel = NewPanel("ShopPanel", "TIENDA", 100);
+        GameObject panel = BuildListPanel("SkillsPanel", "HABILIDADES", 84, "MEJORAS PARA TODAS LAS ARMAS",
+            out TextMeshProUGUI credits, out RectTransform list, out ShopRowUI row, out Button back);
+        SetRefs(panel.AddComponent<SkillsPanelUI>(), "creditsText", credits, "content", list, "rowTemplate", row, "backButton", back);
+        return panel;
+    }
+
+    private static GameObject BuildArmoryPanel()
+    {
+        GameObject panel = BuildListPanel("ArmoryPanel", "ARMERÍA", 100, "ARMAS DE LA CASETA",
+            out TextMeshProUGUI credits, out RectTransform list, out ShopRowUI row, out Button back);
+        SetRefs(panel.AddComponent<ArmoryPanelUI>(), "creditsText", credits, "content", list, "rowTemplate", row, "backButton", back);
+        return panel;
+    }
+
+    // Cartel, créditos, un tablero centrado con su lista, la fila de plantilla y VOLVER
+    private static GameObject BuildListPanel(string name, string title, float titleSize, string label,
+        out TextMeshProUGUI credits, out RectTransform list, out ShopRowUI rowUI, out Button back)
+    {
+        GameObject panel = NewPanel(name, title, titleSize);
         Transform root = panel.transform;
 
-        TextMeshProUGUI credits = CartelText(root, "CreditsText", "TUS CRÉDITOS: 0", 44, Gold, new Vector2(0f, 160f), new Vector2(900f, 60f));
+        credits = CartelText(root, "CreditsText", "TUS CRÉDITOS: 0", 44, Gold, new Vector2(0f, 160f), new Vector2(900f, 60f));
 
-        NewBoard(root, "UpgradesBoard", new Vector2(-475f, -160f), new Vector2(900f, 560f));
-        CartelText(root, "UpgradesLabel", "MEJORAS", 38, Gold, new Vector2(-475f, 75f), new Vector2(800f, 50f));
-        RectTransform upgrades = NewList(root, "UpgradesList", new Vector2(-475f, -195f), new Vector2(820f, 440f), 6f);
+        NewBoard(root, "Board", new Vector2(0f, -160f), new Vector2(1100f, 560f));
+        CartelText(root, "BoardLabel", label, 38, Gold, new Vector2(0f, 75f), new Vector2(1000f, 50f));
+        // 410 de alto: caben 5 filas de 76 + 4 huecos de 6 (las 5 armas) sin tocar el marco del tablero
+        list = NewList(root, "List", new Vector2(0f, -190f), new Vector2(1020f, 410f), 6f);
 
-        NewBoard(root, "WeaponsBoard", new Vector2(475f, -160f), new Vector2(900f, 560f));
-        CartelText(root, "WeaponsLabel", "ARMAS", 38, Gold, new Vector2(475f, 75f), new Vector2(800f, 50f));
-        RectTransform weapons = NewList(root, "WeaponsList", new Vector2(475f, -195f), new Vector2(820f, 440f), 6f);
-
-        // Plantilla de fila (desactivada; ShopPanelUI la clona en una u otra lista)
+        // Plantilla de fila (desactivada; el script del panel la clona por cada artículo)
         GameObject row = new GameObject("RowTemplate", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
-        row.transform.SetParent(upgrades, false);
+        row.transform.SetParent(list, false);
         row.GetComponent<Image>().color = RowColor;
-        row.GetComponent<LayoutElement>().preferredHeight = 84f;
+        row.GetComponent<LayoutElement>().preferredHeight = 76f;
 
-        TextMeshProUGUI title = NewText(row.transform, "Title", "Mejora 0/3", rye, 28, Cream, new Vector2(20f, 18f), new Vector2(560f, 36f));
-        LeftAnchor(title.rectTransform);
-        title.alignment = TextAlignmentOptions.Left;
+        TextMeshProUGUI titleText = NewText(row.transform, "Title", "Artículo 0/3", rye, 28, Cream, new Vector2(20f, 18f), new Vector2(760f, 36f));
+        LeftAnchor(titleText.rectTransform);
+        titleText.alignment = TextAlignmentOptions.Left;
 
         TextMeshProUGUI info = NewText(row.transform, "Info", "Descripción", sans, 19, new Color(Cream.r, Cream.g, Cream.b, 0.85f),
-            new Vector2(20f, -18f), new Vector2(570f, 44f));
+            new Vector2(20f, -18f), new Vector2(770f, 44f));
         LeftAnchor(info.rectTransform);
         info.alignment = TextAlignmentOptions.TopLeft;
         info.textWrappingMode = TextWrappingModes.Normal;
@@ -306,15 +382,42 @@ public static class ProgressionUIBuilder
         buyRt.anchorMin = buyRt.anchorMax = buyRt.pivot = new Vector2(1f, 0.5f);
         buyRt.anchoredPosition = new Vector2(-12f, 0f);
 
-        ShopRowUI rowUI = row.AddComponent<ShopRowUI>();
-        SetRefs(rowUI, "titleText", title, "infoText", info, "buyButton", buy, "buyText", buy.GetComponentInChildren<TMP_Text>());
+        rowUI = row.AddComponent<ShopRowUI>();
+        SetRefs(rowUI, "titleText", titleText, "infoText", info, "buyButton", buy, "buyText", buy.GetComponentInChildren<TMP_Text>());
 
-        Button back = TicketButton(root, "BackButton", "VOLVER", new Vector2(0f, -490f), new Vector2(300f, 90f), 36);
-
-        ShopPanelUI ui = panel.AddComponent<ShopPanelUI>();
-        SetRefs(ui, "creditsText", credits, "upgradesContent", upgrades, "weaponsContent", weapons,
-            "rowTemplate", rowUI, "backButton", back);
+        back = TicketButton(root, "BackButton", "VOLVER", new Vector2(0f, -490f), new Vector2(300f, 90f), 36);
         return panel;
+    }
+
+    // Inicio o Game Over ya adaptados con un solo botón TIENDA: ese ticket pasa a ser ARMERÍA (su
+    // referencia se conserva con FormerlySerializedAs) y se añade HABILIDADES encima. Si ya está hecho, no toca nada
+    private static void SplitShopButton(string path, System.Type uiType, Vector2 skillsPos, Vector2 armoryPos, Vector2 box, float fontSize)
+    {
+        GameObject root = PrefabUtility.LoadPrefabContents(path);
+        try
+        {
+            Component ui = root.GetComponent(uiType);
+            if (ui == null || root.transform.Find("SkillsButton") != null)
+                return;
+
+            Transform armory = root.transform.Find("ShopButton");
+            armory.name = "ArmoryButton";
+            Place((RectTransform)armory, armoryPos, box);
+            TMP_Text armoryText = armory.GetComponentInChildren<TMP_Text>();
+            armoryText.text = "ARMERÍA";
+            armoryText.fontSize = fontSize;
+
+            Button skills = TicketButton(root.transform, "SkillsButton", "HABILIDADES", skillsPos, box, fontSize);
+            skills.transform.SetSiblingIndex(armory.GetSiblingIndex());
+
+            SetRefs(ui, "skillsButton", skills, "armoryButton", armory.GetComponent<Button>());
+            SyncTmpFields(root);
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+        }
     }
 
     private static void LeftAnchor(RectTransform rt)
@@ -374,13 +477,15 @@ public static class ProgressionUIBuilder
             change.transform.SetSiblingIndex(index + 1);
             credits.transform.SetSiblingIndex(index + 2);
 
-            Button shop = TicketButton(root.transform, "ShopButton", "TIENDA", new Vector2(-500f, -410f), new Vector2(320f, 120f), 44);
+            Button skills = TicketButton(root.transform, "SkillsButton", "HABILIDADES", StartSkillsPos, ShopTicketStart, ShopFontStart);
+            Button armory = TicketButton(root.transform, "ArmoryButton", "ARMERÍA", StartArmoryPos, ShopTicketStart, ShopFontStart);
             Button records = TicketButton(root.transform, "RecordsButton", "RÉCORDS", new Vector2(500f, -410f), new Vector2(320f, 120f), 44);
 
             StartPanelUI ui = root.AddComponent<StartPanelUI>();
-            SetRefs(ui, "profileText", profile, "creditsText", credits, "shopButton", shop,
+            SetRefs(ui, "profileText", profile, "creditsText", credits, "skillsButton", skills, "armoryButton", armory,
                 "recordsButton", records, "changeProfileButton", change);
 
+            SyncTmpFields(root);
             PrefabUtility.SaveAsPrefabAsset(root, path);
         }
         finally
@@ -420,12 +525,15 @@ public static class ProgressionUIBuilder
             TextMeshProUGUI credits = CartelText(root.transform, "CreditsText", "+0 CRÉDITOS", 36, Gold, new Vector2(0f, 42f), new Vector2(900f, 46f));
             credits.transform.SetSiblingIndex(root.transform.Find("ScoreTicket").GetSiblingIndex() + 1);
 
-            Button shop = TicketButton(root.transform, "ShopButton", "TIENDA", new Vector2(-500f, -462f), new Vector2(320f, 110f), 40);
+            Button skills = TicketButton(root.transform, "SkillsButton", "HABILIDADES", OverSkillsPos, ShopTicketOver, ShopFontOver);
+            Button armory = TicketButton(root.transform, "ArmoryButton", "ARMERÍA", OverArmoryPos, ShopTicketOver, ShopFontOver);
             Button recordsButton = TicketButton(root.transform, "RecordsButton", "RÉCORDS", new Vector2(500f, -462f), new Vector2(320f, 110f), 40);
 
             GameOverSummaryUI ui = root.AddComponent<GameOverSummaryUI>();
-            SetRefs(ui, "creditsText", credits, "summaryText", summary, "shopButton", shop, "recordsButton", recordsButton);
+            SetRefs(ui, "creditsText", credits, "summaryText", summary, "skillsButton", skills, "armoryButton", armory,
+                "recordsButton", recordsButton);
 
+            SyncTmpFields(root);
             PrefabUtility.SaveAsPrefabAsset(root, path);
         }
         finally
@@ -436,7 +544,7 @@ public static class ProgressionUIBuilder
 
     // ── Escena ──────────────────────────────────────────────────────────────────
 
-    private static void WireScene(GameObject profilePrefab, GameObject shopPrefab, GameObject recordsPrefab)
+    private static void WireScene(GameObject profilePrefab, GameObject skillsPrefab, GameObject armoryPrefab, GameObject recordsPrefab)
     {
         GameManager gameManager = Object.FindFirstObjectByType<GameManager>(FindObjectsInactive.Include);
         SerializedObject gm = new SerializedObject(gameManager);
@@ -447,13 +555,14 @@ public static class ProgressionUIBuilder
         Transform canvas = startPanel.transform.parent;
 
         GameObject profilePanel = EnsureInstance(canvas, profilePrefab, gameOverPanel.transform.GetSiblingIndex() + 1);
-        GameObject shopPanel = EnsureInstance(canvas, shopPrefab, profilePanel.transform.GetSiblingIndex() + 1);
-        GameObject recordsPanel = EnsureInstance(canvas, recordsPrefab, shopPanel.transform.GetSiblingIndex() + 1);
+        GameObject skillsPanel = EnsureInstance(canvas, skillsPrefab, profilePanel.transform.GetSiblingIndex() + 1);
+        GameObject armoryPanel = EnsureInstance(canvas, armoryPrefab, skillsPanel.transform.GetSiblingIndex() + 1);
+        GameObject recordsPanel = EnsureInstance(canvas, recordsPrefab, armoryPanel.transform.GetSiblingIndex() + 1);
 
         MenuController menu = canvas.GetComponent<MenuController>();
         if (menu == null) menu = canvas.gameObject.AddComponent<MenuController>();
-        SetRefs(menu, "profilePanel", profilePanel, "startPanel", startPanel, "shopPanel", shopPanel,
-            "recordsPanel", recordsPanel, "gameOverPanel", gameOverPanel);
+        SetRefs(menu, "profilePanel", profilePanel, "startPanel", startPanel, "skillsPanel", skillsPanel,
+            "armoryPanel", armoryPanel, "recordsPanel", recordsPanel, "gameOverPanel", gameOverPanel);
 
         // Racha en el HUD, bajo la puntuación y con su misma fuente
         if (hud.transform.Find("StreakText") == null)
@@ -477,6 +586,25 @@ public static class ProgressionUIBuilder
                 new Vector2(0f, -170f), new Vector2(1000f, 60f)).transform;
         gm.FindProperty("levelTransitionBonus").objectReferenceValue = bonus.GetComponent<TMP_Text>();
         gm.ApplyModifiedPropertiesWithoutUndo();
+
+        EditorSceneManager.MarkSceneDirty(canvas.gameObject.scene);
+        EditorSceneManager.SaveScene(canvas.gameObject.scene);
+    }
+
+    // Sustituye la instancia de ShopPanel de Main.unity por las de SkillsPanel y ArmoryPanel, en su sitio
+    private static void WireShopPanels(GameObject skillsPrefab, GameObject armoryPrefab)
+    {
+        MenuController menu = Object.FindFirstObjectByType<MenuController>(FindObjectsInactive.Include);
+        Transform canvas = menu.transform;
+
+        Transform shop = canvas.Find("ShopPanel");
+        int index = shop != null ? shop.GetSiblingIndex() : canvas.Find("RecordsPanel").GetSiblingIndex();
+        if (shop != null)
+            Object.DestroyImmediate(shop.gameObject);
+
+        GameObject skillsPanel = EnsureInstance(canvas, skillsPrefab, index);
+        GameObject armoryPanel = EnsureInstance(canvas, armoryPrefab, index + 1);
+        SetRefs(menu, "skillsPanel", skillsPanel, "armoryPanel", armoryPanel);
 
         EditorSceneManager.MarkSceneDirty(canvas.gameObject.scene);
         EditorSceneManager.SaveScene(canvas.gameObject.scene);
