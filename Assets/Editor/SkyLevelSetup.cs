@@ -14,6 +14,10 @@ using UnityEngine.Rendering.Universal;
 //   Bandada    4 pájaros pequeños en formación V      15 pts cada uno (SpawnEntry.groupSize)
 //   Globos     suben desde detrás de las nubes        20 pts (SinkMovement con velocidad negativa)
 //   Avioneta   cruza despacio con cartel de prohibido −40 pts (penalización)
+//
+// Banda LEJANA (más al fondo, z ≈ 4,8, y más pequeños): águila 70, bandada de 3 a 25 cada uno, globos 35.
+// Más puntos por ser más difíciles de acertar; le dan uso al Barrett (mira y daño 3) y a la bala explosiva.
+// Son ~1/3 de las apariciones normales: el nivel se puede jugar con el arma inicial.
 public static class SkyLevelSetup
 {
     private const string PrefabFolder = "Assets/Prefabs/Sky";
@@ -63,13 +67,40 @@ public static class SkyLevelSetup
             balloons.Add(b);
         }
 
+        // ---- Banda lejana: mismos modelos y movimientos, más pequeños y al fondo.
+        // Tamaño mínimo orientativo: ~3° de ancho en pantalla para que se pueda acertar sin mira
+        // (globos 0,85 y pájaros 0,5 con hitbox completa; con menos, apuntar sin mira se vuelve lotería)
+        GameObject farEagle = BuildTarget("FarEagleTarget", "Target_Eagle", 70, 7.5f, typeof(DiveMovement), 0.6f, 0.9f);
+        SetFloats(farEagle.GetComponent<DiveMovement>(), ("cruiseSpeed", 2.0f), ("diveDepth", 1.3f));
+        AddOscillator(farEagle, "Target_Eagle_Wing", IdleOscillator.Channel.Rotation, Vector3.forward, 14f, 1.3f);
+
+        GameObject farFlock = BuildTarget("FarFlockBirdTarget", "Target_Bird", 25, 7f, typeof(SenoMovement), 0.5f, 1f);
+        SetFloats(farFlock.GetComponent<SenoMovement>(), ("horizontalSpeed", 2.4f), ("verticalAmplitude", 0.16f), ("frequency", 3.2f));
+        AddOscillator(farFlock, "Target_Bird_Wing", IdleOscillator.Channel.Rotation, Vector3.forward, 34f, 5f);
+        SwapMaterial(farFlock, "M_T_BirdPink", MaterialVariant("M_T_BirdBlue", "M_T_BirdPink", new Color(0.20f, 0.45f, 0.95f)));
+
+        var farBalloons = new List<GameObject>();
+        foreach (var (name, matName, color) in new[]
+        {
+            ("FarBalloonRedTarget", "M_T_BalloonRed", new Color(0.88f, 0.10f, 0.14f)),
+            ("FarBalloonYellowTarget", "M_T_BalloonYellow", new Color(0.98f, 0.80f, 0.12f)),
+            ("FarBalloonBlueTarget", "M_T_BalloonBlue", new Color(0.15f, 0.45f, 0.92f)),
+        })
+        {
+            GameObject b = BuildTarget(name, "Target_Balloon", 35, 7f, typeof(SinkMovement), 0.85f, 1f, colliderTopFraction: 0.62f);
+            SetFloats(b.GetComponent<SinkMovement>(), ("sinkSpeed", -0.5f), ("driftAmplitude", 0.18f), ("driftFrequency", 0.35f),
+                      ("spinSpeed", 0f), ("minHeight", -10f));
+            SwapMaterial(b, "M_T_BalloonRed", MaterialVariant(matName, "M_T_BalloonRed", color));
+            farBalloons.Add(b);
+        }
+
         GameObject plane = BuildTarget("PlaneTarget", "Target_Plane", -40, 9f, typeof(SenoMovement), 1f, 0.85f);
         SetFloats(plane.GetComponent<SenoMovement>(), ("horizontalSpeed", 1.5f), ("verticalAmplitude", 0.08f), ("frequency", 2f));
         AddOscillator(plane, "Target_Plane_Prop", IdleOscillator.Channel.Scale, Vector3.up, 0.45f, 11f);
         AddOscillator(plane, "Target_Plane_Banner", IdleOscillator.Channel.Rotation, Vector3.forward, 4f, 1.4f);
 
         CreateLanes();
-        LevelConfig level = CreateLevel3(eagle, flock, balloons, plane);
+        LevelConfig level = CreateLevel3(eagle, flock, balloons, plane, farEagle, farFlock, farBalloons);
         RegisterLevel(level, env, lighting);
         AddToSceneryColliders();
 
@@ -193,7 +224,7 @@ public static class SkyLevelSetup
         so.FindProperty("groundColor").colorValue = new Color(0.12f, 0.07f, 0.10f);
         so.FindProperty("fog").boolValue = true;               // bruma rosada: da profundidad a lo lejano
         so.FindProperty("fogColor").colorValue = new Color(0.85f, 0.55f, 0.55f);
-        so.FindProperty("fogStart").floatValue = 9.5f;          // empieza tras los objetivos para no lavarlos
+        so.FindProperty("fogStart").floatValue = 12f;           // empieza tras la banda lejana (~10 m) para no lavarla
         so.FindProperty("fogEnd").floatValue = 40f;
         so.ApplyModifiedPropertiesWithoutUndo();
 
@@ -323,6 +354,11 @@ public static class SkyLevelSetup
         ("Sky_Plane",   new[] { new Vector3(-7.4f, 1.85f, 3.0f), new Vector3(7.4f, 2.05f, 3.0f) }),
         // Globos: suben desde detrás del banco de nubes delantero
         ("Sky_Balloon", new[] { new Vector3(-4f, 0.15f, 3.1f), new Vector3(-1.5f, 0.15f, 3.1f), new Vector3(1.5f, 0.15f, 3.1f), new Vector3(4f, 0.15f, 3.1f) }),
+        // Banda lejana: delante de las nubes del fondo (5,0) y entre los globos de decorado (4,75–4,87)
+        ("Sky_FarEagle",   new[] { new Vector3(-6.8f, 3.05f, 4.8f), new Vector3(6.8f, 2.9f, 4.8f) }),
+        ("Sky_FarFlock",   new[] { new Vector3(-6.8f, 2.0f, 4.8f), new Vector3(6.8f, 2.2f, 4.8f) }),
+        // Desde y 0: a esa profundidad, el banco de nubes delantero tapa todo lo que está por debajo de ~0,5 m
+        ("Sky_FarBalloon", new[] { new Vector3(-3f, 0.0f, 4.8f), new Vector3(0f, 0.0f, 4.8f), new Vector3(3f, 0.0f, 4.8f) }),
     };
 
     private static void CreateLanes()
@@ -361,7 +397,8 @@ public static class SkyLevelSetup
     }
 
     // ---------- Nivel 3 ----------
-    private static LevelConfig CreateLevel3(GameObject eagle, GameObject flock, List<GameObject> balloons, GameObject plane)
+    private static LevelConfig CreateLevel3(GameObject eagle, GameObject flock, List<GameObject> balloons, GameObject plane,
+                                            GameObject farEagle, GameObject farFlock, List<GameObject> farBalloons)
     {
         LevelConfig level = AssetDatabase.LoadAssetAtPath<LevelConfig>(Level3Path);
         if (level == null)
@@ -376,9 +413,9 @@ public static class SkyLevelSetup
         level.duration = 60f;
         level.spawnInterval = 1.0f;
         level.endSpawnIntervalFactor = 0.55f;
-        level.maxActiveTargets = 6;
+        level.maxActiveTargets = 7;
         level.pointsMultiplier = 2f;
-        level.speedMultiplier = 1.2f;
+        level.speedMultiplier = 1.1f;   // 1,2 → 1,1 al añadir la banda lejana: no sumar tres dificultades a la vez
         level.lifetimeMultiplier = 0.85f;
         // 1,75: con el arma inicial hace falta la mejora de daño al máximo (1,75) para derribar de un disparo
         level.healthMultiplier = 1.75f;
@@ -396,6 +433,12 @@ public static class SkyLevelSetup
             new LevelConfig.SpawnEntry { label = "Globo amarillo",prefab = balloons[1], laneId = "Sky_Balloon", weight = 1.1f, maxActive = 1 },
             new LevelConfig.SpawnEntry { label = "Globo azul",    prefab = balloons[2], laneId = "Sky_Balloon", weight = 1.1f, maxActive = 1 },
             new LevelConfig.SpawnEntry { label = "Avioneta",      prefab = plane,       laneId = "Sky_Plane",   weight = 1.0f, maxActive = 1 },
+            // Banda lejana (~35 % de las apariciones de objetivos normales)
+            new LevelConfig.SpawnEntry { label = "Aguila lejana",  prefab = farEagle,       laneId = "Sky_FarEagle",   weight = 1.3f, maxActive = 1 },
+            new LevelConfig.SpawnEntry { label = "Bandada lejana", prefab = farFlock,       laneId = "Sky_FarFlock",   weight = 0.9f, maxActive = 3, groupSize = 3, groupSpacing = new Vector3(0.55f, 0.2f, 0f) },
+            new LevelConfig.SpawnEntry { label = "Globo lejano rojo",     prefab = farBalloons[0], laneId = "Sky_FarBalloon", weight = 0.4f, maxActive = 1 },
+            new LevelConfig.SpawnEntry { label = "Globo lejano amarillo", prefab = farBalloons[1], laneId = "Sky_FarBalloon", weight = 0.4f, maxActive = 1 },
+            new LevelConfig.SpawnEntry { label = "Globo lejano azul",     prefab = farBalloons[2], laneId = "Sky_FarBalloon", weight = 0.4f, maxActive = 1 },
         };
         EditorUtility.SetDirty(level);
         return level;
