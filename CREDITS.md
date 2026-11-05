@@ -14,6 +14,19 @@ para el juego; los originales están en `AudioSource/raw/`.
 | Assault Rifle Reload | Kodack | https://freesound.org/s/256912/ | CC0 | Recarga de rifle |
 | pistol reload sound.mp3 | GFL7 | https://freesound.org/s/276959/ | CC0 | Recarga de pistola |
 
+## Ambiente
+Todos de [Freesound](https://freesound.org), en CC0. Se usa la vista previa HQ (OGG) y no el
+original, que exige iniciar sesión; para ambiente de fondo la calidad sobra. Procesados
+(fragmento, bucle con fundido cruzado, mono y normalizado); los originales están en
+`AudioSource/raw/`.
+
+| Título | Autor | Enlace | Licencia | Uso |
+|---|---|---|---|---|
+| G28-21-Crowd Walla at Outdoor Event.wav | craigsmith | https://freesound.org/s/438381/ | CC0 | Murmullo de fondo |
+| Mechanical Fun Fair Ride.wav | sertuser | https://freesound.org/s/661925/ | CC0 | Tiovivo y noria |
+| S41-28 Carnival Ambiance; mainly voices; barkers calling to crowd.wav | craigsmith | https://freesound.org/s/675012/ | CC0 | Pregones (puesto izquierdo) |
+| S12-01 Crowd reactions; oohs; ahh; cheering; laughing; moderate emotion; exterior.wav | craigsmith | https://freesound.org/s/675056/ | CC0 | Reacciones de la gente (puestos) |
+
 ## Música
 Todas de [OpenGameArt](https://opengameart.org). Procesadas (fundidos de 2 ms en la costura y
 normalizado de sonoridad) para el juego; los originales están en `AudioSource/raw/`.

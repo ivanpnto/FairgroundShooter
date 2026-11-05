@@ -1,7 +1,7 @@
 # AudioSource
 
 Originales de Freesound y OpenGameArt (en `raw/`, sin modificar) y cómo se han procesado los
-clips de `Assets/Audio/Weapons/` y `Assets/Audio/Music/`. Créditos y licencias en `CREDITS.md`, en la raíz del repo.
+clips de `Assets/Audio/Weapons/`, `Assets/Audio/Music/` y `Assets/Audio/Ambience/`. Créditos y licencias en `CREDITS.md`, en la raíz del repo.
 
 ## Procesado común (Audacity)
 1. Importar el original.
@@ -60,3 +60,36 @@ Importación en Unity: Streaming, Vorbis calidad 70, sin Preload y con Load In B
 | Music_Menu.wav | music_menu_raw.ogg (Vorbis, 44,1 kHz) | 25.498 | −13,8 | −4,9 |
 | Music_Level1_Forest.wav | music_level1_raw.wav (44,1 kHz) | 64.000 | −17,8 | −2,1 |
 | Music_Level2_Seabed.wav | music_level2_raw.wav (44,1 kHz) | 104.724 | −17,3 | −3,9 |
+
+## Ambiente (ffmpeg)
+Hecho con ffmpeg y no con Audacity: el bucle con fundido cruzado exige mezclar el final del
+fragmento sobre su principio con precisión de muestra, y así el proceso queda en una orden.
+Los originales `amb_*_raw.ogg` son las vistas previas HQ de Freesound (Vorbis; 48 kHz mono
+las de craigsmith, 44,1 kHz estéreo la de sertuser).
+
+**Bucles** (fragmento [a, b], fundido X = 2 s): los últimos X s se funden en potencia
+constante (`curve=qsin`, porque son ruidos sin correlación) sobre los primeros X s, y el
+resultado dura b − a − X. Así la última muestra enlaza con la primera sin salto. Después:
+mono, 44,1 kHz y ganancia fija hasta −20 LUFS (medida con `ebur128`, para que sea lineal).
+```
+ffmpeg -i SRC -filter_complex "[0]atrim=a:b,asetpts=N/SR/TB,aformat=sample_rates=44100:channel_layouts=mono,asplit=3[h][m][t];
+  [h]atrim=0:X,asetpts=N/SR/TB,afade=t=in:d=X:curve=qsin[hi];[t]atrim=L-X:L,asetpts=N/SR/TB,afade=t=out:d=X:curve=qsin[to];
+  [hi][to]amix=inputs=2:normalize=0[x];[m]atrim=X:L-X,asetpts=N/SR/TB[body];[x][body]concat=n=2:v=0:a=1" -c:a pcm_s16le tmp.wav
+ffmpeg -i tmp.wav -af "volume=<−20 − LUFS medidos>dB" -c:a pcm_s16le OUT.wav
+```
+**Sueltos**: fragmento [a, b] → mono, 44,1 kHz, fade in 0,05 s, fade out 0,5 s, −20 LUFS.
+Cada reacción va entre dos silencios del original (< −50 dB), así que empieza y acaba entera.
+
+| Exportado | Original | a (s) | b (s) | Duración (s) |
+|---|---|---|---|---|
+| Amb_Crowd_Loop.wav | amb_crowd_raw.ogg | 1.0 | 29.5 | 26.5 |
+| Amb_Carousel_Loop.wav | amb_rides_raw.ogg | 4.0 | 48.0 | 42.0 |
+| Amb_Wheel_Loop.wav | amb_rides_raw.ogg | 140.0 | 176.0 | 34.0 |
+| Amb_Barkers_Loop.wav | amb_barkers_raw.ogg | 1.2 | 43.8 | 40.6 |
+| Amb_Reaction_01.wav | amb_reactions_raw.ogg | 5.4 | 12.6 | 7.2 |
+| Amb_Reaction_02.wav | amb_reactions_raw.ogg | 34.9 | 41.0 | 6.1 |
+| Amb_Reaction_03.wav | amb_reactions_raw.ogg | 44.8 | 50.8 | 6.0 |
+| Amb_Reaction_04.wav | amb_reactions_raw.ogg | 51.0 | 59.0 | 8.0 |
+
+La noria y el tiovivo salen de la misma grabación, en tramos distintos; la noria además suena
+con pitch 0,85 en Unity (`AmbientEmitter.loopPitch`), más grave y lenta.
