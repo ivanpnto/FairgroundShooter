@@ -36,7 +36,7 @@ public class LevelConfig : ScriptableObject
     [Min(0f)] public float pointsMultiplier = 1f;      // también agrava las penalizaciones
     [Min(0.1f)] public float speedMultiplier = 1f;     // acelera todo el patrón de movimiento
     [Min(0.1f)] public float lifetimeMultiplier = 1f;  // < 1: los objetivos desaparecen antes
-    [Tooltip("Vida final = Ceil(vida del prefab × este valor). Cualquier valor > 1 sube a 2 los objetivos de vida 1")]
+    [Tooltip("Vida final = vida del prefab × este valor, SIN redondear (1 × 1.5 = 1.5). Los de penalización no lo aplican")]
     [Min(0.1f)] public float healthMultiplier = 1f;
 
     [Header("Objetivos especiales (contorno de color)")]

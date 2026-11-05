@@ -52,7 +52,7 @@ public class Target : MonoBehaviour
     public bool CanHaveBonus => points > 0;   // un objetivo de penalización nunca es especial
     public bool IsPenalty => points < 0;      // resta puntos y rompe la racha
     public bool IsDead { get; private set; }
-    public int MaxHealth { get; private set; }     // vida con el multiplicador del nivel ya aplicado
+    public float MaxHealth { get; private set; }   // vida con el multiplicador del nivel ya aplicado (puede ser decimal)
     public float Health => currentHealth;
 
     private ScoreManager scoreManager;
@@ -112,7 +112,10 @@ public class Target : MonoBehaviour
     }
 
     // Lo llama el spawner justo después de instanciar (antes de Start).
-    // Vida entera hacia arriba: con ×1.5 un objetivo de vida 1 pasa a 2 y la tortuga (3) a 5.
+    // La vida NO se redondea: con ×1.5 un objetivo de vida 1 tiene 1.5 y la tortuga (3) 4.5.
+    // Antes se redondeaba hacia arriba (1 → 2) y la mejora de daño no servía con el arma inicial:
+    // 1 → 1.75 de daño seguía necesitando 2 disparos contra vida 2. Con 1.5, el nivel 2 de la mejora
+    // (daño 1.5) ya los derriba de un disparo, y cada nivel se nota con la tortuga (5 → 4 → 3 disparos).
     // Los de penalización no ganan vida: dañarlo sin derribarlo no restaría nada, y la penalización
     // debe llegar en el primer impacto, como hasta ahora
     public void ApplyLevel(float levelPointsMultiplier, float levelLifetimeMultiplier, float levelHealthMultiplier = 1f)
@@ -121,7 +124,7 @@ public class Target : MonoBehaviour
         lifetime *= levelLifetimeMultiplier;
 
         float healthMultiplier = CanHaveBonus ? levelHealthMultiplier : 1f;
-        MaxHealth = Mathf.Max(1, Mathf.CeilToInt(health * healthMultiplier));
+        MaxHealth = Mathf.Max(1f, health * healthMultiplier);
         currentHealth = MaxHealth;
     }
 
