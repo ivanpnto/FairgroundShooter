@@ -14,14 +14,17 @@ using UnityEngine.Audio;
 public class UpgradeEffects : MonoBehaviour
 {
     [Header("Explosión")]
-    [Tooltip("Prefab con los sistemas de la explosión (Assets/Prefabs/VFX/Explosion): raíz = destello; hijos Sparks, Smoke, Confetti")]
+    [Tooltip("Prefab con los sistemas de la explosión (Assets/Prefabs/VFX/Explosion): raíz = destello; hijos Sparks, Smoke, Embers")]
     [SerializeField] private ParticleSystem explosionPrefab;
     [Tooltip("Radio con el que está diseñado el prefab: con otro radio se escala en proporción")]
     [SerializeField, Min(0.05f)] private float designRadius = 0.6f;
     [SerializeField] private int flashCount = 3;
     [SerializeField] private int sparksCount = 26;
     [SerializeField] private int smokeCount = 10;
-    [SerializeField] private int confettiCount = 30;
+    // Brasas y NO confeti: el confeti es la señal de "has acertado" (ImpactTarget de WeaponEffects).
+    // Como la bala explosiva estalla en cada impacto, también contra el decorado, con confeti
+    // cualquier disparo parecería un acierto
+    [SerializeField] private int embersCount = 18;
     [Tooltip("Luz breve en el centro: ilumina el decorado de alrededor un instante")]
     [SerializeField] private Color lightColor = new Color(1f, 0.65f, 0.3f);
     [SerializeField] private float lightIntensity = 5f;
@@ -48,7 +51,7 @@ public class UpgradeEffects : MonoBehaviour
     private PlayerScope playerScope;
     private Camera playerCamera;
 
-    private ParticleSystem flash, sparks, smoke, confetti;
+    private ParticleSystem flash, sparks, smoke, embers;
     private Light blastLight;
     private float blastLightOffTime;
     private AudioSource audioSource;
@@ -72,7 +75,7 @@ public class UpgradeEffects : MonoBehaviour
             flash.name = "Explosion (pool)";
             sparks = Child(flash, "Sparks");
             smoke = Child(flash, "Smoke");
-            confetti = Child(flash, "Confetti");
+            embers = Child(flash, "Embers");
 
             GameObject lightGO = new GameObject("ExplosionLight");
             lightGO.transform.SetParent(flash.transform, false);
@@ -145,7 +148,7 @@ public class UpgradeEffects : MonoBehaviour
             flash.Emit(flashCount);
             if (sparks != null) sparks.Emit(sparksCount);
             if (smoke != null) smoke.Emit(smokeCount);
-            if (confetti != null) confetti.Emit(confettiCount);
+            if (embers != null) embers.Emit(embersCount);
 
             blastLight.range = radius * lightRangePerRadius;
             blastLight.intensity = lightIntensity;
