@@ -43,7 +43,7 @@ Los originales a 48 kHz se remuestrean a 44,1 kHz al exportar.
   más la corredera de 1.50–1.84 s.
 
 ## Música (Audacity)
-Las tres pistas ya son bucles: no se recortan, para no cambiar su duración (el bucle depende
+Las pistas no se recortan, para no cambiar su duración (el bucle depende
 de que dure exactamente lo mismo). Pero el salto entre la última muestra y la primera era de
 374–1903 (sobre 32767), lo que se oye como un clic en cada vuelta.
 1. Importar el original.
@@ -51,6 +51,10 @@ de que dure exactamente lo mismo). Pero el salto entre la última muestra y la p
 3. Loudness Normalization a −18 LUFS (estéreo conjunto, no independiente). Más baja que los
    disparos (picos a −1 dB) para que la música quede de fondo.
 4. Exportar WAV 16 bits, 44100 Hz, **estéreo** (la música sí aprovecha el estéreo).
+
+*Determined to Fly* (nivel 3) no es un bucle sino una pieza con final, pero el nivel dura 60 s y
+la pista 70 s, así que casi nunca da la vuelta; se le aplica el mismo fundido para que, si la da,
+no haya clic (el original empieza en −565 de golpe).
 
 Importación en Unity: Streaming, Vorbis calidad 70, sin Preload y con Load In Background
 (son largas y solo suena una a la vez, al revés que los efectos).
@@ -60,6 +64,7 @@ Importación en Unity: Streaming, Vorbis calidad 70, sin Preload y con Load In B
 | Music_Menu.wav | music_menu_raw.ogg (Vorbis, 44,1 kHz) | 25.498 | −13,8 | −4,9 |
 | Music_Level1_Forest.wav | music_level1_raw.wav (44,1 kHz) | 64.000 | −17,8 | −2,1 |
 | Music_Level2_Seabed.wav | music_level2_raw.wav (44,1 kHz) | 104.724 | −17,3 | −3,9 |
+| Music_Level3_Sky.wav | music_level3_raw.wav (44,1 kHz) | 70.370 | −16,0 | −2,2 |
 
 ## Ambiente (ffmpeg)
 Hecho con ffmpeg y no con Audacity: el bucle con fundido cruzado exige mezclar el final del

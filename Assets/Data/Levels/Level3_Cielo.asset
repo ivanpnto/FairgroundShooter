@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelConfig
   levelName: Cielo
   environmentId: Sky
-  music: {fileID: 0}
+  music: {fileID: 8300000, guid: e79138925b8eb117490019c258b3b590, type: 3}
   duration: 60
   entries:
   - label: Aguila

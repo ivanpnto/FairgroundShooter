@@ -46,6 +46,7 @@ normalizado de sonoridad) para el juego; los originales están en `AudioSource/r
 | Carnival Rides | Écrivain | https://opengameart.org/content/carnival-rides | CC0 | Menús |
 | Children's March Theme | CleytonKauffman | https://opengameart.org/content/childrens-march-theme | CC0 | Nivel 1 (Bosque) |
 | Underwater Theme II | CleytonKauffman | https://opengameart.org/content/underwater-theme-ii | CC0 | Nivel 2 (Fondo marino) |
+<<<<<<< HEAD
 
 ## Efectos del combate contra el boss (propios)
 Sintetizados por código para el juego, sin muestras de terceros: toma de aire del bocinazo, bocinazo, aturdido,
@@ -59,3 +60,6 @@ Los de la armería (caja registradora, bombilla y paso del ratón, `Assets/Audio
 Corazones, viñeta, salpicadura de tarta y relleno de barra (`Assets/UI/Boss`) se generan con
 `ArtSource/UI/hud_sprites.py` (Pillow). Los iconos de la tienda (`Assets/UI/Icons`) se renderizan desde
 `ArtSource/Icons.blend`, y los proyectiles del boss (tarta, bola y maza) están en `ArtSource/Booth.blend`.
+=======
+| Determined to Fly | OwlishMedia | https://opengameart.org/content/determined-to-fly | CC0 | Nivel 3 (Cielo) |
+>>>>>>> 079bab5 (feat(J6.1): música del nivel 3 (Determined to Fly) con fundido cruzado desde el nivel 2)
