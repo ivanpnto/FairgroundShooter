@@ -1168,7 +1168,7 @@ MonoBehaviour:
   sceneryMask:
     serializedVersion: 2
     m_Bits: 256
-  multiRaySpread: 1.2
+  multiRaySpread: 3.5
 --- !u!114 &354793039
 MonoBehaviour:
   m_ObjectHideFlags: 0

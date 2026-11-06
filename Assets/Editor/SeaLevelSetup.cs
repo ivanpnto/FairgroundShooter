@@ -20,6 +20,17 @@ public static class SeaLevelSetup
     [MenuItem("Tools/Fairground/Setup Sea Level")]
     public static void Setup()
     {
+        // Esta herramienta es de la Fase 3: reconstruye los prefabs de los objetivos y el decorado desde cero.
+        // Lo añadido después a mano o con otras herramientas se perdería: TargetFall y TargetAppear,
+        // IdleOscillator (ala, tentáculos, ojos), hittableFrom del búho, materiales animados y colliders del
+        // decorado (este último se recupera con Setup Scenery Colliders). Por eso pide confirmación.
+        if (!EditorUtility.DisplayDialog("Setup Sea Level",
+                "Reconstruye los prefabs de este nivel desde cero.\n\nSe perderán TargetFall, TargetAppear, las animaciones " +
+                "en reposo (IdleOscillator), el ajuste del búho y los materiales animados del decorado. Después habría que " +
+                "volver a pasar Setup Scenery Colliders y rehacer esos cambios.\n\n¿Continuar?",
+                "Reconstruir", "Cancelar"))
+            return;
+
         if (!AssetDatabase.IsValidFolder(PrefabFolder))
             AssetDatabase.CreateFolder("Assets/Prefabs", "Sea");
 
@@ -194,7 +205,7 @@ public static class SeaLevelSetup
         SerializedObject so = new SerializedObject(target);
         so.FindProperty("points").intValue = points;
         so.FindProperty("lifetime").floatValue = lifetime;
-        so.FindProperty("hitsToKill").intValue = hits;
+        so.FindProperty("health").intValue = hits;   // antes hitsToKill (renombrado en la Fase 5)
         so.FindProperty("haloScale").floatValue = 1.12f;
         so.ApplyModifiedPropertiesWithoutUndo();
 
