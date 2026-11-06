@@ -22,7 +22,11 @@ public class ProfileManager : MonoBehaviour
     [Tooltip("Mejoras que existen en el juego (las que salen en la tienda)")]
     [SerializeField] private UpgradeData[] upgrades;
 
-    private const string FileName = "profiles.json";
+    // Archivo en Application.persistentDataPath. En Main es profiles.json; en escenas de prueba
+    // (BossSandbox) se cambia para no tocar los perfiles reales al ganar o perder una partida
+    [Tooltip("Archivo de perfiles en persistentDataPath. Solo se cambia en escenas de prueba")]
+    [SerializeField] private string fileName = "profiles.json";
+    private string FileName => string.IsNullOrWhiteSpace(fileName) ? "profiles.json" : fileName;
 
     // Créditos = max(0, puntuación final) / ScorePerCredit (división entera)
     public const int ScorePerCredit = 10;

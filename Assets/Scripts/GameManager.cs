@@ -2,6 +2,15 @@ using System.Collections;
 using UnityEngine;
 using TMPro;
 
+// Por qué acaba la partida (I7.1). Tiempo = se acabó el último nivel normal; Derrota = el jugador perdió
+// los corazones contra el boss; Victoria = venció al boss. Para la pantalla de fin (Jaime, J7.1)
+public enum GameOverReason
+{
+    Time,
+    Defeat,
+    Victory
+}
+
 public class GameManager : MonoBehaviour
 {
     public enum GameState
@@ -37,6 +46,12 @@ public class GameManager : MonoBehaviour
 
     // Resultado de la última partida, para la pantalla de fin
     public int LastCreditsEarned { get; private set; }
+    public GameOverReason LastGameOverReason { get; private set; } = GameOverReason.Time;
+
+    // Se lanza al final de EndGame, con los créditos ya guardados
+    public event System.Action<GameOverReason> GameEnded;
+
+    private PlayerHealth playerHealth;
 
     private void Awake()
     {
@@ -46,10 +61,24 @@ public class GameManager : MonoBehaviour
         targetSpawner = FindFirstObjectByType<TargetSpawner>();
         levelManager = FindFirstObjectByType<LevelManager>();
         profileManager = FindFirstObjectByType<ProfileManager>();
+        playerHealth = FindFirstObjectByType<PlayerHealth>();
 
         if (levelTransitionPanel != null)
             levelTransitionPanel.SetActive(false);
     }
+
+    private void OnEnable()
+    {
+        if (playerHealth != null) playerHealth.Died += HandlePlayerDied;
+    }
+
+    private void OnDisable()
+    {
+        if (playerHealth != null) playerHealth.Died -= HandlePlayerDied;
+    }
+
+    // Se conservan los puntos de los niveles 1–3 y los del boss hasta ahora (§27.7): EndGame no resta nada
+    private void HandlePlayerDied() => EndGame(GameOverReason.Defeat);
 
     public void StartGame()
     {
@@ -172,12 +201,16 @@ public class GameManager : MonoBehaviour
             text.text = value;
     }
 
-    public void EndGame()
+    // Sin parámetro, como antes: fin por tiempo. Se conserva por si algún botón o script lo llama así
+    public void EndGame() => EndGame(GameOverReason.Time);
+
+    public void EndGame(GameOverReason reason)
     {
         if (CurrentState != GameState.Playing)
             return;
 
         CurrentState = GameState.GameOver;
+        LastGameOverReason = reason;
         targetSpawner.ResetSpawner();
 
         int finalScore = scoreManager.GetScore();
@@ -193,8 +226,10 @@ public class GameManager : MonoBehaviour
         gameOverPanel.SetActive(true);
 
         // Resumen para equilibrar precios y créditos (Fase 5, hito 6)
-        Debug.Log($"Fin de partida · {profileName} · puntos {finalScore} · créditos +{LastCreditsEarned} (total {totalCredits}) · " +
+        Debug.Log($"Fin de partida ({reason}) · {profileName} · puntos {finalScore} · créditos +{LastCreditsEarned} (total {totalCredits}) · " +
                   $"precisión {scoreManager.RunAccuracy:P0} ({scoreManager.RunShotsHit}/{scoreManager.RunShotsFired}) · " +
                   $"racha máxima {scoreManager.MaxStreak}");
+
+        GameEnded?.Invoke(reason);
     }
 }

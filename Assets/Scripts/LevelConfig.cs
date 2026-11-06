@@ -30,6 +30,11 @@ public class LevelConfig : ScriptableObject
     [Tooltip("Música de fondo del nivel (la reproduce MusicManager en bucle). Vacío = silencio")]
     public AudioClip music;
 
+    [Header("Boss (nivel 4)")]
+    [Tooltip("Nivel con boss: activa PlayerHealth y BossController. Provisional: hasta I7.6 la duración debe ser " +
+             "muy larga, porque el boss no tiene cuenta atrás y el temporizador acabaría el nivel")]
+    public bool isBossLevel;
+
     [Header("Duración")]
     [Min(1f)] public float duration = 60f;
 
