@@ -26,20 +26,27 @@ public readonly struct ShotResult
     public readonly bool HitPenalty;     // alguno de ellos era de penalización (rompe la racha)
     public readonly int ExplosionKills;  // objetivos derribados solo por la onda expansiva
 
+    // I7.1: algún impacto directo dio a un punto débil del boss (un IDamageable que no es Target).
+    // Cuenta como acierto para la racha y el hitmarker aunque Target sea null
+    public readonly bool HitWeakPoint;
+
     public ShotResult(bool hitSomething, bool hitScenery, Vector3 point, Vector3 normal, Collider collider, Target target,
-        float damage = 0f, bool killedTarget = false, int targetsHit = -1, bool hitPenalty = false, int explosionKills = 0)
+        float damage = 0f, bool killedTarget = false, int targetsHit = -1, bool hitPenalty = false, int explosionKills = 0,
+        bool hitWeakPoint = false)
     {
         HitSomething = hitSomething;
-        HitTarget = target != null;
+        HitWeakPoint = hitWeakPoint;
+        // HitTarget es lo que leen la racha, el hitmarker y el sonido de acierto: un punto débil es un acierto
+        HitTarget = target != null || hitWeakPoint;
         HitScenery = hitScenery;
         Point = point;
         Normal = normal;
         Collider = collider;
         Target = target;
-        Damage = target != null ? damage : 0f;
+        Damage = HitTarget ? damage : 0f;
         KilledTarget = killedTarget;
         // -1 = constructor antiguo (un solo objetivo): se deduce del objetivo principal
-        TargetsHit = targetsHit >= 0 ? targetsHit : (target != null ? 1 : 0);
+        TargetsHit = targetsHit >= 0 ? targetsHit : (HitTarget ? 1 : 0);
         HitPenalty = hitPenalty || (target != null && target.IsPenalty);
         ExplosionKills = explosionKills;
     }
@@ -57,10 +64,16 @@ public readonly struct ShotImpact
     public readonly Target Target;       // null si es una superficie
     public readonly bool HitScenery;
     public readonly bool Killed;         // el impacto derribó al objetivo
+    public readonly bool HitWeakPoint;   // I7.1: dio a un punto débil del boss (Target es null)
 
-    public ShotImpact(Vector3 point, Vector3 normal, Collider collider, Target target, bool hitScenery, bool killed)
+    // Acierto en este impacto: un objetivo o un punto débil. Para el confeti de WeaponEffects
+    public bool IsHit => Target != null || HitWeakPoint;
+
+    public ShotImpact(Vector3 point, Vector3 normal, Collider collider, Target target, bool hitScenery, bool killed,
+        bool hitWeakPoint = false)
     {
         Point = point; Normal = normal; Collider = collider; Target = target; HitScenery = hitScenery; Killed = killed;
+        HitWeakPoint = hitWeakPoint;
     }
 }
 
@@ -106,9 +119,10 @@ public class PlayerShoot : MonoBehaviour
     public event System.Action<Vector3, float> Exploded;
 
     // Listas reutilizadas entre disparos: sin basura para el recolector en cada clic
-    private readonly System.Collections.Generic.List<Target> shotTargets = new System.Collections.Generic.List<Target>();
-    private readonly System.Collections.Generic.List<Target> rayTargets = new System.Collections.Generic.List<Target>();
-    private readonly System.Collections.Generic.List<Target> blastTargets = new System.Collections.Generic.List<Target>();
+    // De IDamageable (I7.1): un mismo disparo puede dar a dianas y a puntos débiles
+    private readonly System.Collections.Generic.List<IDamageable> shotTargets = new System.Collections.Generic.List<IDamageable>();
+    private readonly System.Collections.Generic.List<IDamageable> rayTargets = new System.Collections.Generic.List<IDamageable>();
+    private readonly System.Collections.Generic.List<IDamageable> blastTargets = new System.Collections.Generic.List<IDamageable>();
     private RaycastHit[] rayHits = new RaycastHit[16];
     private readonly Collider[] blastHits = new Collider[24];
 
@@ -249,7 +263,7 @@ public class PlayerShoot : MonoBehaviour
         int penetration = Mathf.Max(1, stats.Penetration);
 
         shotTargets.Clear();
-        bool hitPenalty = false, killedAny = false, hitSomething = false;
+        bool hitPenalty = false, killedAny = false, hitSomething = false, hitWeakPoint = false;
         float totalDamage = 0f;
         int explosionKills = 0;
 
@@ -270,34 +284,42 @@ public class PlayerShoot : MonoBehaviour
             for (int i = 0; i < count; i++)
             {
                 RaycastHit hit = rayHits[i];
-                Target target = hit.collider.GetComponent<Target>();
+                // I7.1: se busca IDamageable y no Target. Target sigue siendo el caso habitual
+                IDamageable damageable = hit.collider.GetComponent<IDamageable>();
+                Target target = damageable as Target;
+                bool weakPoint = damageable != null && target == null;   // hoy, el único otro IDamageable
 
-                // Un objetivo con varios colliders, o ya alcanzado por este rayo: no cuenta dos veces
-                if (target != null && (target.IsDead || target.IsExpiring || rayTargets.Contains(target)))
+                // Ya no se le puede dar (derribado, expirando, cerrado), o ya lo alcanzó este rayo
+                // (varios colliders): no cuenta y el rayo sigue
+                if (damageable != null && (!damageable.CanBeHit || rayTargets.Contains(damageable)))
                     continue;
 
                 hitSomething = true;
                 bool scenery = (sceneryMask.value & (1 << hit.collider.gameObject.layer)) != 0;
 
-                if (target != null)
+                if (damageable != null)
                 {
-                    rayTargets.Add(target);
-                    if (!shotTargets.Contains(target)) shotTargets.Add(target);
-                    if (target.IsPenalty) hitPenalty = true;
+                    rayTargets.Add(damageable);
+                    if (!shotTargets.Contains(damageable)) shotTargets.Add(damageable);
+                    if (target != null && target.IsPenalty) hitPenalty = true;
+                    if (weakPoint) hitWeakPoint = true;
 
                     // Daño ANTES de publicar nada: los puntos se suman antes que cualquier efecto
-                    target.TakeDamage(stats.Damage);
+                    damageable.TakeDamage(stats.Damage);
                     totalDamage += stats.Damage;
-                    killedAny |= target.IsDead;
+                    bool killed = target != null && target.IsDead;
+                    killedAny |= killed;
 
-                    ShotImpact impact = new ShotImpact(hit.point, hit.normal, hit.collider, target, false, target.IsDead);
+                    ShotImpact impact = new ShotImpact(hit.point, hit.normal, hit.collider, target, false, killed, weakPoint);
                     Publish(hit, impact);
                     if (!primaryIsTarget) { primary = impact; hasPrimary = true; primaryIsTarget = true; }
 
                     if (stats.ExplosionRadius > 0f)
-                        explosionKills += Explode(hit.point, stats.ExplosionRadius, stats.Damage, target);
+                        explosionKills += Explode(hit.point, stats.ExplosionRadius, stats.Damage, damageable);
 
-                    if (rayTargets.Count >= penetration)
+                    // Un punto débil para el rayo: la penetración no atraviesa al boss (§27.4). No se confía
+                    // en que detrás haya un collider de decorado bien colocado
+                    if (weakPoint || rayTargets.Count >= penetration)
                     {
                         end = hit.point;
                         break;
@@ -324,7 +346,8 @@ public class PlayerShoot : MonoBehaviour
 
         ShotResult result = hasPrimary
             ? new ShotResult(true, primary.HitScenery, primary.Point, primary.Normal, primary.Collider,
-                primaryIsTarget ? primary.Target : null, totalDamage, killedAny, shotTargets.Count, hitPenalty, explosionKills)
+                primaryIsTarget ? primary.Target : null, totalDamage, killedAny, shotTargets.Count, hitPenalty, explosionKills,
+                hitWeakPoint)
             : new ShotResult(false, false, firstRay.GetPoint(range), -firstRay.direction, null, null,
                 0f, false, 0, false, explosionKills);
 
@@ -367,7 +390,8 @@ public class PlayerShoot : MonoBehaviour
     // más cercano de cada objetivo. El objetivo del impacto directo queda fuera (ya recibió el daño
     // completo; si no, la bala explosiva haría casi el doble). Devuelve los derribados por la onda.
     // No cuenta para la racha ni para el hitmarker: solo el impacto directo decide acierto o fallo
-    private int Explode(Vector3 center, float radius, float damage, Target exclude)
+    // I7.1: también daña puntos débiles (IDamageable), con el mismo decaimiento; solo los Target cuentan como derribos
+    private int Explode(Vector3 center, float radius, float damage, IDamageable exclude)
     {
         Exploded?.Invoke(center, radius);
 
@@ -376,8 +400,8 @@ public class PlayerShoot : MonoBehaviour
         blastTargets.Clear();   // para no dañar dos veces al mismo objetivo (varios colliders) en esta onda
         for (int i = 0; i < count; i++)
         {
-            Target target = blastHits[i].GetComponent<Target>();
-            if (target == null || target == exclude || target.IsDead || target.IsExpiring || blastTargets.Contains(target))
+            IDamageable target = blastHits[i].GetComponent<IDamageable>();
+            if (target == null || target == exclude || !target.CanBeHit || blastTargets.Contains(target))
                 continue;
             blastTargets.Add(target);
 
@@ -387,14 +411,14 @@ public class PlayerShoot : MonoBehaviour
                 continue;
 
             target.TakeDamage(damage * falloff);
-            if (target.IsDead) kills++;
+            if (target is Target t && t.IsDead) kills++;
         }
         return kills;
     }
 
     private void Publish(RaycastHit hit, ShotImpact impact)
     {
-        OnHit?.Invoke(hit, impact.Target != null);
+        OnHit?.Invoke(hit, impact.IsHit);
         ImpactResolved?.Invoke(impact);
     }
 }

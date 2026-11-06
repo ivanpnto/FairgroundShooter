@@ -217,7 +217,7 @@ public class WeaponEffects : MonoBehaviour
     {
         WeaponData weapon = weaponController != null ? weaponController.CurrentWeapon : null;
         float scale = weapon != null ? weapon.impactScale : 1f;
-        bool hitTarget = shot.Target != null;
+        bool hitTarget = shot.IsHit;   // I7.1: un punto débil del boss también es un acierto (confeti)
 
         ParticleSystem system;
         int baseCount;

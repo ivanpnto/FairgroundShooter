@@ -9,7 +9,7 @@ public enum TargetBonus
     Ammo    // contorno rojo: rellena el cargador
 }
 
-public class Target : MonoBehaviour
+public class Target : MonoBehaviour, IDamageable
 {
     [SerializeField] private int points = 10;
     [SerializeField] private float lifetime = 5f;
@@ -52,6 +52,8 @@ public class Target : MonoBehaviour
     public bool CanHaveBonus => points > 0;   // un objetivo de penalización nunca es especial
     public bool IsPenalty => points < 0;      // resta puntos y rompe la racha
     public bool IsDead { get; private set; }
+    // IDamageable (I7.1): mismas condiciones con las que PlayerShoot lo saltaba antes
+    public bool CanBeHit => !IsDead && !IsExpiring;
     public float MaxHealth { get; private set; }   // vida con el multiplicador del nivel ya aplicado (puede ser decimal)
     public float Health => currentHealth;
 
