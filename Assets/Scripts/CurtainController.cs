@@ -18,6 +18,17 @@ public class CurtainController : MonoBehaviour
     private Animator animator;
     private GameManager gameManager;
 
+    // Anulación para escenas (revelación del boss, §27.1): true/false fuerza abierto o cerrado; null = lo de
+    // siempre (abierto solo en Playing)
+    public bool? OpenOverride { get; set; }
+
+    // Velocidad de las animaciones del telón (1 = normal). La revelación lo abre "de golpe" con 3
+    public float Speed
+    {
+        get => animator != null ? animator.speed : 1f;
+        set { if (animator != null) animator.speed = value; }
+    }
+
     private void Awake()
     {
         animator = GetComponent<Animator>();
@@ -29,6 +40,6 @@ public class CurtainController : MonoBehaviour
         if (gameManager == null)
             return;
 
-        animator.SetBool(OpenParam, gameManager.CurrentState == GameManager.GameState.Playing);
+        animator.SetBool(OpenParam, OpenOverride ?? gameManager.CurrentState == GameManager.GameState.Playing);
     }
 }

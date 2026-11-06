@@ -195,6 +195,25 @@ public class GameManager : MonoBehaviour
         CurrentState = GameState.Playing;
     }
 
+    // Escenas cortas sin control del jugador (la revelación del boss, §27.1). Se reutiliza LevelTransition:
+    // ya significa "no hay disparos, ni tiempo, ni objetivos", y todo lo que mira el estado lo respeta.
+    // Devuelven false si no se podía (p. ej. la partida ya ha acabado)
+    public bool PauseForCutscene()
+    {
+        if (CurrentState != GameState.Playing)
+            return false;
+        CurrentState = GameState.LevelTransition;
+        return true;
+    }
+
+    public bool ResumeFromCutscene()
+    {
+        if (CurrentState != GameState.LevelTransition)
+            return false;
+        CurrentState = GameState.Playing;
+        return true;
+    }
+
     private static void SetText(TMP_Text text, string value)
     {
         if (text != null)

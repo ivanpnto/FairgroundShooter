@@ -64,8 +64,14 @@ public class BossWeakPoint : MonoBehaviour, IDamageable
         Material material = open ? openMaterial : closedMaterial;
         if (material == null || renderers == null)
             return;
+        // Todas las ranuras de material (una lente del modelo puede tener más de una)
         foreach (Renderer rend in renderers)
-            if (rend != null) rend.sharedMaterial = material;
+        {
+            if (rend == null) continue;
+            Material[] mats = rend.sharedMaterials;
+            for (int i = 0; i < mats.Length; i++) mats[i] = material;
+            rend.sharedMaterials = mats;
+        }
     }
 
     public void TakeDamage(float damage)

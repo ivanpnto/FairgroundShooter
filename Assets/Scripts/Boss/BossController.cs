@@ -46,6 +46,9 @@ public class BossController : MonoBehaviour
     }
 
     [SerializeField] private BossConfig config;
+    [Tooltip("Empieza solo al empezar el nivel del boss. Desactivado cuando hay BossReveal: la revelación " +
+             "llama a StartFight al terminar")]
+    [SerializeField] private bool autoStart = true;
 
     [Header("Piezas")]
     [Tooltip("Vacío = se buscan todos los BossWeakPoint hijos")]
@@ -64,6 +67,9 @@ public class BossController : MonoBehaviour
     [SerializeField] private Transform jawPivot;
     [Tooltip("Giro de apertura. Negativo en X baja el frente con la bisagra detrás (positivo la metería en la cabeza)")]
     [SerializeField] private Vector3 jawOpenEuler = new Vector3(-28f, 0f, 0f);
+    [Tooltip("Desplazamiento local al abrirse. La mandíbula de un muñeco de ventrílocuo BAJA recta entre las " +
+             "líneas de marioneta: con solo giro y la bisagra arriba se pone de canto y desde abajo casi no se ve")]
+    [SerializeField] private Vector3 jawOpenOffset = Vector3.zero;
 
     [Header("Reacción a los impactos (en el modelo, la capa additive del Animator la sustituye)")]
     [Tooltip("Lo que se tambalea (vacío = nada). Con cubos, el pivote del cuerpo; con el modelo, nada")]
@@ -128,7 +134,9 @@ public class BossController : MonoBehaviour
     private readonly Dictionary<Renderer, Material[]> originalMaterials = new Dictionary<Renderer, Material[]>();
 
     private float jawOpen, jawTarget;   // 0 cerrada, 1 abierta
+    private bool roaring;
     private Quaternion jawClosedRotation;
+    private Vector3 jawClosedPosition;
     private float flinch;               // grados de tambaleo que quedan
     private Quaternion flinchBaseRotation;
 
@@ -170,7 +178,7 @@ public class BossController : MonoBehaviour
                     if (rend != null && !originalMaterials.ContainsKey(rend)) originalMaterials.Add(rend, rend.sharedMaterials);
             }
 
-        if (jawPivot != null) jawClosedRotation = jawPivot.localRotation;
+        if (jawPivot != null) { jawClosedRotation = jawPivot.localRotation; jawClosedPosition = jawPivot.localPosition; }
         if (flinchPivot != null) flinchBaseRotation = flinchPivot.localRotation;
 
         // Pose original de las piezas que se sueltan, para recolocarlas en la partida siguiente
@@ -196,8 +204,8 @@ public class BossController : MonoBehaviour
     // Empieza solo en un nivel de boss; cualquier otro nivel (también una partida nueva) lo apaga
     private void HandleLevelStarted(LevelConfig level, int index)
     {
-        if (level != null && level.isBossLevel) StartFight();
-        else StopFight();
+        if (level != null && level.isBossLevel) { if (autoStart) StartFight(); }
+        else { StopFight(); ResetVisuals(); }
     }
 
     public void StartFight()
@@ -229,7 +237,7 @@ public class BossController : MonoBehaviour
         ShowTelegraph(false);
         DamageMultiplier = 1f;
         jawTarget = jawOpen = 0f;
-        if (jawPivot != null) jawPivot.localRotation = jawClosedRotation;
+        if (jawPivot != null) { jawPivot.localRotation = jawClosedRotation; jawPivot.localPosition = jawClosedPosition; }
         flinch = 0f;
         if (flinchPivot != null) flinchPivot.localRotation = flinchBaseRotation;
         SetOpen(OpenMode.None);
@@ -238,10 +246,10 @@ public class BossController : MonoBehaviour
 
     private void Update()
     {
-        if (State == BossState.Inactive)
+        if (State == BossState.Inactive && !roaring && jawOpen == jawTarget && flinch <= 0f)
             return;
 
-        if (Playing && State != BossState.Dead)
+        if (Playing && State != BossState.Dead && State != BossState.Inactive)
         {
             FightTime += Time.deltaTime;
             if (!IsFurious && config.furyTime > 0f && FightTime >= config.furyTime)
@@ -257,6 +265,7 @@ public class BossController : MonoBehaviour
         {
             jawOpen = Mathf.MoveTowards(jawOpen, jawTarget, Time.deltaTime * 4f);
             jawPivot.localRotation = jawClosedRotation * Quaternion.Euler(jawOpenEuler * jawOpen);
+            jawPivot.localPosition = jawClosedPosition + jawOpenOffset * jawOpen;
         }
 
         // Tambaleo: oscilación que se apaga. Aturdido, nunca baja de un mínimo (se le ve "grogui")
@@ -695,6 +704,44 @@ public class BossController : MonoBehaviour
     {
         yield return new WaitForSeconds(partLifetime);
         if (part != null) part.SetActive(false);
+    }
+
+    // Pose de partida: piezas en su sitio, boca cerrada, sin tambaleo ni aviso. Lo usa la revelación antes
+    // de levantar al boss, y el inicio de cada combate
+    public void ResetVisuals()
+    {
+        RestoreParts();
+        ShowTelegraph(false);
+        jawTarget = jawOpen = 0f;
+        if (jawPivot != null) { jawPivot.localRotation = jawClosedRotation; jawPivot.localPosition = jawClosedPosition; }
+        flinch = 0f;
+        if (flinchPivot != null) flinchPivot.localRotation = flinchBaseRotation;
+        SetOpen(OpenMode.None);
+    }
+
+    // Rugido de la revelación: abre la boca con la luz roja del bocinazo y se sacude. No hace daño
+    public void PlayRoar(float seconds)
+    {
+        if (State != BossState.Inactive || config == null)
+            return;
+        StartCoroutine(RoarRoutine(seconds));
+    }
+
+    private IEnumerator RoarRoutine(float seconds)
+    {
+        CurrentAttack = BossAttack.ChargedHonk;
+        jawTarget = 1f;
+        ShowTelegraph(true);
+        roaring = true;
+        for (float t = 0f; t < seconds; t += Time.deltaTime)
+        {
+            SetTelegraphLight(Mathf.PingPong(t * 4f, 1f));
+            flinch = maxFlinch * 0.6f;
+            yield return null;
+        }
+        roaring = false;
+        ShowTelegraph(false);
+        jawTarget = 0f;
     }
 
     // Partida nueva: las piezas sueltas vuelven a su sitio
