@@ -18,15 +18,55 @@ MonoBehaviour:
     weakPointIds:
     - Eye
     attacks: 00000000
-    idleTime: {x: 1.5, y: 2.5}
+    idleTime: {x: 1.6, y: 2.4}
     telegraphTime: 1
     vulnerableTime: 2.5
-    projectilesPerVolley: 3
+    projectilesPerVolley: 2
     maxProjectilesAlive: 3
-    projectileInterval: 0.45
-    projectileFlightTime: {x: 1.6, y: 2.2}
+    projectileInterval: 0.5
+    projectileFlightTime: {x: 1.9, y: 2.2}
+    backgroundProjectileInterval: 0
+  - label: "Manos y mand\xEDbula"
+    health: 20
+    weakPointIds:
+    - Hand
+    - Jaw
+    attacks: 0000000001000000
+    idleTime: {x: 1.4, y: 2.2}
+    telegraphTime: 0.9
+    vulnerableTime: 2.3
+    projectilesPerVolley: 3
+    maxProjectilesAlive: 4
+    projectileInterval: 0.4
+    projectileFlightTime: {x: 1.8, y: 2.1}
+    backgroundProjectileInterval: 2.5
+  - label: "N\xFAcleo"
+    health: 20
+    weakPointIds:
+    - Core
+    attacks: 0000000001000000
+    idleTime: {x: 1, y: 1.6}
+    telegraphTime: 0.8
+    vulnerableTime: 2
+    projectilesPerVolley: 4
+    maxProjectilesAlive: 5
+    projectileInterval: 0.32
+    projectileFlightTime: {x: 1.6, y: 1.9}
+    backgroundProjectileInterval: 1.6
   phaseChangeDuration: 2
   projectilePrefab: {fileID: 6802895817535235489, guid: 8a42184475f4f9f43ad40746c984edc9, type: 3}
   projectileHeartDamage: 1
+  projectileArcHeight: 1
   projectileAimJitter: 0.35
+  honkTelegraphTime: 1.5
+  honkMinTelegraphTime: 1.2
+  honkCounterDamage: 4
+  honkCounterWeakPointId: Jaw
+  honkHeartDamage: 2
+  honkRecoveryTime: 0.6
+  stunDuration: 3
+  stunDamageMultiplier: 1.5
+  furyTime: 180
+  furyTimeMultiplier: 0.75
+  weakPointPointsPerDamage: 10
   deathDelay: 1.5

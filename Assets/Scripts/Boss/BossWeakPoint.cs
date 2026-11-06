@@ -19,6 +19,16 @@ public class BossWeakPoint : MonoBehaviour, IDamageable
     [SerializeField] private Material openMaterial;
     [SerializeField] private Material closedMaterial;
 
+    [Header("Tapa (opcional: la compuerta del pecho)")]
+    [Tooltip("Pivote de una tapa que se abre al abrirse el punto débil (origen en la bisagra)")]
+    [SerializeField] private Transform cover;
+    [SerializeField] private Vector3 coverOpenEuler = new Vector3(0f, -110f, 0f);
+    [SerializeField, Min(0.1f)] private float coverSpeed = 3f;
+
+    [Header("Reacción al impacto")]
+    [Tooltip("Cuánto crece un instante al recibir daño (0 = nada). Que cada acierto se note")]
+    [SerializeField, Min(0f)] private float hitPunch = 0.18f;
+
     public string Id => id;
     public bool IsOpen { get; private set; }
     public bool CanBeHit => IsOpen && boss != null && boss.CanTakeDamage;
@@ -28,12 +38,18 @@ public class BossWeakPoint : MonoBehaviour, IDamageable
 
     private BossController boss;
     private Collider[] colliders;
+    private Vector3 baseScale;
+    private float punch;
+    private Quaternion coverClosed;
+    private float coverOpen;
 
     private void Awake()
     {
         colliders = GetComponents<Collider>();
         if (renderers == null || renderers.Length == 0)
             renderers = GetComponents<Renderer>();
+        baseScale = transform.localScale;
+        if (cover != null) coverClosed = cover.localRotation;
         SetOpen(false);
     }
 
@@ -58,7 +74,25 @@ public class BossWeakPoint : MonoBehaviour, IDamageable
             return;
 
         float applied = boss.ApplyDamage(this, damage);
-        if (applied > 0f)
-            Damaged?.Invoke(this, applied);
+        if (applied <= 0f)
+            return;
+
+        punch = hitPunch;
+        Damaged?.Invoke(this, applied);
+    }
+
+    private void Update()
+    {
+        if (punch > 0f || transform.localScale != baseScale)
+        {
+            punch = Mathf.MoveTowards(punch, 0f, Time.deltaTime * 1.5f);
+            transform.localScale = baseScale * (1f + punch);
+        }
+
+        if (cover != null)
+        {
+            coverOpen = Mathf.MoveTowards(coverOpen, IsOpen ? 1f : 0f, Time.deltaTime * coverSpeed);
+            cover.localRotation = coverClosed * Quaternion.Euler(coverOpenEuler * Mathf.SmoothStep(0f, 1f, coverOpen));
+        }
     }
 }

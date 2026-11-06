@@ -9,6 +9,7 @@ public class BossDebugHUD : MonoBehaviour
     private PlayerHealth health;
     private BossController boss;
     private GameManager gameManager;
+    private ScoreManager scoreManager;
     private GUIStyle style;
 
     private void Awake()
@@ -16,6 +17,7 @@ public class BossDebugHUD : MonoBehaviour
         health = FindFirstObjectByType<PlayerHealth>();
         boss = FindFirstObjectByType<BossController>();
         gameManager = FindFirstObjectByType<GameManager>();
+        scoreManager = FindFirstObjectByType<ScoreManager>();
     }
 
     private void OnGUI()
@@ -27,16 +29,22 @@ public class BossDebugHUD : MonoBehaviour
             ? new string('♥', health.Hearts) + new string('·', health.MaxHearts - health.Hearts) +
               (health.IsInvulnerable ? "  (invulnerable)" : "")
             : "—";
-        string bossText = boss != null
-            ? $"{boss.State} · fase {boss.PhaseIndex + 1}/{boss.PhaseCount} · vida {boss.Health:0.##}/{boss.MaxHealth:0.##} " +
-              $"(fase {boss.PhaseHealth:0.##})"
-            : "sin boss";
+        string bossText = "sin boss";
+        if (boss != null)
+        {
+            bossText = $"{boss.State}" + (boss.State == BossController.BossState.Telegraph ? $" ({boss.CurrentAttack})" : "") +
+                       $" · fase {boss.PhaseIndex + 1}/{boss.PhaseCount} · vida {boss.Health:0.#}/{boss.MaxHealth:0.#}" +
+                       $" · {boss.FightTime:0} s" + (boss.IsFurious ? " · FURIA" : "");
+            if (boss.State == BossController.BossState.Telegraph && boss.CurrentAttack == BossAttack.ChargedHonk)
+                bossText += $"\nMandíbula: {boss.HonkCounterProgress:P0}";
+        }
         string game = gameManager != null
             ? $"{gameManager.CurrentState}" + (gameManager.CurrentState == GameManager.GameState.GameOver
                 ? $" ({gameManager.LastGameOverReason})" : "")
             : "";
+        string score = scoreManager != null ? $" · puntos {scoreManager.GetScore()} · racha {scoreManager.StreakCount}" : "";
 
-        GUI.Box(new Rect(10, 10, 560, 84), $"Corazones: {hearts}\nBoss: {bossText}\nPartida: {game}", style);
+        GUI.Box(new Rect(10, 10, 620, 106), $"Corazones: {hearts}\nBoss: {bossText}\nPartida: {game}{score}", style);
     }
 #endif
 }
