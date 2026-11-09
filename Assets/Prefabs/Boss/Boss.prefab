@@ -84,7 +84,7 @@ MonoBehaviour:
     - {fileID: 2269200478293626196}
   partImpulse: 4
   partLifetime: 3.5
-  animator: {fileID: 0}
+  animator: {fileID: 7730301634861151764}
 --- !u!1 &5328419983750587106
 GameObject:
   m_ObjectHideFlags: 0
@@ -449,6 +449,12 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d15203defbd4c9b4fb463459cc6c494e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7730301634861151764}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d15203defbd4c9b4fb463459cc6c494e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5505022122007785202}
     - targetCorrespondingSourceObject: {fileID: 2019086242730970568, guid: d15203defbd4c9b4fb463459cc6c494e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8412014341765439988}
@@ -864,7 +870,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.075, y: 0.10999998, z: 0.25000012}
+  m_Size: {x: 1.075, y: 0.10999998, z: 0.45}
   m_Center: {x: 0, y: -0.0049999966, z: -0.000000834465}
 --- !u!114 &5907779675978758772
 MonoBehaviour:
@@ -1186,6 +1192,45 @@ MonoBehaviour:
   coverOpenEuler: {x: 0, y: -110, z: 0}
   coverSpeed: 3
   hitPunch: 0.18
+--- !u!1 &8623980193282304973 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: d15203defbd4c9b4fb463459cc6c494e, type: 3}
+  m_PrefabInstance: {fileID: 8894575843416053404}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &7730301634861151764
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8623980193282304973}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: bc77beb8167666a41b5c6957db83303e, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &5505022122007785202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8623980193282304973}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b21ceb525559a048bf8b3d7bd4a939e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossAnimationEvents
 --- !u!1 &8638055219304774258 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 905057421641854190, guid: d15203defbd4c9b4fb463459cc6c494e, type: 3}

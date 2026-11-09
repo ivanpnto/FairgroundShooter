@@ -26,6 +26,8 @@ MonoBehaviour:
     projectileInterval: 0.5
     projectileFlightTime: {x: 1.9, y: 2.2}
     backgroundProjectileInterval: 0
+    minionInterval: 0
+    maxMinions: 0
   - label: "Manos y mand\xEDbula"
     health: 20
     weakPointIds:
@@ -40,6 +42,8 @@ MonoBehaviour:
     projectileInterval: 0.4
     projectileFlightTime: {x: 1.8, y: 2.1}
     backgroundProjectileInterval: 2.5
+    minionInterval: 5
+    maxMinions: 1
   - label: "N\xFAcleo"
     health: 20
     weakPointIds:
@@ -53,11 +57,14 @@ MonoBehaviour:
     projectileInterval: 0.32
     projectileFlightTime: {x: 1.6, y: 1.9}
     backgroundProjectileInterval: 1.6
+    minionInterval: 4
+    maxMinions: 2
   phaseChangeDuration: 2
   projectilePrefab: {fileID: 6802895817535235489, guid: 8a42184475f4f9f43ad40746c984edc9, type: 3}
   projectileHeartDamage: 1
   projectileArcHeight: 1
   projectileAimJitter: 0.35
+  honkWindupTime: 1.2
   honkTelegraphTime: 1.5
   honkMinTelegraphTime: 1.2
   honkCounterDamage: 4
@@ -70,3 +77,16 @@ MonoBehaviour:
   furyTimeMultiplier: 0.75
   weakPointPointsPerDamage: 10
   deathDelay: 1.5
+  victoryBonusBase: 2000
+  victoryBonusPerHeart: 500
+  victoryBonusPerSecond: 20
+  victoryParTime: 180
+  minionPrefab: {fileID: 2834708955499654938, guid: fff0b96219f265b4ea4e5fdfbd951cda, type: 3}
+  minionLaneId: Boss_Minion
+  minionWaitTime: {x: 2.2, y: 3.2}
+  minionWarningTime: 0.6
+  minionLungeTime: 0.9
+  minionHeartDamage: 1
+  minionWarningMaterial: {fileID: 2100000, guid: 26d1c6c2fd021e845bc1b23417a6d207, type: 2}
+  minionHeartChance: 0.15
+  heartBonusOutline: {fileID: 2100000, guid: 1d5947020e4ecec49b36986a8537ab01, type: 2}
