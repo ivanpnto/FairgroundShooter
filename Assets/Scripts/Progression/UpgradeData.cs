@@ -11,7 +11,10 @@ public enum UpgradeEffect
     // meterlas en medio cambiaría el efecto de las mejoras que ya existen
     Penetration,      // valuePerLevel = objetivos extra que atraviesa (1 → hasta 2 objetivos)
     ExtraRays,        // valuePerLevel = rayos extra por disparo (1 → disparo doble)
-    Explosive         // valuePerLevel = radio de la onda expansiva en metros
+    Explosive,        // valuePerLevel = radio de la onda expansiva en metros
+
+    // I7.6: añade el nivel 4 al final de la partida (maxLevel 1; valuePerLevel no se usa)
+    UnlockBossLevel
 }
 
 // Una mejora de la tienda. Es global (no por arma): su nivel se guarda en el perfil por id.

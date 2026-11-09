@@ -100,6 +100,7 @@ public class BossController : MonoBehaviour
     public bool IsFurious { get; private set; }
     public float FightTime { get; private set; }         // segundos de combate (solo en Playing)
     public float DamageMultiplier { get; private set; } = 1f;
+    public int LastVictoryBonus { get; private set; }     // para la pantalla de fin (J7.1)
     public float HonkCounterProgress => config != null ? Mathf.Clamp01(honkDamage / config.honkCounterDamage) : 0f;
 
     // Se le hace daño si hay algún punto débil abierto y no está cambiando de fase
@@ -130,6 +131,9 @@ public class BossController : MonoBehaviour
     private int originIndex;
 
     private readonly List<BossProjectile> projectiles = new List<BossProjectile>();
+    // Esbirros (I7.5) y el ataque «peligroso» en curso: un salto de esbirro o null (§27.6, regla 5)
+    private readonly List<MinionLunge> minions = new List<MinionLunge>();
+    private MinionLunge dangerOwner;
     private readonly HashSet<int> animatorTriggers = new HashSet<int>();
     private readonly Dictionary<Renderer, Material[]> originalMaterials = new Dictionary<Renderer, Material[]>();
 
@@ -145,7 +149,7 @@ public class BossController : MonoBehaviour
 
     private BossConfig.Phase CurrentPhase => config.phases[Mathf.Clamp(PhaseIndex, 0, PhaseCount - 1)];
     private bool Playing => gameManager == null || gameManager.CurrentState == GameManager.GameState.Playing;
-    private float Fury => IsFurious ? config.furyTimeMultiplier : 1f;
+    public float Fury => IsFurious ? config.furyTimeMultiplier : 1f;   // pública: la usan los esbirros
 
     private void Awake()
     {
@@ -218,12 +222,32 @@ public class BossController : MonoBehaviour
 
         StopFight();
         RestoreParts();
+        if (playerHealth != null) playerHealth.Activate();   // I7.6: los corazones llegan con el combate
+        LastVictoryBonus = 0;
         Health = MaxHealth;
         FightTime = 0f;
         IsFurious = false;
         HealthChanged?.Invoke(Health, MaxHealth);
         fight = StartCoroutine(FightRoutine());
         background = StartCoroutine(BackgroundProjectilesRoutine());
+        StartCoroutine(MinionRoutine());
+    }
+
+    // Bonus de victoria (§27.7) y récord en el perfil. Se hace al morir y no al acabar la partida, mientras aún
+    // se sabe cuántos corazones quedan; los créditos los calcula EndGame con la puntuación ya sumada
+    private void AwardVictory()
+    {
+        int hearts = playerHealth != null ? playerHealth.Hearts : 0;
+        LevelConfig level = levelManager != null ? levelManager.CurrentLevel : null;
+        float levelMultiplier = level != null ? level.pointsMultiplier : 1f;
+        float raw = config.victoryBonusBase + config.victoryBonusPerHeart * hearts +
+                    config.victoryBonusPerSecond * Mathf.Max(0f, config.victoryParTime - FightTime);
+        LastVictoryBonus = Mathf.RoundToInt(raw * levelMultiplier);
+        if (scoreManager != null) scoreManager.AddBonus(LastVictoryBonus);
+
+        ProfileManager profiles = FindFirstObjectByType<ProfileManager>();
+        if (profiles != null) profiles.RecordBossVictory(FightTime);
+        Debug.Log($"Boss: bonus de victoria +{LastVictoryBonus} ({hearts} corazones, {FightTime:0.0} s)");
     }
 
     public void StopFight()
@@ -309,6 +333,10 @@ public class BossController : MonoBehaviour
                 attacksThisPhase++;
                 lastWasHonk = CurrentAttack == BossAttack.ChargedHonk;
 
+                // El bocinazo no empieza mientras un esbirro está saltando (un peligro a la vez)
+                if (CurrentAttack == BossAttack.ChargedHonk)
+                    while (dangerOwner != null && !phaseCleared) yield return null;
+
                 if (CurrentAttack == BossAttack.ChargedHonk) yield return HonkRoutine();
                 else yield return RainRoutine();
             }
@@ -335,6 +363,7 @@ public class BossController : MonoBehaviour
         flinch = maxFlinch;
         for (int i = 0; partsDroppedAtPhase != null && i < partsDroppedAtPhase.Length; i++) DropParts(i);
         Debug.Log($"Boss: derrotado en {FightTime:0.0} s");
+        AwardVictory();
         Defeated?.Invoke();
 
         yield return Wait(config.deathDelay, interruptible: false);
@@ -375,6 +404,20 @@ public class BossController : MonoBehaviour
             while (projectiles.Count >= phase.maxProjectilesAlive && !phaseCleared)
                 yield return null;
             if (phaseCleared) yield break;
+
+            // I7.4: el primer proyectil de la tanda sale en el fotograma del latigazo del clip Boss_Throw
+            // (Animation Event → BossAnimationEvents.OnThrow → OnThrowEvent). Con un tope: si el Animator
+            // no está o el evento no llega, sale igual. La animación decora, no decide (reglas en código)
+            if (i == 0 && animator != null && animator.runtimeAnimatorController != null)
+            {
+                throwEventReceived = false;
+                for (float t = 0f; !throwEventReceived && t < ThrowEventTimeout && !phaseCleared; )
+                {
+                    if (Playing) t += Time.deltaTime;
+                    yield return null;
+                }
+                if (phaseCleared) yield break;
+            }
 
             ReleaseProjectile();
             yield return Wait(phase.projectileInterval * Fury);
@@ -496,6 +539,12 @@ public class BossController : MonoBehaviour
     }
 
     // Público para que, con el modelo, lo llame un Animation Event en el fotograma en que la mano suelta (I7.4)
+    private const float ThrowEventTimeout = 0.5f;
+    private bool throwEventReceived;
+
+    // Lo llama BossAnimationEvents desde el Animation Event del clip de lanzamiento
+    public void OnThrowEvent() => throwEventReceived = true;
+
     public void ReleaseProjectile()
     {
         if (config.projectilePrefab == null || projectileDestination == null)
@@ -539,6 +588,74 @@ public class BossController : MonoBehaviour
         for (int i = projectiles.Count - 1; i >= 0; i--)
             if (projectiles[i] != null) Destroy(projectiles[i].gameObject);
         projectiles.Clear();
+        // Los esbirros también: entre fases y al acabar no queda nada que pueda hacer daño
+        for (int i = minions.Count - 1; i >= 0; i--)
+            if (minions[i] != null) Destroy(minions[i].gameObject);
+        minions.Clear();
+        dangerOwner = null;
+    }
+
+    // ---------------------------------------------------------------- esbirros (I7.5)
+
+    // Un peligro a la vez: un esbirro solo salta si no hay bocinazo en marcha ni otro esbirro saltando
+    public bool TryClaimDanger(MinionLunge minion)
+    {
+        if (dangerOwner != null && dangerOwner != minion) return false;
+        bool honkBusy = CurrentAttack == BossAttack.ChargedHonk &&
+                        (State == BossState.Telegraph || State == BossState.Attack);
+        if (honkBusy || State == BossState.PhaseChange || State == BossState.Dead || !Playing) return false;
+        dangerOwner = minion;
+        return true;
+    }
+
+    public void ReleaseDanger(MinionLunge minion)
+    {
+        if (dangerOwner == minion) dangerOwner = null;
+    }
+
+    private IEnumerator MinionRoutine()
+    {
+        if (config.minionPrefab == null) yield break;
+        SpawnLane lane = null;
+        foreach (SpawnLane l in FindObjectsByType<SpawnLane>(FindObjectsSortMode.None))
+            if (l.LaneId == config.minionLaneId) lane = l;
+        if (lane == null || !lane.HasPoints)
+        {
+            Debug.LogWarning($"BossController: no hay carril '{config.minionLaneId}'; no saldrán esbirros.", this);
+            yield break;
+        }
+
+        float timer = 0f;
+        while (true)
+        {
+            yield return null;
+            if (!Playing || State == BossState.Inactive || State == BossState.PhaseChange || State == BossState.Dead) continue;
+            var phase = CurrentPhase;
+            if (phase.minionInterval <= 0f || phase.maxMinions <= 0) { timer = 0f; continue; }
+
+            for (int i = minions.Count - 1; i >= 0; i--)
+                if (minions[i] == null || minions[i].GetComponent<Target>().IsDead) minions.RemoveAt(i);
+
+            timer += Time.deltaTime;
+            if (timer < phase.minionInterval * Fury || minions.Count >= phase.maxMinions) continue;
+            timer = 0f;
+            SpawnMinion(lane);
+        }
+    }
+
+    private void SpawnMinion(SpawnLane lane)
+    {
+        Transform point = lane.GetRandomPoint();
+        GameObject go = Instantiate(config.minionPrefab, point.position, point.rotation);
+        Target target = go.GetComponent<Target>();
+        LevelConfig level = levelManager != null ? levelManager.CurrentLevel : null;
+        // Puntos del nivel; vida siempre la del prefab (1): un esbirro debe caer de un disparo
+        if (target != null && level != null) target.ApplyLevel(level.pointsMultiplier, 1f, 1f);
+        if (target != null && config.heartBonusOutline != null && Random.value < config.minionHeartChance)
+            target.ApplyBonus(TargetBonus.Heart, config.heartBonusOutline, 0f);
+        MinionLunge lunge = go.GetComponent<MinionLunge>();
+        if (lunge != null) { lunge.Bind(this, config); minions.Add(lunge); }
+        Debug.Log($"Boss: esbirro en {point.name}{(target != null && target.Bonus == TargetBonus.Heart ? " (ROSA)" : "")}");
     }
 
     // ---------------------------------------------------------------- daño
@@ -683,10 +800,11 @@ public class BossController : MonoBehaviour
 
             part.SetParent(null, true);
 
-            // Sus colliders pasan a trigger: el disparo y la onda ignoran los triggers, así que los trozos que
-            // vuelan delante del boss no paran las balas (en la prueba, el sombrero y las hombreras tapaban la
-            // mandíbula justo en el bocinazo de estreno de la fase). Sin colisión, caen tras la caseta
-            foreach (Collider col in part.GetComponentsInChildren<Collider>()) col.isTrigger = true;
+            // Sin collider mientras vuelan: los trozos que pasan por delante del boss no paran las balas (en la
+            // prueba, el sombrero y las hombreras tapaban la mandíbula justo en el bocinazo de estreno de la fase).
+            // Antes pasaban a trigger, pero un MeshCollider cóncavo no admite ser trigger ni ir con un Rigidbody
+            // dinámico (Unity da error). Sin colisión, caen tras la caseta
+            foreach (Collider col in part.GetComponentsInChildren<Collider>()) col.enabled = false;
 
             Rigidbody body = part.GetComponent<Rigidbody>();
             if (body == null) body = part.gameObject.AddComponent<Rigidbody>();
@@ -752,7 +870,7 @@ public class BossController : MonoBehaviour
             if (pose.part == null) continue;
             Rigidbody body = pose.part.GetComponent<Rigidbody>();
             if (body != null) { body.isKinematic = true; Destroy(body); }
-            foreach (Collider col in pose.part.GetComponentsInChildren<Collider>(true)) col.isTrigger = false;
+            foreach (Collider col in pose.part.GetComponentsInChildren<Collider>(true)) col.enabled = true;
             pose.part.SetParent(pose.parent, false);
             pose.part.localPosition = pose.position;
             pose.part.localRotation = pose.rotation;

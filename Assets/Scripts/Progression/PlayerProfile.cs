@@ -29,6 +29,11 @@ public class PlayerProfile
     public List<UpgradeLevel> upgradeLevels = new List<UpgradeLevel>();
     public List<string> unlockedWeapons = new List<string>();   // ids de WeaponData
 
+    // Nivel 4 (I7.6). Campos nuevos con valor por defecto: los perfiles guardados antes se leen igual
+    public int bossVictories;
+    public float bestBossTime;   // segundos del combate más rápido; 0 = nunca lo ha vencido
+    public bool BossDefeated => bossVictories > 0;
+
     public PlayerProfile(string name)
     {
         this.name = name;

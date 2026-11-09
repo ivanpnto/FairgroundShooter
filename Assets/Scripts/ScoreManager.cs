@@ -145,6 +145,13 @@ public class ScoreManager : MonoBehaviour
         return bonus;
     }
 
+    // Bonus que se suma tal cual, sin racha ni mejora y aunque ya no sea Playing (victoria contra el boss)
+    public void AddBonus(int points)
+    {
+        score += points;
+        UpdateScoreText();
+    }
+
     public int GetScore()
     {
         return score;

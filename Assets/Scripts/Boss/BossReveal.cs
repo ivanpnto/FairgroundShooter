@@ -2,14 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// Revelación del boss (I7.4, §27.1): «la caseta se vuelve contra ti». Animación por código y física, en
-// unos 5 s y sin control del jugador (GameManager en pausa de escena: ni disparos, ni tiempo, ni ataques):
+// Revelación del boss (I7.4, §27.1): «la caseta se vuelve contra ti». Animación por código y física.
+// I7.6: el nivel 4 empieza como uno normal («El Circo»: telón abierto, dianas, cuenta atrás) y a los
+// LevelConfig.bossRevealDelay s llega la revelación, unos 5 s sin control del jugador (pausa de escena):
 //
-//   0,0 s  Telón cerrado. Las luces parpadean y se apagan.
-//   1,2 s  ¡PUM! La pared del fondo tiembla (se oye detrás del telón).
+//   0,0 s  Las luces parpadean y se apagan. El circo deja de sacar dianas.
+//   1,2 s  ¡PUM! La pared del fondo tiembla.
 //   1,9 s  ¡PUM! La pared se agrieta y por las grietas se cuela luz roja.
-//   2,4 s  El telón se abre de golpe: la pared agrietada brilla en la oscuridad.
-//   3,2 s  ¡CRASH! Pared y techo revientan (BoothBreak) y el boss sube desde el suelo con rebote. Focos rojos.
+//   2,4 s  (Solo si el telón estaba cerrado, con retardo 0) el telón se abre de golpe.
+//   3,2 s  ¡CRASH! Pared, techo y decorado del circo revientan y el boss sube desde el suelo con rebote.
 //   4,2 s  Rugido: boca abierta y luz roja, sin daño.
 //   5,0 s  Empieza el combate (BossController.StartFight).
 //
@@ -27,8 +28,12 @@ public class BossReveal : MonoBehaviour
     [SerializeField] private Light[] stageLights;
     [Tooltip("Luz roja detrás de la pared: se cuela por las grietas")]
     [SerializeField] private Light crackLight;
-    [Tooltip("Focos rojos que apuntan al boss y se encienden al aparecer")]
+    [Tooltip("Focos que apuntan al boss y se encienden al aparecer")]
     [SerializeField] private Light[] bossSpots;
+    [Tooltip("Capas del decorado del nivel falso (el circo) que salen volando con la pared")]
+    [SerializeField] private Transform[] decorToLaunch;
+    [SerializeField] private float decorSpeed = 7f;
+    [SerializeField] private float decorLifetime = 1.4f;
 
     [Header("Tiempos (s)")]
     [SerializeField] private float flickerTime = 1.2f;
@@ -60,6 +65,10 @@ public class BossReveal : MonoBehaviour
 
     private GameManager gameManager;
     private LevelManager levelManager;
+    private TargetSpawner spawner;
+    private GameTimer timer;
+    private struct DecorPose { public Vector3 position; public Quaternion rotation; public Vector3 scale; }
+    private readonly Dictionary<Transform, DecorPose> decorPoses = new Dictionary<Transform, DecorPose>();
     private Vector3 bossRestPosition;
     private readonly Dictionary<Light, float> baseIntensity = new Dictionary<Light, float>();
     private Coroutine routine;
@@ -68,6 +77,11 @@ public class BossReveal : MonoBehaviour
     {
         gameManager = FindFirstObjectByType<GameManager>();
         levelManager = FindFirstObjectByType<LevelManager>();
+        spawner = FindFirstObjectByType<TargetSpawner>();
+        timer = FindFirstObjectByType<GameTimer>();
+        if (decorToLaunch != null)
+            foreach (Transform d in decorToLaunch)
+                if (d != null) decorPoses[d] = new DecorPose { position = d.localPosition, rotation = d.localRotation, scale = d.localScale };
         if (bossRoot == null && boss != null) bossRoot = boss.transform;
         if (bossRoot != null) bossRestPosition = bossRoot.localPosition;
         if (stageLights == null || stageLights.Length == 0)
@@ -100,8 +114,8 @@ public class BossReveal : MonoBehaviour
     {
         if (level != null && level.isBossLevel)
         {
-            if (routine != null) StopCoroutine(routine);
-            routine = StartCoroutine(RevealRoutine());
+            ResetAll();   // el circo y la caseta, enteros: el nivel empieza como uno normal
+            routine = StartCoroutine(IntroThenReveal(level.bossRevealDelay));
         }
         else
         {
@@ -112,14 +126,29 @@ public class BossReveal : MonoBehaviour
     // Partida nueva o cualquier nivel normal: caseta entera, boss escondido, luces como estaban
     public void ResetAll()
     {
-        if (routine != null) StopCoroutine(routine);
+        StopAllCoroutines();   // la revelación y lo que lanzó (subida, temblor, piezas encogiendo)
         routine = null;
         IsPlaying = false;
         if (booth != null) booth.ResetBooth();
         if (curtain != null) { curtain.OpenOverride = null; curtain.Speed = 1f; }
         foreach (KeyValuePair<Light, float> entry in baseIntensity)
             if (entry.Key != null) entry.Key.intensity = IsBossOnly(entry.Key) ? 0f : entry.Value;
+        RestoreDecor();
         HideBoss();
+    }
+
+    // Nivel «normal» durante delay s de juego (no cuenta la pausa), y entonces la revelación
+    private IEnumerator IntroThenReveal(float delay)
+    {
+        // Un frame: GameManager pone Playing justo después de empezar el nivel
+        yield return null;
+        for (float t = 0f; t < delay; )
+        {
+            if (gameManager == null || gameManager.CurrentState == GameManager.GameState.Playing) t += Time.deltaTime;
+            else if (gameManager.CurrentState == GameManager.GameState.GameOver) yield break;
+            yield return null;
+        }
+        yield return RevealRoutine();
     }
 
     private bool IsBossOnly(Light l) =>
@@ -134,18 +163,20 @@ public class BossReveal : MonoBehaviour
 
     private IEnumerator RevealRoutine()
     {
+        // Si la partida ya no está en juego (p. ej. ha acabado), no hay revelación
+        if (gameManager != null && !gameManager.PauseForCutscene()) { routine = null; yield break; }
         IsPlaying = true;
-        // Un frame: GameManager pone Playing justo después de empezar el nivel; la pausa va detrás
-        yield return null;
-        if (gameManager != null) gameManager.PauseForCutscene();
         if (boss != null) boss.ResetVisuals();
         HideBoss();
-        if (curtain != null) curtain.OpenOverride = false;
+        if (spawner != null) spawner.StopSpawning();   // el circo se acaba: no salen más dianas
+        // Con el nivel ya jugándose el telón está abierto, y se queda abierto: fuera de Playing se cerraría solo
+        bool curtainOpen = curtain != null && curtain.IsOpen;
+        if (curtain != null) curtain.OpenOverride = curtainOpen;
         RevealStarted?.Invoke();
         Debug.Log("BossReveal: empieza la revelación");
 
         float t = 0f;
-        bool hit1 = false, cracked = false, snapped = false, burst = false, roared = false;
+        bool hit1 = false, cracked = false, snapped = curtainOpen, burst = false, roared = false;
         // Punto del golpe: donde quedará el pecho del boss (no donde está ahora, bajo tierra)
         Vector3 restWorld = bossRoot == null ? transform.position
             : (bossRoot.parent != null ? bossRoot.parent.TransformPoint(bossRestPosition) : bossRestPosition);
@@ -168,6 +199,8 @@ public class BossReveal : MonoBehaviour
                 cracked = true;
                 WallHit?.Invoke(2);
                 if (booth != null) booth.Crack(impact);
+                BuckleDecor();   // antes del temblor: Shake guarda la pose de reposo al empezar y la restaura al acabar
+                StartCoroutine(Shake(0.3f, 0.09f));
                 if (crackLight != null) crackLight.intensity = baseIntensity.TryGetValue(crackLight, out float ci) ? ci : 6f;
             }
             if (!snapped && t >= curtainTime)
@@ -180,6 +213,8 @@ public class BossReveal : MonoBehaviour
             {
                 burst = true;
                 if (booth != null) booth.BurstOut(impact);
+                if (spawner != null) spawner.ResetSpawner();   // las dianas del circo desaparecen con el reventón
+                LaunchDecor(impact);
                 if (crackLight != null) crackLight.intensity = 0f;
                 if (bossSpots != null)
                     foreach (Light l in bossSpots) if (l != null && baseIntensity.TryGetValue(l, out float si)) l.intensity = si;
@@ -202,7 +237,73 @@ public class BossReveal : MonoBehaviour
         RevealFinished?.Invoke();
         Debug.Log("BossReveal: fin; empieza el combate");
         if (gameManager != null) gameManager.ResumeFromCutscene();
+        if (timer != null) timer.StartStopwatch();   // desde aquí no hay cuenta atrás (§27.5)
         if (boss != null) boss.StartFight();
+    }
+
+    // Las capas del decorado salen despedidas enteras, alejándose del punto del golpe, y encogen al final
+    private void LaunchDecor(Vector3 impact)
+    {
+        if (decorToLaunch == null) return;
+        foreach (Transform d in decorToLaunch)
+        {
+            if (d == null || !d.gameObject.activeInHierarchy) continue;
+            // Sin collider mientras vuela: no para balas, y un MeshCollider cóncavo no admite ser trigger ni ir
+            // con un Rigidbody dinámico (Unity da error)
+            foreach (Collider c in d.GetComponentsInChildren<Collider>()) c.enabled = false;
+            Rigidbody rb = d.GetComponent<Rigidbody>();
+            if (rb == null) rb = d.gameObject.AddComponent<Rigidbody>();
+            rb.isKinematic = false;
+            rb.useGravity = true;
+            rb.mass = 2f;
+            Vector3 away = d.position - impact;
+            away.y = Mathf.Abs(away.y) + 1.5f;
+            rb.linearVelocity = away.normalized * decorSpeed * Random.Range(0.8f, 1.2f) + Vector3.back * 2f;
+            rb.angularVelocity = Random.insideUnitSphere * 4f;
+            StartCoroutine(ShrinkAndHide(d, decorLifetime));
+        }
+    }
+
+    private IEnumerator ShrinkAndHide(Transform d, float lifetime)
+    {
+        Vector3 from = d.localScale;
+        float shrink = 0.35f;
+        yield return new WaitForSeconds(Mathf.Max(0f, lifetime - shrink));
+        for (float t = 0f; t < shrink && d != null; t += Time.deltaTime)
+        {
+            d.localScale = from * (1f - t / shrink);
+            yield return null;
+        }
+        if (d != null) d.gameObject.SetActive(false);
+    }
+
+    // Segundo golpe: el decorado (que tapa la pared agrietada) se tuerce y se abomba hacia el jugador.
+    // Lo deshace RestoreDecor
+    private void BuckleDecor()
+    {
+        if (decorToLaunch == null) return;
+        foreach (Transform d in decorToLaunch)
+        {
+            if (d == null || !d.gameObject.activeInHierarchy) continue;
+            d.localRotation *= Quaternion.Euler(Random.Range(-3f, 3f), 0f, Random.Range(-2.5f, 2.5f));
+            d.position += Vector3.back * Random.Range(0.04f, 0.1f) + Vector3.up * Random.Range(-0.03f, 0.05f);
+        }
+    }
+
+    private void RestoreDecor()
+    {
+        foreach (KeyValuePair<Transform, DecorPose> entry in decorPoses)
+        {
+            Transform d = entry.Key;
+            if (d == null) continue;
+            Rigidbody rb = d.GetComponent<Rigidbody>();
+            if (rb != null) Destroy(rb);
+            foreach (Collider c in d.GetComponentsInChildren<Collider>(true)) c.enabled = true;
+            d.localPosition = entry.Value.position;
+            d.localRotation = entry.Value.rotation;
+            d.localScale = entry.Value.scale;
+            d.gameObject.SetActive(true);
+        }
     }
 
     private void SetStageLights(float level)
@@ -234,6 +335,9 @@ public class BossReveal : MonoBehaviour
         var targets = new List<Transform>();
         foreach (Transform child in booth.GetComponentsInChildren<Transform>())
             if (child.name == "Booth_BackWall") targets.Add(child);
+        // El decorado del nivel falso tapa la pared: tiembla con ella para que se note el golpe desde detrás
+        if (decorToLaunch != null)
+            foreach (Transform d in decorToLaunch) if (d != null && d.gameObject.activeInHierarchy) targets.Add(d);
         var rest = new Dictionary<Transform, Vector3>();
         foreach (Transform tr in targets) rest[tr] = tr.localPosition;
         for (float t = 0f; t < seconds; t += Time.deltaTime)

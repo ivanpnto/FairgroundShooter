@@ -209,6 +209,32 @@ public class ProfileManager : MonoBehaviour
         return earned;
     }
 
+    // ¿Ha comprado el nivel secreto? Basta con cualquier mejora con ese efecto a nivel 1 o más
+    public bool IsBossLevelUnlocked
+    {
+        get
+        {
+            if (Current == null || upgrades == null)
+                return false;
+            foreach (UpgradeData upgrade in upgrades)
+                if (upgrade != null && upgrade.effect == UpgradeEffect.UnlockBossLevel && Current.GetUpgradeLevel(upgrade.id) > 0)
+                    return true;
+            return false;
+        }
+    }
+
+    // Victoria contra el boss: cuenta y mejor tiempo. Lo llama BossController antes de acabar la partida
+    public void RecordBossVictory(float fightSeconds)
+    {
+        if (Current == null)
+            return;
+
+        Current.bossVictories++;
+        if (Current.bestBossTime <= 0f || fightSeconds < Current.bestBossTime)
+            Current.bestBossTime = fightSeconds;
+        Commit();
+    }
+
     // Perfiles con al menos una partida, de mayor a menor récord (pantalla de Récords)
     public List<PlayerProfile> GetRecords()
     {

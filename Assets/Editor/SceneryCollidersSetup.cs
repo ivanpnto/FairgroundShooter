@@ -28,6 +28,7 @@ public static class SceneryCollidersSetup
         "Assets/Prefabs/Enviroments/Env_Forest.prefab",
         "Assets/Prefabs/Enviroments/Env_Sea.prefab",
         "Assets/Prefabs/Enviroments/Env_Sky.prefab",
+        "Assets/Prefabs/Enviroments/Env_Circus.prefab",   // nivel 4 (I7.6)
     };
 
     // Piezas que NO llevan collider (se compara si el nombre contiene el texto)

@@ -21,7 +21,9 @@ public class LevelManager : MonoBehaviour
     public int CurrentIndex { get; private set; } = -1;
     public int LevelCount => levels != null ? levels.Length : 0;
     public LevelConfig CurrentLevel => IsValid(CurrentIndex) ? levels[CurrentIndex] : null;
-    public bool HasNextLevel => IsValid(CurrentIndex + 1);
+    // I7.6: un nivel con boss solo cuenta como siguiente si el perfil lo ha comprado. Sin comprarlo, la
+    // partida acaba en el nivel 3 como siempre (el nivel 4 va el último de la lista)
+    public bool HasNextLevel => IsAvailable(CurrentIndex + 1);
     public LevelConfig NextLevel => HasNextLevel ? levels[CurrentIndex + 1] : null;
 
     public event System.Action<LevelConfig, int> LevelStarted;
@@ -29,15 +31,21 @@ public class LevelManager : MonoBehaviour
     private TargetSpawner spawner;
     private GameTimer timer;
     private WeaponAmmo weaponAmmo;
+    private ProfileManager profileManager;
 
     private void Awake()
     {
         spawner = FindFirstObjectByType<TargetSpawner>();
         timer = FindFirstObjectByType<GameTimer>();
         weaponAmmo = FindFirstObjectByType<WeaponAmmo>();
+        profileManager = FindFirstObjectByType<ProfileManager>();
     }
 
     private bool IsValid(int index) => levels != null && index >= 0 && index < levels.Length && levels[index] != null;
+
+    // Sin ProfileManager (escenas de prueba) se juega todo
+    private bool IsAvailable(int index) =>
+        IsValid(index) && (!levels[index].isBossLevel || profileManager == null || profileManager.IsBossLevelUnlocked);
 
     public void StartLevel(int index)
     {

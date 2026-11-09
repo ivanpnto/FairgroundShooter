@@ -22,6 +22,9 @@ public class CurtainController : MonoBehaviour
     // siempre (abierto solo en Playing)
     public bool? OpenOverride { get; set; }
 
+    // Lo que el telón quiere estar ahora (el parámetro del Animator): abierto o cerrado
+    public bool IsOpen => animator != null && animator.GetBool(OpenParam);
+
     // Velocidad de las animaciones del telón (1 = normal). La revelación lo abre "de golpe" con 3
     public float Speed
     {

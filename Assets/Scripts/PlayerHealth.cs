@@ -50,8 +50,9 @@ public class PlayerHealth : MonoBehaviour
 
     private void HandleLevelStarted(LevelConfig level, int index)
     {
-        if (level != null && level.isBossLevel) Activate();
-        else Deactivate();
+        // I7.6: los corazones no se activan al empezar el nivel 4, sino con el combate (BossController.StartFight):
+        // el nivel empieza como uno normal y los corazones destriparían la sorpresa
+        Deactivate();
     }
 
     public void Activate()

@@ -46,6 +46,11 @@ public class BossConfig : ScriptableObject
         [Tooltip("Cada cuántos segundos suelta un proyectil suelto mientras está en reposo o vulnerable (0 = nunca). " +
                  "Obliga a elegir entre derribarlo y castigar al boss. Nunca durante el aviso del bocinazo (§27.6, regla 5)")]
         [Min(0f)] public float backgroundProjectileInterval = 0f;
+
+        [Tooltip("Cada cuántos segundos sale un esbirro (0 = ninguno en esta fase). Solo cuenta el tiempo de combate")]
+        [Min(0f)] public float minionInterval = 0f;
+        [Tooltip("Esbirros a la vez como máximo")]
+        [Min(0)] public int maxMinions = 0;
     }
 
     public Phase[] phases = { new Phase() };
@@ -68,9 +73,9 @@ public class BossConfig : ScriptableObject
 
     [Header("Bocinazo (ataque cargado)")]
     [Tooltip("Toma de aire antes del aviso: cabeza roja y luz subiendo, pero la boca aún cerrada. Da tiempo a " +
-             "recargar si se ve venir: la Five-seven recarga en 1,5 s, lo mismo que dura la ventana, y sin esto " +
-             "quedarse sin balas al empezar el aviso era un golpe seguro (§27.6, regla 8)")]
-    [Min(0f)] public float honkWindupTime = 0.6f;
+             "recargar si se ve venir: con 1,2 s, una recarga de la Five-seven (1,5 s) empezada al ver la cabeza roja " +
+             "acaba 0,3 s dentro de la ventana. Con 0,6 s acababa a 0,9 s y el golpe era casi seguro (§27.6, regla 8)")]
+    [Min(0f)] public float honkWindupTime = 1.2f;
     [Tooltip("Aviso: la boca se abre y se pone roja, la luz sube. El más largo porque es el que más quita (§27.6, regla 3)")]
     [Min(0.5f)] public float honkTelegraphTime = 1.5f;
     [Tooltip("En furia el aviso se acorta, pero nunca por debajo de esto")]
@@ -101,6 +106,28 @@ public class BossConfig : ScriptableObject
     [Header("Victoria")]
     [Tooltip("Segundos entre la muerte del boss y el fin de la partida (para la animación)")]
     [Min(0f)] public float deathDelay = 2f;
+    [Tooltip("Bonus al vencer (§27.7): (base + porCorazón × corazones + porSegundo × máx(0, tiempoPar − tiempo)) × multiplicador del nivel. Se suma sin racha ni mejora")]
+    [Min(0)] public int victoryBonusBase = 2000;
+    [Min(0)] public int victoryBonusPerHeart = 500;
+    [Min(0)] public int victoryBonusPerSecond = 20;
+    [Min(0f)] public float victoryParTime = 180f;
+
+    [Header("Esbirros (I7.5)")]
+    [Tooltip("Prefab con Target + MinionLunge (el muñeco de resorte)")]
+    public GameObject minionPrefab;
+    [Tooltip("Carril de la escena donde salen (SpawnLane)")]
+    public string minionLaneId = "Boss_Minion";
+    [Tooltip("Segundos a la vista antes de intentar saltar (× furia)")]
+    public Vector2 minionWaitTime = new Vector2(2.2f, 3.2f);
+    [Tooltip("Aviso antes del salto: tiembla y el contorno se pone rojo (§27.6, regla 1)")]
+    [Min(0.1f)] public float minionWarningTime = 0.6f;
+    [Min(0.1f)] public float minionLungeTime = 0.9f;
+    [Min(1)] public int minionHeartDamage = 1;
+    [Tooltip("Material del contorno durante el aviso (el rojo de peligro)")]
+    public Material minionWarningMaterial;
+    [Tooltip("Probabilidad de que un esbirro sea especial rosa (+1 corazón)")]
+    [Range(0f, 1f)] public float minionHeartChance = 0.15f;
+    public Material heartBonusOutline;
 
     public float TotalHealth
     {

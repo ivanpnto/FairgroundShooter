@@ -31,9 +31,13 @@ public class LevelConfig : ScriptableObject
     public AudioClip music;
 
     [Header("Boss (nivel 4)")]
-    [Tooltip("Nivel con boss: activa PlayerHealth y BossController. Provisional: hasta I7.6 la duración debe ser " +
-             "muy larga, porque el boss no tiene cuenta atrás y el temporizador acabaría el nivel")]
+    [Tooltip("Nivel con boss (§27). Solo se juega si el perfil lo ha comprado (UpgradeEffect.UnlockBossLevel). " +
+             "Empieza como un nivel normal (dianas y cuenta atrás) y a los bossRevealDelay s llega la revelación; " +
+             "desde ahí el temporizador es un cronómetro y el nivel solo acaba con victoria o derrota")]
     public bool isBossLevel;
+    [Tooltip("Segundos de nivel «normal» antes de la revelación (solo cuenta el tiempo en Playing). " +
+             "Con 0, la revelación empieza nada más abrirse el nivel")]
+    [Min(0f)] public float bossRevealDelay = 12f;
 
     [Header("Duración")]
     [Min(1f)] public float duration = 60f;

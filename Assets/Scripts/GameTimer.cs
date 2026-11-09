@@ -10,7 +10,13 @@ public class GameTimer : MonoBehaviour
     private float timeRemaining;
     private GameManager gameManager;
 
+    // Cronómetro (I7.6): en el combate contra el boss no hay cuenta atrás; el tiempo sube y nunca acaba el nivel
+    private bool stopwatch;
+    private float elapsed;
+
     public float TimeRemaining => timeRemaining;
+    public bool IsStopwatch => stopwatch;
+    public float Elapsed => elapsed;
 
     private void Awake()
     {
@@ -22,6 +28,13 @@ public class GameTimer : MonoBehaviour
     {
         if (gameManager.CurrentState != GameManager.GameState.Playing)
             return;
+
+        if (stopwatch)
+        {
+            elapsed += Time.deltaTime;
+            UpdateTimerText();
+            return;
+        }
 
         timeRemaining -= Time.deltaTime;
 
@@ -38,12 +51,17 @@ public class GameTimer : MonoBehaviour
 
     private void UpdateTimerText()
     {
-        timerText.text = $"TIEMPO: {Mathf.CeilToInt(timeRemaining)}";
+        if (timerText == null)
+            return;
+        timerText.text = stopwatch
+            ? $"TIEMPO: {Mathf.FloorToInt(elapsed / 60f)}:{Mathf.FloorToInt(elapsed % 60f):00}"
+            : $"TIEMPO: {Mathf.CeilToInt(timeRemaining)}";
     }
 
     // Lo llama LevelManager al empezar cada nivel
     public void StartLevel(float duration)
     {
+        stopwatch = false;
         timeRemaining = duration;
         UpdateTimerText();
     }
@@ -55,8 +73,17 @@ public class GameTimer : MonoBehaviour
         UpdateTimerText();
     }
 
+    // Lo llama BossReveal al empezar el combate: desde aquí el tiempo sube y OnTimeUp ya no llega
+    public void StartStopwatch()
+    {
+        stopwatch = true;
+        elapsed = 0f;
+        UpdateTimerText();
+    }
+
     public void ResetTimer()
     {
+        stopwatch = false;
         timeRemaining = gameDuration;
         UpdateTimerText();
     }

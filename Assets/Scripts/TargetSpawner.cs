@@ -200,6 +200,9 @@ public class TargetSpawner : MonoBehaviour
             activePerEntry[entryIndex] = Mathf.Max(0, activePerEntry[entryIndex] - 1);
     }
 
+    // Deja de sacar objetivos hasta el próximo Configure (la revelación del boss: el nivel del circo se acaba)
+    public void StopSpawning() => level = null;
+
     public void ResetSpawner()
     {
         Target[] targets = FindObjectsByType<Target>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);

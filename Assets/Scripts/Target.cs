@@ -6,7 +6,8 @@ public enum TargetBonus
 {
     None,
     Time,   // contorno dorado: suma tiempo al nivel
-    Ammo    // contorno rojo: rellena el cargador
+    Ammo,   // contorno rojo: rellena el cargador
+    Heart   // contorno rosa (I7.5, solo en el combate del boss): +1 corazón; con los 3 llenos, puntos extra
 }
 
 public class Target : MonoBehaviour, IDamageable
@@ -260,6 +261,17 @@ public class Target : MonoBehaviour, IDamageable
             case TargetBonus.Ammo:
                 WeaponAmmo ammo = FindFirstObjectByType<WeaponAmmo>();
                 if (ammo != null) ammo.ResetAmmo();   // cargador lleno y cancela la recarga en curso
+                break;
+
+            case TargetBonus.Heart:
+                PlayerHealth health = FindFirstObjectByType<PlayerHealth>();
+                Debug.Log("Especial rosa: +1 corazón");
+                if (health == null || !health.Heal(1))
+                {
+                    // Con los corazones llenos no se desperdicia: vale el triple de puntos (provisional, §27.3)
+                    ScoreManager score = FindFirstObjectByType<ScoreManager>();
+                    if (score != null) score.AddScore(points * 2);
+                }
                 break;
         }
     }
