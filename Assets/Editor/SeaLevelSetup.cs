@@ -277,7 +277,7 @@ public static class SeaLevelSetup
         LevelConfig level = AssetDatabase.LoadAssetAtPath<LevelConfig>(Level2Path);
         if (level == null)
         {
-            Debug.LogError("[SeaLevelSetup] No existe Level2_FondoMarino; ejecuta antes Setup Levels.");
+            Debug.LogError("[SeaLevelSetup] No existe Level2_FondoMarino (Assets/Data/Levels).");
             return;
         }
 

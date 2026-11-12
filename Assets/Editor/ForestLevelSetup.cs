@@ -12,7 +12,7 @@ public static class ForestLevelSetup
     private const string ModelsFolder = "Assets/Art/Models/Targets";
     private const string EnvModel = "Assets/Art/Models/Environments/Env_Forest.fbx";
     private const string EnvPrefab = "Assets/Prefabs/Enviroments/Env_Forest.prefab";
-    private const string Level1Path = "Assets/Data/Levels/Level1_Estanque.asset";
+    private const string Level1Path = "Assets/Data/Levels/Level1_Bosque.asset";
     private const string BirdPrefab = "Assets/Prefabs/SenoTarget.prefab";
 
     [MenuItem("Tools/Fairground/Setup Forest Level")]
@@ -201,7 +201,7 @@ public static class ForestLevelSetup
         LevelConfig level = AssetDatabase.LoadAssetAtPath<LevelConfig>(Level1Path);
         if (level == null)
         {
-            Debug.LogError("[ForestLevelSetup] No existe Level1_Estanque; ejecuta antes Setup Levels.");
+            Debug.LogError("[ForestLevelSetup] No existe Level1_Bosque (Assets/Data/Levels).");
             return;
         }
 
