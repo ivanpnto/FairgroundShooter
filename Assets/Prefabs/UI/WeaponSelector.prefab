@@ -313,7 +313,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 5691097639840834616}
-        m_TargetAssemblyTypeName: WeaponSelectorUI, Assembly-CSharp
+        m_TargetAssemblyTypeName: WeaponSelectorUI, FairgroundShooter
         m_MethodName: Previous
         m_Mode: 1
         m_Arguments:
@@ -720,7 +720,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 5691097639840834616}
-        m_TargetAssemblyTypeName: WeaponSelectorUI, Assembly-CSharp
+        m_TargetAssemblyTypeName: WeaponSelectorUI, FairgroundShooter
         m_MethodName: Next
         m_Mode: 1
         m_Arguments:

@@ -4245,7 +4245,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
+        m_TargetAssemblyTypeName: GameManager, FairgroundShooter
         m_MethodName: StartGame
         m_Mode: 1
         m_Arguments:
@@ -4257,7 +4257,7 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
       - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: PlayerAim, Assembly-CSharp
+        m_TargetAssemblyTypeName: PlayerAim, FairgroundShooter
         m_MethodName: EnableAiming
         m_Mode: 1
         m_Arguments:
