@@ -173,7 +173,7 @@ public class BossReveal : MonoBehaviour
         bool curtainOpen = curtain != null && curtain.IsOpen;
         if (curtain != null) curtain.OpenOverride = curtainOpen;
         RevealStarted?.Invoke();
-        Debug.Log("BossReveal: empieza la revelación");
+        GameLog.Info("BossReveal: empieza la revelación");
 
         float t = 0f;
         bool hit1 = false, cracked = false, snapped = curtainOpen, burst = false, roared = false;
@@ -235,7 +235,7 @@ public class BossReveal : MonoBehaviour
         IsPlaying = false;
         routine = null;
         RevealFinished?.Invoke();
-        Debug.Log("BossReveal: fin; empieza el combate");
+        GameLog.Info("BossReveal: fin; empieza el combate");
         if (gameManager != null) gameManager.ResumeFromCutscene();
         if (timer != null) timer.StartStopwatch();   // desde aquí no hay cuenta atrás (§27.5)
         if (boss != null) boss.StartFight();

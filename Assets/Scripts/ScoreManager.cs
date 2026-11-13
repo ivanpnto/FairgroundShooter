@@ -76,8 +76,6 @@ public class ScoreManager : MonoBehaviour
 
         score += points;
 
-        Debug.Log("Puntuación: " + score);
-
         UpdateScoreText();
     }
 

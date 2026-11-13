@@ -16,6 +16,10 @@ using UnityEngine;
 //
 // Prefab: raíz con collider (no trigger) + Rigidbody + Target (vida 1, lifetime ~5 s, destroyDelay 0) +
 // este componente, en la capa BossHazard.
+//
+// Object pooling (F8): BossController no crea ni destruye proyectiles en cada tanda, los saca de un pool y
+// los devuelve. Por eso el aviso Removed sale en OnDisable (el pool desactiva el objeto al devolverlo, y
+// Unity también llama a OnDisable antes de destruirlo) y ResetForFlight deja la física como recién creada.
 [RequireComponent(typeof(Target), typeof(Rigidbody))]
 public class BossProjectile : MonoBehaviour, IPlayerHazard
 {
@@ -25,7 +29,8 @@ public class BossProjectile : MonoBehaviour, IPlayerHazard
     public int HeartDamage { get; private set; } = 1;
     public bool IsActiveHazard => target != null && !target.IsDead && !target.IsExpiring && !reached;
 
-    // Se avisa al boss al destruirse (derribado, llegado o expirado) para llevar la cuenta de los que vuelan
+    // Se avisa al boss cuando deja de volar (derribado, llegado o expirado; devuelto al pool o destruido)
+    // para llevar la cuenta de los que hay en el aire
     public event System.Action<BossProjectile> Removed;
 
     private Target target;
@@ -65,11 +70,28 @@ public class BossProjectile : MonoBehaviour, IPlayerHazard
             Random.Range(-maxSpin, maxSpin)) * Mathf.Deg2Rad;
     }
 
+    // Lo llama BossController al sacarlo del pool, antes de Launch: lo coloca en el origen sin la velocidad del
+    // vuelo anterior (un Rigidbody la conserva aunque se desactive el objeto) y sin gravedad hasta el lanzamiento
+    public void ResetForFlight(Vector3 position, Quaternion rotation)
+    {
+        reached = false;
+        gravity = Vector3.zero;
+        HeartDamage = 1;
+
+        // Se mueve el Rigidbody y no solo el Transform: con interpolación, mover solo el Transform haría
+        // que el primer fotograma se dibujase interpolando desde donde acabó el vuelo anterior
+        transform.SetPositionAndRotation(position, rotation);
+        body.position = position;
+        body.rotation = rotation;
+        body.linearVelocity = Vector3.zero;
+        body.angularVelocity = Vector3.zero;
+    }
+
     public void OnReachedPlayer()
     {
         reached = true;
-        Destroy(gameObject);
+        target.Despawn(0f);   // destruir o devolver al pool: lo decide Target
     }
 
-    private void OnDestroy() => Removed?.Invoke(this);
+    private void OnDisable() => Removed?.Invoke(this);
 }

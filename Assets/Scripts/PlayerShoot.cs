@@ -241,7 +241,7 @@ public class PlayerShoot : MonoBehaviour
             if (weapons[i] != null && weapons[i] != weaponController.CurrentWeapon && weaponController.IsUnlocked(weapons[i]))
             {
                 weaponController.Equip(weapons[i]);
-                Debug.Log($"Depuración: equipada {weapons[i].displayName} (tecla {i + 1})");
+                GameLog.Info($"Depuración: equipada {weapons[i].displayName} (tecla {i + 1})");
             }
             return;
         }
@@ -263,7 +263,7 @@ public class PlayerShoot : MonoBehaviour
         int penetration = Mathf.Max(1, stats.Penetration);
 
         shotTargets.Clear();
-        bool hitPenalty = false, killedAny = false, hitSomething = false, hitWeakPoint = false;
+        bool hitPenalty = false, killedAny = false, hitWeakPoint = false;
         float totalDamage = 0f;
         int explosionKills = 0;
 
@@ -294,7 +294,6 @@ public class PlayerShoot : MonoBehaviour
                 if (damageable != null && (!damageable.CanBeHit || rayTargets.Contains(damageable)))
                     continue;
 
-                hitSomething = true;
                 bool scenery = (sceneryMask.value & (1 << hit.collider.gameObject.layer)) != 0;
 
                 if (damageable != null)
@@ -344,6 +343,8 @@ public class PlayerShoot : MonoBehaviour
             RayTraced?.Invoke(ray.origin, end);
         }
 
+        // hasPrimary es «algún rayo chocó con algo»: se marca en las mismas iteraciones en las que antes se
+        // marcaba una variable hitSomething que nunca se leía (aviso CS0219), así que se quitó
         ShotResult result = hasPrimary
             ? new ShotResult(true, primary.HitScenery, primary.Point, primary.Normal, primary.Collider,
                 primaryIsTarget ? primary.Target : null, totalDamage, killedAny, shotTargets.Count, hitPenalty, explosionKills,

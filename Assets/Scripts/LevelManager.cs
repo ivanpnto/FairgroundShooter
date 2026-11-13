@@ -68,7 +68,7 @@ public class LevelManager : MonoBehaviour
             levelText.text = $"NIVEL {index + 1} · {level.levelName.ToUpper()}";
 
         LevelStarted?.Invoke(level, index);
-        Debug.Log($"Nivel {index + 1}: {level.levelName}");
+        GameLog.Info($"Nivel {index + 1}: {level.levelName}");
     }
 
     private void ActivateEnvironment(string id)

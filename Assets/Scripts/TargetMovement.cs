@@ -33,7 +33,7 @@ public abstract class TargetMovement : MonoBehaviour
     protected virtual void Start()
     {
         startPosition = transform.position;
-        gameManager = FindFirstObjectByType<GameManager>();
+        gameManager = SceneCache<GameManager>.Get();   // se ejecuta en cada diana que aparece: búsqueda cacheada
     }
 
     private void Update()

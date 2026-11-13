@@ -99,7 +99,7 @@ public class GameManager : MonoBehaviour
 
         BeginRun();
 
-        Debug.Log($"Jugador: {playerName}");
+        GameLog.Info($"Jugador: {playerName}");
     }
 
     public void RestartGame()
@@ -108,7 +108,7 @@ public class GameManager : MonoBehaviour
 
         BeginRun();
 
-        Debug.Log("Nueva partida iniciada.");
+        GameLog.Info("Nueva partida iniciada.");
     }
 
     // Una partida = todos los niveles seguidos con la puntuación acumulada
@@ -154,7 +154,7 @@ public class GameManager : MonoBehaviour
             ? levelManager.CurrentLevel.pointsMultiplier : 1f;
         LastLevelAccuracy = scoreManager.LevelAccuracy;
         LastAccuracyBonus = scoreManager.ApplyAccuracyBonus(levelMultiplier);
-        Debug.Log($"Bonus de precisión: +{LastAccuracyBonus} ({LastLevelAccuracy:P0} de {scoreManager.ShotsFired} disparos)");
+        GameLog.Info($"Bonus de precisión: +{LastAccuracyBonus} ({LastLevelAccuracy:P0} de {scoreManager.ShotsFired} disparos)");
 
         if (levelManager != null && levelManager.HasNextLevel)
             StartCoroutine(LevelTransitionRoutine());
@@ -178,7 +178,7 @@ public class GameManager : MonoBehaviour
         if (levelTransitionPanel != null)
             levelTransitionPanel.SetActive(true);
 
-        Debug.Log($"Nivel {finished} superado. Puntos: {scoreManager.GetScore()}. Siguiente: {nextName}");
+        GameLog.Info($"Nivel {finished} superado. Puntos: {scoreManager.GetScore()}. Siguiente: {nextName}");
 
         // Cuenta atrás visible: el jugador sabe cuándo vuelve la acción
         for (int s = transitionSeconds; s > 0; s--)
@@ -245,7 +245,7 @@ public class GameManager : MonoBehaviour
         gameOverPanel.SetActive(true);
 
         // Resumen para equilibrar precios y créditos (Fase 5, hito 6)
-        Debug.Log($"Fin de partida ({reason}) · {profileName} · puntos {finalScore} · créditos +{LastCreditsEarned} (total {totalCredits}) · " +
+        GameLog.Info($"Fin de partida ({reason}) · {profileName} · puntos {finalScore} · créditos +{LastCreditsEarned} (total {totalCredits}) · " +
                   $"precisión {scoreManager.RunAccuracy:P0} ({scoreManager.RunShotsHit}/{scoreManager.RunShotsFired}) · " +
                   $"racha máxima {scoreManager.MaxStreak}");
 

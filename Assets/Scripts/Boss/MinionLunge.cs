@@ -32,7 +32,7 @@ public class MinionLunge : MonoBehaviour, IPlayerHazard
     private void Awake()
     {
         target = GetComponent<Target>();
-        gameManager = FindFirstObjectByType<GameManager>();
+        gameManager = SceneCache<GameManager>.Get();
         target.Killed += HandleKilled;
     }
 
@@ -69,7 +69,7 @@ public class MinionLunge : MonoBehaviour, IPlayerHazard
         transform.position = rest;
         RestoreOutline(original);
 
-        Debug.Log("Esbirro: ¡salta!");
+        GameLog.Info("Esbirro: ¡salta!");
         // 4. Salto. Capa BossHazard: la única que choca con PlayerZone (el disparo sí la ve)
         lunging = true;
         int hazardLayer = LayerMask.NameToLayer("BossHazard");
@@ -77,7 +77,7 @@ public class MinionLunge : MonoBehaviour, IPlayerHazard
         foreach (MonoBehaviour mb in GetComponents<MonoBehaviour>())
             if (mb is TargetMovement || mb is TargetAppear) mb.enabled = false;   // el salto manda
 
-        PlayerDamageZone zone = FindFirstObjectByType<PlayerDamageZone>();
+        PlayerDamageZone zone = SceneCache<PlayerDamageZone>.Get();
         Vector3 from = transform.position;
         Vector3 to = zone != null ? zone.transform.position : Camera.main.transform.position;
         Vector3 scale0 = transform.localScale;
@@ -92,7 +92,7 @@ public class MinionLunge : MonoBehaviour, IPlayerHazard
         // Si por lo que sea no ha tocado el trigger (p. ej. está muy lejos), se da por llegado
         if (!reached && !target.IsDead)
         {
-            PlayerHealth health = FindFirstObjectByType<PlayerHealth>();
+            PlayerHealth health = SceneCache<PlayerHealth>.Get();
             if (health != null) health.TakeHit(HeartDamage);
             OnReachedPlayer();
         }

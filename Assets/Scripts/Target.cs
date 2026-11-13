@@ -65,12 +65,22 @@ public class Target : MonoBehaviour, IDamageable
     private float timeBonusSeconds;
     private float currentHealth;
 
+    // lifetime tal como viene en el prefab. ApplyLevel calcula el del nivel a partir de este valor y no
+    // del actual: antes hacía lifetime *= multiplicador, y un objeto reutilizado (pooling) lo habría
+    // multiplicado una vez por cada uso
+    private float baseLifetime;
+
+    // Object pooling: si quien creó el objetivo lo gestiona con un pool, en vez de destruirlo se le
+    // devuelve con este callback. null = el comportamiento de siempre (Destroy)
+    private System.Action<Target> releaseToPool;
+
     // Por debajo de esto la vida cuenta como 0: el daño de las mejoras (1.25, 1.75…) suma en float
     private const float HealthEpsilon = 0.001f;
 
     private void Awake()
     {
-        scoreManager = FindFirstObjectByType<ScoreManager>();
+        scoreManager = SceneCache<ScoreManager>.Get();
+        baseLifetime = lifetime;
 
         // Sin ApplyLevel (p. ej. un objetivo colocado a mano en la escena) vale la vida del prefab
         MaxHealth = health;
@@ -82,6 +92,15 @@ public class Target : MonoBehaviour, IDamageable
     // Invoke en lugar de Destroy diferido: si lo derriban antes, Expire() comprueba IsDead y no hace nada
     private void Start()
     {
+        StartLifetime();
+    }
+
+    // Empieza (o reinicia) la cuenta del tiempo de vida. Start la llama sola la primera vez; un objeto
+    // reutilizado no vuelve a pasar por Start, así que la llama quien lo saca del pool, después de ApplyLevel.
+    // CancelInvoke primero: llamarla dos veces no programa dos expiraciones
+    public void StartLifetime()
+    {
+        CancelInvoke(nameof(Expire));
         Invoke(nameof(Expire), lifetime);
     }
 
@@ -94,7 +113,7 @@ public class Target : MonoBehaviour, IDamageable
         StopInteraction();   // mientras baja no se le puede acertar: ya "se ha ido"
 
         Expired?.Invoke(this);
-        Destroy(gameObject, ExpireDuration);
+        Despawn(ExpireDuration);
     }
 
     // Colliders fuera (no bloquea ni recibe disparos) y movimiento parado
@@ -124,7 +143,7 @@ public class Target : MonoBehaviour, IDamageable
     public void ApplyLevel(float levelPointsMultiplier, float levelLifetimeMultiplier, float levelHealthMultiplier = 1f)
     {
         pointsMultiplier = levelPointsMultiplier;
-        lifetime *= levelLifetimeMultiplier;
+        lifetime = baseLifetime * levelLifetimeMultiplier;
 
         float healthMultiplier = CanHaveBonus ? levelHealthMultiplier : 1f;
         MaxHealth = Mathf.Max(1f, health * healthMultiplier);
@@ -232,48 +251,114 @@ public class Target : MonoBehaviour, IDamageable
         IsDead = true;
         CancelInvoke(nameof(Expire));
 
-        scoreManager.AddScore(Mathf.RoundToInt(points * pointsMultiplier));
-        GiveBonusReward();
+        int levelPoints = Mathf.RoundToInt(points * pointsMultiplier);
+        if (scoreManager != null) scoreManager.AddScore(levelPoints);
+        GiveBonusReward(levelPoints);
 
         Killed?.Invoke(this);
 
         if (destroyDelay <= 0f)
         {
-            Destroy(gameObject);
+            Despawn(0f);
             return;
         }
 
         // Mientras cae: que no se le pueda volver a dar ni siga con su movimiento
         StopInteraction();
 
-        Destroy(gameObject, destroyDelay);
+        Despawn(destroyDelay);
     }
 
-    private void GiveBonusReward()
+    // levelPoints: los puntos del derribo con el multiplicador del nivel (los mismos que acaba de recibir AddScore)
+    private void GiveBonusReward(int levelPoints)
     {
         switch (Bonus)
         {
             case TargetBonus.Time:
-                GameTimer timer = FindFirstObjectByType<GameTimer>();
+                GameTimer timer = SceneCache<GameTimer>.Get();
                 if (timer != null) timer.AddTime(timeBonusSeconds);
                 break;
 
             case TargetBonus.Ammo:
-                WeaponAmmo ammo = FindFirstObjectByType<WeaponAmmo>();
+                WeaponAmmo ammo = SceneCache<WeaponAmmo>.Get();
                 if (ammo != null) ammo.ResetAmmo();   // cargador lleno y cancela la recarga en curso
                 break;
 
             case TargetBonus.Heart:
-                PlayerHealth health = FindFirstObjectByType<PlayerHealth>();
-                Debug.Log("Especial rosa: +1 corazón");
-                if (health == null || !health.Heal(1))
+                PlayerHealth health = SceneCache<PlayerHealth>.Get();
+                bool healed = health != null && health.Heal(1);
+                GameLog.Info(healed ? "Especial rosa: +1 corazón" : "Especial rosa con los corazones llenos: puntos ×3");
+                if (!healed && scoreManager != null)
                 {
-                    // Con los corazones llenos no se desperdicia: vale el triple de puntos (provisional, §27.3)
-                    ScoreManager score = FindFirstObjectByType<ScoreManager>();
-                    if (score != null) score.AddScore(points * 2);
+                    // Con los corazones llenos no se desperdicia: vale el TRIPLE de puntos (§27.3, provisional).
+                    // El derribo ya ha sumado una vez levelPoints, así que aquí se suman dos más. AddScore les aplica
+                    // la mejora de puntos y la racha igual que al derribo, de modo que el total es exactamente ×3.
+                    // Antes se sumaba points × 2 (los puntos BASE, sin el ×2,5 del circo): el total se quedaba en
+                    // 1,8 veces los de un derribo normal en vez de 3
+                    scoreManager.AddScore(levelPoints * 2);
                 }
                 break;
         }
+    }
+
+    // ---------------------------------------------------------------- reutilización (object pooling)
+    //
+    // Hoy solo los usan los proyectiles del boss (BossController). Las dianas del spawner siguen con
+    // Instantiate/Destroy: llevan más estado propio (TargetFall, TargetAppear, IdleOscillator, halos,
+    // FaceDirection...) que habría que reiniciar componente a componente, y salen pocas por segundo.
+
+    public bool IsPooled => releaseToPool != null;
+
+    // Lo llama el dueño del pool al crear el objeto: a partir de aquí, "destruirlo" es devolverlo al pool
+    public void SetPool(System.Action<Target> release) => releaseToPool = release;
+
+    // Deja el objetivo como recién instanciado para volver a usarlo. Solo reinicia el estado de Target;
+    // cada componente con estado propio (BossProjectile) se reinicia a sí mismo.
+    // Después hay que llamar a ApplyLevel (si toca) y a StartLifetime
+    public void ResetForReuse()
+    {
+        CancelInvoke();
+        IsDead = false;
+        IsExpiring = false;
+        pointsMultiplier = 1f;
+        lifetime = baseLifetime;
+        MaxHealth = health;
+        currentHealth = health;
+
+        // Bonus: fuera el halo y su latido (los crea ApplyBonus)
+        Bonus = TargetBonus.None;
+        timeBonusSeconds = 0f;
+        BonusGlow glow = GetComponent<BonusGlow>();
+        if (glow != null) Destroy(glow);
+        foreach (Transform child in GetComponentsInChildren<Transform>(true))
+            if (child.name == "BonusHalo") Destroy(child.gameObject);
+
+        // Lo contrario de StopInteraction
+        foreach (Collider col in GetComponents<Collider>())
+            col.enabled = true;
+        TargetMovement movement = GetComponent<TargetMovement>();
+        if (movement != null)
+            movement.enabled = true;
+    }
+
+    // Retirarlo de la escena tras delay segundos (la caída o la bajada): destruirlo o, si viene de un pool,
+    // devolverlo. Pública para quien lo retira sin que muera ni expire (un proyectil que llega al jugador)
+    public void Despawn(float delay)
+    {
+        if (releaseToPool == null)
+        {
+            Destroy(gameObject, delay);
+            return;
+        }
+
+        if (delay <= 0f) ReleaseNow();
+        else Invoke(nameof(ReleaseNow), delay);
+    }
+
+    private void ReleaseNow()
+    {
+        CancelInvoke();
+        releaseToPool(this);
     }
 
     private void OnDestroy()

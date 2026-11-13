@@ -81,7 +81,7 @@ public class PlayerHealth : MonoBehaviour
         Hearts = Mathf.Max(0, Hearts - amount);
         invulnerableUntil = Time.time + invulnerabilityAfterHit;
 
-        Debug.Log($"PlayerHealth: −{amount} corazón(es) → {Hearts}/{maxHearts}");
+        GameLog.Info($"PlayerHealth: −{amount} corazón(es) → {Hearts}/{maxHearts}");
         Damaged?.Invoke(amount);
         HeartsChanged?.Invoke(Hearts, maxHearts);
 

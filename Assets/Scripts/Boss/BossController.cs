@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 
 // Lógica del boss (I7.2–I7.3): máquina de estados en C# con un enum y corrutinas.
 //
@@ -57,6 +58,9 @@ public class BossController : MonoBehaviour
     [SerializeField] private Transform[] projectileOrigins;
     [Tooltip("Hacia dónde van (el centro de PlayerDamageZone). Vacío = se busca la zona en la escena")]
     [SerializeField] private Transform projectileDestination;
+    [Tooltip("Proyectiles que se crean de antemano (object pooling), para no instanciar en mitad de una tanda. " +
+             "Con el máximo de la fase 3 (5 en el aire) sobra con 6; si hicieran falta más, el pool crea los que falten")]
+    [SerializeField, Min(0)] private int projectilePoolPrewarm = 6;
 
     [Header("Aviso (rojo = va a atacar)")]
     [SerializeField] private AttackVisual[] attackVisuals;
@@ -130,7 +134,9 @@ public class BossController : MonoBehaviour
     private int attacksThisPhase;
     private int originIndex;
 
-    private readonly List<BossProjectile> projectiles = new List<BossProjectile>();
+    private readonly List<BossProjectile> projectiles = new List<BossProjectile>();   // los que están en el aire
+    private ObjectPool<BossProjectile> projectilePool;
+    private Transform projectilePoolRoot;
     // Esbirros (I7.5) y el ataque «peligroso» en curso: un salto de esbirro o null (§27.6, regla 5)
     private readonly List<MinionLunge> minions = new List<MinionLunge>();
     private MinionLunge dangerOwner;
@@ -192,6 +198,8 @@ public class BossController : MonoBehaviour
                     foreach (Transform part in group.parts)
                         if (part != null)
                             partPoses.Add(new PartPose { part = part, parent = part.parent, position = part.localPosition, rotation = part.localRotation });
+
+        CreateProjectilePool();
     }
 
     private void OnEnable()
@@ -247,7 +255,7 @@ public class BossController : MonoBehaviour
 
         ProfileManager profiles = FindFirstObjectByType<ProfileManager>();
         if (profiles != null) profiles.RecordBossVictory(FightTime);
-        Debug.Log($"Boss: bonus de victoria +{LastVictoryBonus} ({hearts} corazones, {FightTime:0.0} s)");
+        GameLog.Info($"Boss: bonus de victoria +{LastVictoryBonus} ({hearts} corazones, {FightTime:0.0} s)");
     }
 
     public void StopFight()
@@ -279,7 +287,7 @@ public class BossController : MonoBehaviour
             if (!IsFurious && config.furyTime > 0f && FightTime >= config.furyTime)
             {
                 IsFurious = true;
-                Debug.Log("Boss: ¡FURIA!");
+                GameLog.Info("Boss: ¡FURIA!");
                 FuryStarted?.Invoke();
             }
         }
@@ -314,7 +322,7 @@ public class BossController : MonoBehaviour
             attacksThisPhase = 0;
             lastWasHonk = false;
             PhaseStarted?.Invoke(PhaseIndex);
-            Debug.Log($"Boss: fase {PhaseIndex + 1}/{PhaseCount} ({CurrentPhase.label}), vida {PhaseHealth}");
+            GameLog.Info($"Boss: fase {PhaseIndex + 1}/{PhaseCount} ({CurrentPhase.label}), vida {PhaseHealth}");
 
             // Ciclo de la fase hasta vaciar su vida. Cada espera se corta en cuanto phaseCleared se activa.
             // Los puntos débiles se abren/cierran ANTES de anunciar el estado: quien escuche StateChanged
@@ -362,7 +370,7 @@ public class BossController : MonoBehaviour
         ClearProjectiles();
         flinch = maxFlinch;
         for (int i = 0; partsDroppedAtPhase != null && i < partsDroppedAtPhase.Length; i++) DropParts(i);
-        Debug.Log($"Boss: derrotado en {FightTime:0.0} s");
+        GameLog.Info($"Boss: derrotado en {FightTime:0.0} s");
         AwardVictory();
         Defeated?.Invoke();
 
@@ -456,7 +464,7 @@ public class BossController : MonoBehaviour
 
         if (countered)
         {
-            Debug.Log("Boss: ¡bocinazo contrarrestado! Aturdido");
+            GameLog.Info("Boss: ¡bocinazo contrarrestado! Aturdido");
             HonkResolved?.Invoke(true);
             DamageMultiplier = config.stunDamageMultiplier;
             jawTarget = 0.35f;   // queda con la boca entreabierta, grogui
@@ -547,9 +555,9 @@ public class BossController : MonoBehaviour
 
     public void ReleaseProjectile()
     {
-        if (config.projectilePrefab == null || projectileDestination == null)
+        if (projectilePool == null || projectileDestination == null)
         {
-            Debug.LogWarning("BossController: falta el prefab del proyectil o el destino (PlayerDamageZone).", this);
+            Debug.LogWarning("BossController: falta el prefab del proyectil (con BossProjectile) o el destino (PlayerDamageZone).", this);
             return;
         }
 
@@ -557,42 +565,102 @@ public class BossController : MonoBehaviour
             ? projectileOrigins[originIndex++ % projectileOrigins.Length]
             : transform;
 
-        GameObject instance = Instantiate(config.projectilePrefab, origin.position, Random.rotation);
-        BossProjectile projectile = instance.GetComponent<BossProjectile>();
-        if (projectile == null)
-        {
-            Debug.LogError("BossController: el prefab del proyectil no tiene BossProjectile.", instance);
-            Destroy(instance);
-            return;
-        }
+        // Sacar del pool y dejarlo como recién creado: primero el estado de Target, luego la física
+        BossProjectile projectile = projectilePool.Get();
+        Target target = projectile.GetComponent<Target>();
+        target.ResetForReuse();
+        projectile.ResetForFlight(origin.position, Random.rotation);
 
         // Puntos con el multiplicador del nivel, como cualquier diana; vida y tiempo de vida, los del prefab
-        Target target = instance.GetComponent<Target>();
         LevelConfig level = levelManager != null ? levelManager.CurrentLevel : null;
-        if (target != null && level != null) target.ApplyLevel(level.pointsMultiplier, 1f, 1f);
+        if (level != null) target.ApplyLevel(level.pointsMultiplier, 1f, 1f);
+        target.StartLifetime();   // un objeto reutilizado no vuelve a pasar por Start
 
         Vector2 jitter = Random.insideUnitCircle * config.projectileAimJitter;
         Vector3 destination = projectileDestination.position + projectileDestination.right * jitter.x
                               + projectileDestination.up * jitter.y;
         float flight = Random.Range(CurrentPhase.projectileFlightTime.x, CurrentPhase.projectileFlightTime.y);
 
-        projectile.Removed += HandleProjectileRemoved;
         projectiles.Add(projectile);
         projectile.Launch(destination, flight, config.projectileArcHeight, config.projectileHeartDamage);
     }
 
     private void HandleProjectileRemoved(BossProjectile projectile) => projectiles.Remove(projectile);
 
+    // ---------------------------------------------------------------- object pooling de proyectiles (F8)
+    //
+    // Antes cada proyectil era un Instantiate al lanzarlo y un Destroy al derribarlo o llegar: decenas por
+    // combate, cada uno con su Rigidbody, collider y materiales. Crear y destruir objetos cuesta CPU en el
+    // momento (justo durante una tanda) y deja basura que el recolector (GC) tiene que limpiar más tarde,
+    // lo que puede notarse como un tirón. Con un pool se crean unos pocos al principio y se reutilizan:
+    // "destruir" pasa a ser desactivar y devolver; "crear", sacar uno inactivo y reiniciarlo.
+    //
+    // Se usa UnityEngine.Pool.ObjectPool (incluido en Unity) en vez de escribir uno: ya gestiona la pila de
+    // objetos libres y, con collectionCheck, avisa en el editor si algo se devuelve dos veces (el error
+    // típico de un pool).
+    //
+    // Lo delicado es el ESTADO: un objeto reutilizado conserva lo que le pasó en su vida anterior (velocidad,
+    // vida, IsDead, Invoke pendientes). Por eso Target.ResetForReuse y BossProjectile.ResetForFlight.
+    // Los esbirros no usan pool: su estado (corrutina, capa, escala, contorno, TargetAppear) es más complejo
+    // y salen como mucho unos pocos por combate.
+    private void CreateProjectilePool()
+    {
+        if (config == null || config.projectilePrefab == null)
+            return;
+
+        if (config.projectilePrefab.GetComponent<BossProjectile>() == null || config.projectilePrefab.GetComponent<Target>() == null)
+        {
+            Debug.LogError("BossController: el prefab del proyectil necesita BossProjectile y Target.", config.projectilePrefab);
+            return;
+        }
+
+        // Contenedor en la raíz de la escena, no hijo del boss: si el boss se oculta o se desactiva entre
+        // partidas, no debe arrastrar a los proyectiles que estén en el aire
+        projectilePoolRoot = new GameObject("BossProjectilePool").transform;
+
+        projectilePool = new ObjectPool<BossProjectile>(
+            createFunc: CreatePooledProjectile,
+            actionOnGet: p => p.gameObject.SetActive(true),
+            actionOnRelease: p => p.gameObject.SetActive(false),   // OnDisable avisa con Removed
+            actionOnDestroy: p => { if (p != null) Destroy(p.gameObject); },
+            collectionCheck: true,
+            defaultCapacity: projectilePoolPrewarm,
+            maxSize: 32);
+
+        // Precalentar: crear ya los objetos (Instantiate + Awake) para que la primera tanda no los cree
+        var warm = new List<BossProjectile>();
+        for (int i = 0; i < projectilePoolPrewarm; i++) warm.Add(projectilePool.Get());
+        foreach (BossProjectile p in warm) projectilePool.Release(p);
+    }
+
+    private BossProjectile CreatePooledProjectile()
+    {
+        GameObject go = Instantiate(config.projectilePrefab, projectilePoolRoot);
+        BossProjectile projectile = go.GetComponent<BossProjectile>();
+
+        // Se enlaza UNA vez por objeto, no en cada lanzamiento (si no, los avisos se acumularían)
+        go.GetComponent<Target>().SetPool(_ => projectilePool.Release(projectile));
+        projectile.Removed += HandleProjectileRemoved;
+        return projectile;
+    }
+
     private void ClearProjectiles()
     {
-        for (int i = projectiles.Count - 1; i >= 0; i--)
-            if (projectiles[i] != null) Destroy(projectiles[i].gameObject);
+        // Copia: al devolver cada uno, su OnDisable lo quita de la lista que se está recorriendo
+        foreach (BossProjectile projectile in projectiles.ToArray())
+            if (projectile != null && projectile.gameObject.activeSelf)
+                projectile.GetComponent<Target>().Despawn(0f);
         projectiles.Clear();
         // Los esbirros también: entre fases y al acabar no queda nada que pueda hacer daño
         for (int i = minions.Count - 1; i >= 0; i--)
             if (minions[i] != null) Destroy(minions[i].gameObject);
         minions.Clear();
         dangerOwner = null;
+    }
+
+    private void OnDestroy()
+    {
+        if (projectilePoolRoot != null) Destroy(projectilePoolRoot.gameObject);
     }
 
     // ---------------------------------------------------------------- esbirros (I7.5)
@@ -655,7 +723,7 @@ public class BossController : MonoBehaviour
             target.ApplyBonus(TargetBonus.Heart, config.heartBonusOutline, 0f);
         MinionLunge lunge = go.GetComponent<MinionLunge>();
         if (lunge != null) { lunge.Bind(this, config); minions.Add(lunge); }
-        Debug.Log($"Boss: esbirro en {point.name}{(target != null && target.Bonus == TargetBonus.Heart ? " (ROSA)" : "")}");
+        GameLog.Info($"Boss: esbirro en {point.name}{(target != null && target.Bonus == TargetBonus.Heart ? " (ROSA)" : "")}");
     }
 
     // ---------------------------------------------------------------- daño
