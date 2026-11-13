@@ -209,6 +209,14 @@ public class TargetSpawner : MonoBehaviour
 
         foreach (Target target in targets)
         {
+            // Los que vienen de un pool (proyectiles del boss) se devuelven, no se destruyen: destruir uno dejaría
+            // al pool con un objeto muerto que fallaría en el siguiente lanzamiento (pasó en el bloque 2)
+            if (target.IsPooled)
+            {
+                target.Despawn(0f);
+                continue;
+            }
+
             // Destroy es diferido: desvinculamos antes para que su OnDestroy
             // no descuente de los contadores que ponemos a 0 justo debajo
             target.SetSpawner(null, -1);
