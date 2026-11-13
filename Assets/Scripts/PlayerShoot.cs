@@ -107,7 +107,7 @@ public class PlayerShoot : MonoBehaviour
     [SerializeField] private LayerMask sceneryMask = 1 << 8;   // capa Scenery
 
     // ---- Mejoras caras (I6.2). Los valores de cada mejora salen de WeaponStats; aquí solo la forma
-    [Tooltip("Separación angular total entre los rayos del disparo doble (grados). 3,5° ≈ 25 cm a cada lado a 8 m: cubre más área en vez de duplicar el daño casi siempre")]
+    [Tooltip("Ángulo entre el rayo central y el lateral del disparo doble (grados). 3,5° ≈ 49 cm a 8 m: el central va a donde apuntas y el lateral cubre área (rara vez dobla el daño)")]
     [SerializeField, Min(0f)] private float multiRaySpread = 3.5f;
 
     // Un evento por impacto: con penetración y disparo doble hay varios por disparo. Para efectos
@@ -261,6 +261,7 @@ public class PlayerShoot : MonoBehaviour
         float range = stats.Range;
         int rays = Mathf.Max(1, stats.Rays);
         int penetration = Mathf.Max(1, stats.Penetration);
+        if (rays > 1) rayDirection = -rayDirection;   // el rayo lateral alterna de lado en cada disparo
 
         shotTargets.Clear();
         bool hitPenalty = false, killedAny = false, hitWeakPoint = false;
@@ -356,16 +357,25 @@ public class PlayerShoot : MonoBehaviour
     }
 
     // Rayo i de n: el central si n = 1; si no, repartidos en horizontal entre −spread/2 y +spread/2
+    // Rayo index de count. Balance (bloque 3): el rayo 0 va SIEMPRE al centro de la mira y los demás se abren
+    // multiRaySpread grados a los lados (uno a un lado, el siguiente al otro...). Antes se repartían simétricos
+    // (±1,75° con dos rayos) y ninguno iba a donde apuntabas: contra los puntos débiles del boss (0,45 m a 13 m)
+    // fallaban los dos aunque la puntería fuese perfecta, y la mejora empeoraba al jugador.
+    // Con un número par de rayos, el lado del que sobra uno alterna en cada disparo (rayDirection)
     private Ray RayFor(int index, int count)
     {
         Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-        if (count <= 1)
+        if (count <= 1 || index == 0)
             return ray;
 
-        float angle = Mathf.Lerp(-multiRaySpread * 0.5f, multiRaySpread * 0.5f, index / (float)(count - 1));
+        int step = (index + 1) / 2;                                  // 1, 1, 2, 2...
+        float side = (index % 2 == 1 ? 1f : -1f) * rayDirection;     // un lado, el otro...
+        float angle = multiRaySpread * step * side;
         ray.direction = Quaternion.AngleAxis(angle, playerCamera.transform.up) * ray.direction;
         return ray;
     }
+
+    private float rayDirection = 1f;
 
     // RaycastAll no garantiza el orden: se ordena por distancia para recorrer los impactos como los
     // encontraría la bala. NonAlloc con un buffer que crece si se llena
