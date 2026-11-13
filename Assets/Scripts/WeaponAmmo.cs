@@ -17,6 +17,7 @@ public class WeaponAmmo : MonoBehaviour
     public event System.Action OnShot;
 
     public bool CanShoot => currentAmmo > 0 && !isReloading;
+    public int CurrentAmmo => currentAmmo;   // balas en el cargador (BalanceBot decide si recargar)
 
     // NUEVO: estado de solo lectura para la parte visual
     public bool IsReloading => isReloading;

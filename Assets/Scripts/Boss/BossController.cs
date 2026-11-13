@@ -98,14 +98,20 @@ public class BossController : MonoBehaviour
     public int PhaseIndex { get; private set; }
     public int PhaseCount => config != null && config.phases != null ? config.phases.Length : 0;
     public float Health { get; private set; }            // vida total que queda (todas las fases)
-    public float MaxHealth => config != null ? config.TotalHealth : 0f;
+    public float MaxHealth => config != null ? config.TotalHealth * PowerScale : 0f;
+    // Balance (bloque 3): multiplicador de vida según el equipo del jugador, fijado al empezar el combate
+    public float PowerScale { get; private set; } = 1f;
     public float PhaseHealth { get; private set; }       // vida que queda en la fase actual
     public bool IsDefeated => State == BossState.Dead;
     public bool IsFurious { get; private set; }
     public float FightTime { get; private set; }         // segundos de combate (solo en Playing)
     public float DamageMultiplier { get; private set; } = 1f;
     public int LastVictoryBonus { get; private set; }     // para la pantalla de fin (J7.1)
-    public float HonkCounterProgress => config != null ? Mathf.Clamp01(honkDamage / config.honkCounterDamage) : 0f;
+    public float HonkCounterProgress => config != null ? Mathf.Clamp01(honkDamage / HonkCounterDamage) : 0f;
+    // El daño para aturdirlo NO escala con el equipo (se probó y rompía la regla 7, §27.6): con la Barrett harían
+    // falta 4 impactos en 1,5 s, imposible a menos de un disparo por segundo. El escalado alarga el combate;
+    // contrarrestar el bocinazo sí debe ser más fácil con un arma fuerte o con la mejora de daño
+    private float HonkCounterDamage => config.honkCounterDamage;
 
     // Se le hace daño si hay algún punto débil abierto y no está cambiando de fase
     public bool CanTakeDamage => openMode != OpenMode.None && !phaseCleared && State != BossState.Dead;
@@ -237,6 +243,7 @@ public class BossController : MonoBehaviour
         ProfileManager profiles = SceneCache<ProfileManager>.Get();
         if (profiles != null) profiles.MarkBossEncountered();
         LastVictoryBonus = 0;
+        PowerScale = ComputePowerScale();
         Health = MaxHealth;
         FightTime = 0f;
         IsFurious = false;
@@ -250,12 +257,11 @@ public class BossController : MonoBehaviour
     // se sabe cuántos corazones quedan; los créditos los calcula EndGame con la puntuación ya sumada
     private void AwardVictory()
     {
+        // Balance (bloque 3): sin el ×2,5 del nivel. Con él, vencer valía tanto como cuatro partidas normales
         int hearts = playerHealth != null ? playerHealth.Hearts : 0;
-        LevelConfig level = levelManager != null ? levelManager.CurrentLevel : null;
-        float levelMultiplier = level != null ? level.pointsMultiplier : 1f;
         float raw = config.victoryBonusBase + config.victoryBonusPerHeart * hearts +
                     config.victoryBonusPerSecond * Mathf.Max(0f, config.victoryParTime - FightTime);
-        LastVictoryBonus = Mathf.RoundToInt(raw * levelMultiplier);
+        LastVictoryBonus = Mathf.RoundToInt(raw);
         if (scoreManager != null) scoreManager.AddBonus(LastVictoryBonus);
 
         ProfileManager profiles = FindFirstObjectByType<ProfileManager>();
@@ -322,7 +328,7 @@ public class BossController : MonoBehaviour
     {
         for (PhaseIndex = 0; PhaseIndex < PhaseCount; PhaseIndex++)
         {
-            PhaseHealth = CurrentPhase.health;
+            PhaseHealth = CurrentPhase.health * PowerScale;
             phaseCleared = false;
             attacksThisPhase = 0;
             lastWasHonk = false;
@@ -464,7 +470,7 @@ public class BossController : MonoBehaviour
 
         float time = Mathf.Max(config.honkTelegraphTime * Fury, IsFurious ? config.honkMinTelegraphTime : 0f);
         bool countered = false;
-        yield return TelegraphWait(time, () => countered = honkDamage >= config.honkCounterDamage);
+        yield return TelegraphWait(time, () => countered = honkDamage >= HonkCounterDamage);
         if (phaseCleared) yield break;   // la mandíbula se llevó la última vida de la fase
 
         if (countered)
@@ -675,6 +681,22 @@ public class BossController : MonoBehaviour
     // ---------------------------------------------------------------- esbirros (I7.5)
 
     // Un peligro a la vez: un esbirro solo salta si no hay bocinazo en marcha ni otro esbirro saltando
+    // Potencia del arma equipada (con mejoras) frente al arma inicial sin mejoras → multiplicador de vida
+    private float ComputePowerScale()
+    {
+        if (config == null || !config.scaleWithPlayerPower) return 1f;
+        WeaponController weapons = SceneCache<WeaponController>.Get();
+        ProfileManager profiles = SceneCache<ProfileManager>.Get();
+        if (weapons == null || weapons.CurrentWeapon == null || profiles == null || profiles.StarterWeapon == null) return 1f;
+
+        WeaponStats baseline = WeaponStatsCalculator.Compute(profiles.StarterWeapon, null, null);
+        float reference = BossPowerScaling.SustainedDamage(baseline, profiles.StarterWeapon.isAutomatic, config.extraRayEfficiency, config.explosionBonus);
+        float current = BossPowerScaling.SustainedDamage(weapons.CurrentStats, weapons.CurrentWeapon.isAutomatic, config.extraRayEfficiency, config.explosionBonus);
+        float scale = BossPowerScaling.Scale(reference > 0f ? current / reference : 1f, config.powerExponent, config.maxPowerScale);
+        GameLog.Info($"Boss: potencia del jugador ×{(reference > 0f ? current / reference : 1f):0.00} → vida ×{scale:0.00}");
+        return scale;
+    }
+
     // Lo llama MinionLunge al empezar su aviso
     public void NotifyMinionWarning(MinionLunge minion) => MinionWarning?.Invoke(minion);
 
@@ -683,7 +705,7 @@ public class BossController : MonoBehaviour
     {
         if (config == null || config.phases == null) return 0f;
         float health = MaxHealth;
-        for (int i = 0; i < index && i < config.phases.Length; i++) health -= config.phases[i].health;
+        for (int i = 0; i < index && i < config.phases.Length; i++) health -= config.phases[i].health * PowerScale;
         return Mathf.Max(0f, health);
     }
 
@@ -775,7 +797,8 @@ public class BossController : MonoBehaviour
         {
             LevelConfig level = levelManager != null ? levelManager.CurrentLevel : null;
             float levelMultiplier = level != null ? level.pointsMultiplier : 1f;
-            scoreManager.AddScore(Mathf.RoundToInt(applied * config.weakPointPointsPerDamage * levelMultiplier));
+            // ÷ PowerScale: con más vida por el escalado, el boss da los mismos puntos en total
+            scoreManager.AddScore(Mathf.RoundToInt(applied / PowerScale * config.weakPointPointsPerDamage * levelMultiplier));
         }
 
         // Igual que la vida de Target: por debajo de esto cuenta como 0 (el daño suma en float)

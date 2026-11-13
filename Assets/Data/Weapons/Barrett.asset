@@ -15,7 +15,7 @@ MonoBehaviour:
   id: barrett
   displayName: Barrett M82A1
   modelPrefab: {fileID: 7562074499662942624, guid: e9ee2b129b83af390a7d203b1ce1204c, type: 3}
-  price: 1800
+  price: 1200
   baseDamage: 3
   holdPosition: {x: 0, y: 0.066, z: 0.27}
   holdRotation: {x: 0, y: 90, z: 0}

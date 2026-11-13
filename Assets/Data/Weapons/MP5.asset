@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mp5
   displayName: HK MP5
   modelPrefab: {fileID: 5731537676131412485, guid: 4e324861ce3d61e91a14e78ae7ed8394, type: 3}
-  price: 600
+  price: 400
   baseDamage: 1
   holdPosition: {x: 0, y: 0.032, z: 0}
   holdRotation: {x: 0, y: 90, z: 0}

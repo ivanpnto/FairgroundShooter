@@ -106,11 +106,24 @@ public class BossConfig : ScriptableObject
     [Header("Victoria")]
     [Tooltip("Segundos entre la muerte del boss y el fin de la partida (para la animación)")]
     [Min(0f)] public float deathDelay = 2f;
-    [Tooltip("Bonus al vencer (§27.7): (base + porCorazón × corazones + porSegundo × máx(0, tiempoPar − tiempo)) × multiplicador del nivel. Se suma sin racha ni mejora")]
+    [Tooltip("Bonus al vencer (§27.7): base + porCorazón × corazones + porSegundo × máx(0, tiempoPar − tiempo). Se suma sin racha, sin mejora " +
+             "y, desde el balance del bloque 3, sin el ×2,5 del nivel (valía como cuatro partidas normales)")]
     [Min(0)] public int victoryBonusBase = 2000;
     [Min(0)] public int victoryBonusPerHeart = 500;
     [Min(0)] public int victoryBonusPerSecond = 20;
     [Min(0f)] public float victoryParTime = 180f;
+
+    [Header("Escalado con el equipo del jugador (balance, bloque 3)")]
+    [Tooltip("Multiplica la vida del boss según la potencia del arma y mejoras del jugador (el daño para aturdirlo no cambia)")]
+    public bool scaleWithPlayerPower = true;
+    [Tooltip("escala = potencia ^ exponente. 0 = sin escalado; 1 = el combate dura lo mismo con cualquier equipo")]
+    [Range(0f, 1f)] public float powerExponent = 0.75f;
+    [Tooltip("Tope del multiplicador de vida")]
+    [Min(1f)] public float maxPowerScale = 8f;
+    [Tooltip("Parte del segundo rayo del disparo doble que cuenta como daño útil contra el boss")]
+    [Range(0f, 1f)] public float extraRayEfficiency = 0.5f;
+    [Tooltip("Daño extra que se le supone a la bala explosiva contra el boss (0,5 = +50 %)")]
+    [Min(0f)] public float explosionBonus = 0.5f;
 
     [Header("Esbirros (I7.5)")]
     [Tooltip("Prefab con Target + MinionLunge (el muñeco de resorte)")]

@@ -67,7 +67,7 @@ MonoBehaviour:
   honkWindupTime: 1.2
   honkTelegraphTime: 1.5
   honkMinTelegraphTime: 1.2
-  honkCounterDamage: 4
+  honkCounterDamage: 3
   honkCounterWeakPointId: Jaw
   honkHeartDamage: 2
   honkRecoveryTime: 0.6
@@ -81,9 +81,14 @@ MonoBehaviour:
   victoryBonusPerHeart: 500
   victoryBonusPerSecond: 20
   victoryParTime: 180
+  scaleWithPlayerPower: 1
+  powerExponent: 0.75
+  maxPowerScale: 8
+  extraRayEfficiency: 0.5
+  explosionBonus: 0.5
   minionPrefab: {fileID: 2834708955499654938, guid: fff0b96219f265b4ea4e5fdfbd951cda, type: 3}
   minionLaneId: Boss_Minion
-  minionWaitTime: {x: 2.2, y: 3.2}
+  minionWaitTime: {x: 1.6, y: 2.6}
   minionWarningTime: 0.6
   minionLungeTime: 0.9
   minionHeartDamage: 1

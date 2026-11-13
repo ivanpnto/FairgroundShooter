@@ -52,6 +52,7 @@ public class Target : MonoBehaviour, IDamageable
     public TargetBonus Bonus { get; private set; } = TargetBonus.None;
     public bool CanHaveBonus => points > 0;   // un objetivo de penalización nunca es especial
     public bool IsPenalty => points < 0;      // resta puntos y rompe la racha
+    public float LevelPoints => points * pointsMultiplier;   // puntos del derribo con el nivel (BalanceBot elige por ellos)
     public bool IsDead { get; private set; }
     // IDamageable (I7.1): mismas condiciones con las que PlayerShoot lo saltaba antes
     public bool CanBeHit => !IsDead && !IsExpiring;

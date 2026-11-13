@@ -19,5 +19,5 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 9541206eee6ba4f4e8984fd948b7a21e, type: 3}
   effect: 4
   maxLevel: 1
-  costPerLevel: 60090000
+  costPerLevel: 0e060000
   valuePerLevel: 1

@@ -28,6 +28,12 @@ public class ProfileManager : MonoBehaviour
     [SerializeField] private string fileName = "profiles.json";
     private string FileName => string.IsNullOrWhiteSpace(fileName) ? "profiles.json" : fileName;
 
+    // Balance (bloque 3): perfil de demostración para la evaluación. Se rehace al arrancar el juego, así que siempre
+    // empieza igual aunque alguien lo haya usado antes (sus créditos y compras no se conservan entre sesiones)
+    [Tooltip("Crea (o rehace) al arrancar un perfil de demostración con el nivel 4 comprado y media tienda")]
+    [SerializeField] private bool demoProfile = true;
+    [SerializeField] private ProfilePreset demoPreset = ProfilePreset.DefaultDemo();
+
     // Créditos = max(0, puntuación final) / ScorePerCredit (división entera)
     public const int ScorePerCredit = 10;
 
@@ -51,10 +57,38 @@ public class ProfileManager : MonoBehaviour
     private void Awake()
     {
         Load();
+        if (demoProfile) RebuildDemoProfile();
 
         // El último perfil usado queda elegido al arrancar
         if (!string.IsNullOrEmpty(database.selectedProfile))
             SelectProfile(database.selectedProfile);
+    }
+
+    // Sustituye el perfil Demo por uno recién hecho desde demoPreset (o lo crea si no existe). No lo elige:
+    // el jugador lo escoge en la pantalla de perfiles como cualquier otro
+    private void RebuildDemoProfile()
+    {
+        if (demoPreset == null || string.IsNullOrWhiteSpace(demoPreset.name)) return;
+        int index = database.profiles.FindIndex(p => string.Equals(p.name, demoPreset.name, System.StringComparison.OrdinalIgnoreCase));
+        PlayerProfile fresh = demoPreset.Build();
+        EnsureStarterWeapon(fresh);
+        if (index >= 0) database.profiles[index] = fresh;
+        else database.profiles.Add(fresh);
+        Save();
+    }
+
+    // Para BalanceBot (y herramientas): elige o crea el perfil del preset y lo deja EXACTAMENTE como dice el preset
+    public void ApplyPreset(ProfilePreset preset)
+    {
+        if (preset == null) return;
+        int index = database.profiles.FindIndex(p => string.Equals(p.name, preset.name, System.StringComparison.OrdinalIgnoreCase));
+        PlayerProfile fresh = preset.Build();
+        EnsureStarterWeapon(fresh);
+        if (index >= 0) database.profiles[index] = fresh;
+        else database.profiles.Add(fresh);
+        Current = fresh;
+        database.selectedProfile = fresh.name;
+        Commit();
     }
 
     // ── Perfiles ────────────────────────────────────────────────────────────────
