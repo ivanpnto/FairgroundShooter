@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: 'Nivel 4: El Circo'
   description: "Un nivel m\xE1s al final de la partida: \xA1el circo llega a la feria!
     Pasa y ver\xE1s."
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 999743be6f1303343a8ae6df81f21ce9, type: 3}
   effect: 7
   maxLevel: 1
   costPerLevel: 88130000

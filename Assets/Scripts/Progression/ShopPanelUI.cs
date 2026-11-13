@@ -76,7 +76,8 @@ public class ShopPanelUI : MonoBehaviour
             upgrade.description,
             maxed ? "MÁXIMO" : $"{cost} CR.",
             !maxed && credits >= cost,
-            () => profileManager.BuyUpgradeLevel(upgrade));
+            () => profileManager.BuyUpgradeLevel(upgrade),
+            upgrade.icon);
     }
 
     private void AddWeaponRow(WeaponData weapon, int credits)

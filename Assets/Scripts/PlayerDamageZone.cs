@@ -26,6 +26,10 @@ public class PlayerDamageZone : MonoBehaviour
 {
     private PlayerHealth playerHealth;
 
+    // Bloque 2: lo que acaba de llegar y si ha quitado vida (false si eras invulnerable). PlayerHealth.Damaged
+    // dice cuánto daño, pero no qué lo hizo: con esto los efectos distinguen una tarta de un esbirro
+    public event System.Action<IPlayerHazard, bool> HazardReached;
+
     private void Reset() => Configure();
 
     private void Awake()
@@ -53,8 +57,8 @@ public class PlayerDamageZone : MonoBehaviour
             return;
 
         // Se consume aunque el jugador sea invulnerable: si no, se quedaría delante de la cámara
-        if (playerHealth != null)
-            playerHealth.TakeHit(hazard.HeartDamage);
+        bool damaged = playerHealth != null && playerHealth.TakeHit(hazard.HeartDamage);
+        HazardReached?.Invoke(hazard, damaged);   // antes de OnReachedPlayer: el proyectil aún no ha vuelto al pool
         hazard.OnReachedPlayer();
     }
 }

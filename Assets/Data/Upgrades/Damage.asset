@@ -15,7 +15,7 @@ MonoBehaviour:
   id: damage
   displayName: "Da\xF1o"
   description: "+25 % de da\xF1o por nivel: los objetivos resistentes caen antes."
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 239bf0dc05dab514492a69c725fd8080, type: 3}
   effect: 3
   maxLevel: 3
   costPerLevel: 2c01000058020000e8030000

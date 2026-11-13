@@ -28,17 +28,19 @@ public class GameOverSummaryUI : MonoBehaviour
         recordsButton.onClick.AddListener(() => { if (menu != null) menu.ShowRecords(); });
     }
 
-    // Línea del nivel 4 (texto mínimo de I7.6; la pantalla de victoria/derrota de verdad es de Jaime, J7.1)
+    // Bloque del nivel 4 en el resumen. El cartel grande de victoria/derrota es ResultBannerUI (bloque 2);
+    // aquí queda el detalle: tiempo, corazones y bonus, o cuánta vida le quedaba al boss
     private string BossLine()
     {
-        BossController boss = FindFirstObjectByType<BossController>();
+        BossController boss = SceneCache<BossController>.Get();
         if (boss == null || boss.State == BossController.BossState.Inactive)
             return "";
 
+        // Una línea corta: el tablero del resumen es estrecho (el detalle grande ya lo dio el cartel)
         if (gameManager.LastGameOverReason == GameOverReason.Victory)
-            return $"\n¡EL GRAN FERIANTE DERROTADO en {FormatTime(boss.FightTime)}!  Bonus +{boss.LastVictoryBonus}";
+            return $"\n<color=#FFD24A>Boss derrotado en {FormatTime(boss.FightTime)}  ·  bonus +{boss.LastVictoryBonus}</color>";
         if (gameManager.LastGameOverReason == GameOverReason.Defeat)
-            return $"\nEl Gran Feriante te ha vencido (le quedaba un {(boss.MaxHealth > 0f ? boss.Health / boss.MaxHealth : 0f):P0} de vida)";
+            return $"\n<color=#FF8C73>El boss ganó a los {FormatTime(boss.FightTime)} (le quedaba un {(boss.MaxHealth > 0f ? boss.Health / boss.MaxHealth : 0f):P0})</color>";
         return "";
     }
 

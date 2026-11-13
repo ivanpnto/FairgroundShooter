@@ -58,6 +58,7 @@ public class MinionLunge : MonoBehaviour, IPlayerHazard
         claimed = true;
 
         // 3. Aviso: temblor y contorno rojo
+        boss.NotifyMinionWarning(this);
         Material[][] original = SwapOutline(config.minionWarningMaterial);
         Vector3 rest = transform.position;
         for (float t = 0f; t < config.minionWarningTime; )

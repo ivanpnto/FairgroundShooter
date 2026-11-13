@@ -51,6 +51,12 @@ public class GameManager : MonoBehaviour
     // Se lanza al final de EndGame, con los créditos ya guardados
     public event System.Action<GameOverReason> GameEnded;
 
+    // Bloque 2: al vencer o perder contra el boss, el cartel de ResultBannerUI se ve sobre el juego estos segundos
+    // antes del resumen. Al acabarse el tiempo (niveles 1–3) el resumen sale enseguida, como siempre
+    [Tooltip("Segundos del cartel de victoria/derrota antes del resumen (0 = sin espera)")]
+    [SerializeField, Min(0f)] private float resultBannerSeconds = 3.2f;
+    public float ResultBannerSeconds => resultBannerSeconds;
+
     private PlayerHealth playerHealth;
 
     private void Awake()
@@ -220,6 +226,15 @@ public class GameManager : MonoBehaviour
             text.text = value;
     }
 
+    // El estado ya es GameOver (no se dispara ni corre el tiempo); solo se retrasa el panel. RestartGame para
+    // las corrutinas, así que una partida nueva durante el cartel no deja un panel colgado
+    private IEnumerator ShowGameOverPanelAfter(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        if (CurrentState == GameState.GameOver)
+            gameOverPanel.SetActive(true);
+    }
+
     // Sin parámetro, como antes: fin por tiempo. Se conserva por si algún botón o script lo llama así
     public void EndGame() => EndGame(GameOverReason.Time);
 
@@ -242,7 +257,10 @@ public class GameManager : MonoBehaviour
         finalScoreText.text = $"PUNTOS: {finalScore}";
 
         hud.SetActive(false);
-        gameOverPanel.SetActive(true);
+        if (reason != GameOverReason.Time && resultBannerSeconds > 0f)
+            StartCoroutine(ShowGameOverPanelAfter(resultBannerSeconds));
+        else
+            gameOverPanel.SetActive(true);
 
         // Resumen para equilibrar precios y créditos (Fase 5, hito 6)
         GameLog.Info($"Fin de partida ({reason}) · {profileName} · puntos {finalScore} · créditos +{LastCreditsEarned} (total {totalCredits}) · " +

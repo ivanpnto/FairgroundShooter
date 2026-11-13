@@ -117,6 +117,8 @@ public class BossController : MonoBehaviour
     public event System.Action<bool> HonkResolved;            // true = contrarrestado (aturdido); false = golpe
     public event System.Action FuryStarted;
     public event System.Action Defeated;
+    // Bloque 2: un esbirro empieza su aviso (tiembla y se pone rojo). Para el sonido de peligro
+    public event System.Action<MinionLunge> MinionWarning;
 
     // ---------------------------------------------------------------- privado
 
@@ -231,6 +233,9 @@ public class BossController : MonoBehaviour
         StopFight();
         RestoreParts();
         if (playerHealth != null) playerHealth.Activate();   // I7.6: los corazones llegan con el combate
+        // Bloque 2: a partir de aquí el perfil ya conoce al boss (la pantalla «Cómo jugar» enseña el contorno rosa)
+        ProfileManager profiles = SceneCache<ProfileManager>.Get();
+        if (profiles != null) profiles.MarkBossEncountered();
         LastVictoryBonus = 0;
         Health = MaxHealth;
         FightTime = 0f;
@@ -566,7 +571,11 @@ public class BossController : MonoBehaviour
             : transform;
 
         // Sacar del pool y dejarlo como recién creado: primero el estado de Target, luego la física
+        // Defensa extra: si algo destruyó un proyectil del pool por fuera (Destroy en vez de devolverlo), Get lo
+        // entregaría muerto. Se descarta y se pide otro (el pool crea uno nuevo si hace falta)
         BossProjectile projectile = projectilePool.Get();
+        for (int guard = 0; projectile == null && guard < 8; guard++) projectile = projectilePool.Get();
+        if (projectile == null) return;
         Target target = projectile.GetComponent<Target>();
         target.ResetForReuse();
         projectile.ResetForFlight(origin.position, Random.rotation);
@@ -620,8 +629,8 @@ public class BossController : MonoBehaviour
 
         projectilePool = new ObjectPool<BossProjectile>(
             createFunc: CreatePooledProjectile,
-            actionOnGet: p => p.gameObject.SetActive(true),
-            actionOnRelease: p => p.gameObject.SetActive(false),   // OnDisable avisa con Removed
+            actionOnGet: p => { if (p != null) p.gameObject.SetActive(true); },
+            actionOnRelease: p => { if (p != null) p.gameObject.SetActive(false); },   // OnDisable avisa con Removed
             actionOnDestroy: p => { if (p != null) Destroy(p.gameObject); },
             collectionCheck: true,
             defaultCapacity: projectilePoolPrewarm,
@@ -666,6 +675,18 @@ public class BossController : MonoBehaviour
     // ---------------------------------------------------------------- esbirros (I7.5)
 
     // Un peligro a la vez: un esbirro solo salta si no hay bocinazo en marcha ni otro esbirro saltando
+    // Lo llama MinionLunge al empezar su aviso
+    public void NotifyMinionWarning(MinionLunge minion) => MinionWarning?.Invoke(minion);
+
+    // Vida total que queda al EMPEZAR la fase index (0 = la vida máxima). Para las marcas de la barra del HUD
+    public float HealthAtPhaseStart(int index)
+    {
+        if (config == null || config.phases == null) return 0f;
+        float health = MaxHealth;
+        for (int i = 0; i < index && i < config.phases.Length; i++) health -= config.phases[i].health;
+        return Mathf.Max(0f, health);
+    }
+
     public bool TryClaimDanger(MinionLunge minion)
     {
         if (dangerOwner != null && dangerOwner != minion) return false;

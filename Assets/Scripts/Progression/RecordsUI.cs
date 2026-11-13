@@ -13,6 +13,8 @@ public class RecordsUI : MonoBehaviour
     // sin perder las referencias a los textos
     [SerializeField] private TMP_Text rankingNamesText;
     [SerializeField] private TMP_Text rankingScoresText;
+    [Tooltip("Bloque 2: columna «El Gran Feriante» (mejor tiempo y victorias). Vacío = el tiempo va junto al nombre, como antes")]
+    [SerializeField] private TMP_Text bossText;
     [SerializeField, Min(1)] private int entriesToShow = 5;
 
     private ProfileManager profileManager;
@@ -42,6 +44,7 @@ public class RecordsUI : MonoBehaviour
 
         StringBuilder names = new StringBuilder();
         StringBuilder points = new StringBuilder();
+        StringBuilder boss = new StringBuilder();
 
         if (records.Count == 0)
             names.Append("Aún no hay récords");
@@ -53,14 +56,20 @@ public class RecordsUI : MonoBehaviour
             // El perfil activo se resalta para que el jugador se encuentre en la lista
             bool mine = records[i].name == current;
             string line = $"{i + 1}.  {records[i].name}";
-            // I7.6: quien ha vencido al boss lleva su mejor tiempo (sin símbolos: la fuente TMP puede no tenerlos)
-            if (records[i].BossDefeated)
+            // Mejor tiempo contra el boss y victorias; «-» si no lo ha vencido (sin símbolos raros: la fuente
+            // TMP puede no tenerlos). Sin columna propia en el panel, va junto al nombre como en I7.6
+            string bossCell = records[i].BossDefeated
+                ? $"{GameOverSummaryUI.FormatTime(records[i].bestBossTime)}  (x{records[i].bossVictories})"
+                : "-";
+            if (bossText == null && records[i].BossDefeated)
                 line += $"  · BOSS {GameOverSummaryUI.FormatTime(records[i].bestBossTime)}";
             names.AppendLine(mine ? $"<color=#FFD24A>{line}</color>" : line);
             points.AppendLine(mine ? $"<color=#FFD24A>{records[i].bestScore}</color>" : records[i].bestScore.ToString());
+            boss.AppendLine(mine ? $"<color=#FFD24A>{bossCell}</color>" : bossCell);
         }
 
         rankingNamesText.text = names.ToString();
         rankingScoresText.text = points.ToString();
+        if (bossText != null) bossText.text = boss.ToString();
     }
 }

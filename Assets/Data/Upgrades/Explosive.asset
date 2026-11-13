@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Bala explosiva
   description: "Cada impacto estalla y da\xF1a a lo que haya a menos de 60 cm (menos
     cuanto m\xE1s lejos). Cuidado con los objetivos de penalizaci\xF3n."
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 9604798d7fdbbee4a9edfa2124f99fbb, type: 3}
   effect: 6
   maxLevel: 1
   costPerLevel: 100e0000

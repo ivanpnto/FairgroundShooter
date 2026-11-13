@@ -36,3 +36,13 @@ normalizado de sonoridad) para el juego; los originales están en `AudioSource/r
 | Carnival Rides | Écrivain | https://opengameart.org/content/carnival-rides | CC0 | Menús |
 | Children's March Theme | CleytonKauffman | https://opengameart.org/content/childrens-march-theme | CC0 | Nivel 1 (Bosque) |
 | Underwater Theme II | CleytonKauffman | https://opengameart.org/content/underwater-theme-ii | CC0 | Nivel 2 (Fondo marino) |
+
+## Efectos del combate contra el boss (propios)
+Sintetizados por código para el juego, sin muestras de terceros: toma de aire del bocinazo, bocinazo, aturdido,
+aviso del esbirro, golpe recibido, tartazo, corazón recuperado, cambio de fase, fanfarria de victoria y trombón
+de derrota (`Assets/Audio/Boss`). El generador está en `AudioSource/Synth/boss_sfx.py` (numpy + scipy).
+
+## Arte propio de la interfaz
+Corazones, viñeta, salpicadura de tarta y relleno de barra (`Assets/UI/Boss`) se generan con
+`ArtSource/UI/hud_sprites.py` (Pillow). Los iconos de la tienda (`Assets/UI/Icons`) se renderizan desde
+`ArtSource/Icons.blend`, y los proyectiles del boss (tarta, bola y maza) están en `ArtSource/Booth.blend`.

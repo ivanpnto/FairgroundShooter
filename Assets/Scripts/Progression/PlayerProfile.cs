@@ -34,6 +34,11 @@ public class PlayerProfile
     public float bestBossTime;   // segundos del combate más rápido; 0 = nunca lo ha vencido
     public bool BossDefeated => bossVictories > 0;
 
+    // Bloque 2: la pantalla «Cómo jugar» sale sola la primera partida; el contorno rosa solo se explica
+    // cuando el jugador ya ha visto al boss (si no, destriparía la sorpresa del nivel 4)
+    public bool seenHowToPlay;
+    public bool bossEncountered;
+
     public PlayerProfile(string name)
     {
         this.name = name;

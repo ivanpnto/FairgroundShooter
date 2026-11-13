@@ -224,6 +224,20 @@ public class ProfileManager : MonoBehaviour
     }
 
     // Victoria contra el boss: cuenta y mejor tiempo. Lo llama BossController antes de acabar la partida
+    public void MarkHowToPlaySeen()
+    {
+        if (Current == null || Current.seenHowToPlay) return;
+        Current.seenHowToPlay = true;
+        Commit();
+    }
+
+    public void MarkBossEncountered()
+    {
+        if (Current == null || Current.bossEncountered) return;
+        Current.bossEncountered = true;
+        Commit();
+    }
+
     public void RecordBossVictory(float fightSeconds)
     {
         if (Current == null)
