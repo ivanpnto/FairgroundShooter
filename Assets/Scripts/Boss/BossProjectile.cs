@@ -20,11 +20,21 @@ using UnityEngine;
 // Object pooling (F8): BossController no crea ni destruye proyectiles en cada tanda, los saca de un pool y
 // los devuelve. Por eso el aviso Removed sale en OnDisable (el pool desactiva el objeto al devolverlo, y
 // Unity también llama a OnDisable antes de destruirlo) y ResetForFlight deja la física como recién creada.
+public enum ProjectileKind { Ball, Club, Pie }
+
 [RequireComponent(typeof(Target), typeof(Rigidbody))]
 public class BossProjectile : MonoBehaviour, IPlayerHazard
 {
     [Tooltip("Giro al volar (grados/s, aleatorio hasta este valor por eje): que no parezca un cubo flotando")]
     [SerializeField] private float maxSpin = 360f;
+
+    // Bloque 2: un solo prefab con los tres modelos como hijos (en el orden de ProjectileKind) y uno visible
+    // al azar en cada lanzamiento. Un prefab por modelo obligaría a tener un pool por prefab; así el pool, la
+    // física y el collider (una esfera que vale para los tres) son los mismos y solo cambia lo que se ve
+    [Tooltip("Modelos hijos en el orden de ProjectileKind: bola, maza, tarta. Vacío = el aspecto del prefab")]
+    [SerializeField] private GameObject[] models;
+
+    public ProjectileKind Kind { get; private set; }
 
     public int HeartDamage { get; private set; } = 1;
     public bool IsActiveHazard => target != null && !target.IsDead && !target.IsExpiring && !reached;
@@ -47,6 +57,19 @@ public class BossProjectile : MonoBehaviour, IPlayerHazard
 
         // Derribado en el aire: deja de ser peligroso, pero no se queda flotando
         target.Killed += _ => body.linearVelocity *= 0.3f;
+
+        PickModel();
+    }
+
+    // Enciende un modelo al azar y apaga los demás
+    private void PickModel()
+    {
+        if (models == null || models.Length == 0)
+            return;
+        int index = Random.Range(0, models.Length);
+        for (int i = 0; i < models.Length; i++)
+            if (models[i] != null) models[i].SetActive(i == index);
+        Kind = (ProjectileKind)Mathf.Min(index, (int)ProjectileKind.Pie);
     }
 
     private void FixedUpdate() => body.AddForce(gravity, ForceMode.Acceleration);
@@ -74,6 +97,7 @@ public class BossProjectile : MonoBehaviour, IPlayerHazard
     // vuelo anterior (un Rigidbody la conserva aunque se desactive el objeto) y sin gravedad hasta el lanzamiento
     public void ResetForFlight(Vector3 position, Quaternion rotation)
     {
+        PickModel();
         reached = false;
         gravity = Vector3.zero;
         HeartDamage = 1;
