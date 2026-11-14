@@ -14,6 +14,8 @@ public class ShopPanelUI : MonoBehaviour
     [Tooltip("Fila de ejemplo (desactivada) que se clona por cada mejora y cada arma")]
     [SerializeField] private ShopRowUI rowTemplate;
     [SerializeField] private Button backButton;
+    [Tooltip("Fase 8: las armas se compran en la armería en 3D; esta tienda queda solo con las habilidades")]
+    [SerializeField] private bool includeWeapons = true;
 
     private ProfileManager profileManager;
     private WeaponController weaponController;
@@ -58,7 +60,7 @@ public class ShopPanelUI : MonoBehaviour
                 if (upgrade != null)
                     AddUpgradeRow(upgrade, credits);
 
-        if (weaponController != null && weaponController.AvailableWeapons != null)
+        if (includeWeapons && weaponsContent != null && weaponController != null && weaponController.AvailableWeapons != null)
             foreach (WeaponData weapon in weaponController.AvailableWeapons)
                 if (weapon != null)
                     AddWeaponRow(weapon, credits);

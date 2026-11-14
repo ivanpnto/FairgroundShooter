@@ -53,6 +53,7 @@ aviso del esbirro, golpe recibido, tartazo, corazón recuperado, cambio de fase,
 de derrota (`Assets/Audio/Boss`). El generador está en `AudioSource/Synth/boss_sfx.py` (numpy + scipy).
 Los de la transición entre niveles (telón, golpes tras el telón, cartel y cuenta atrás, `Assets/Audio/Transition`)
 se generan igual con `AudioSource/Synth/transition_sfx.py`.
+Los de la armería (caja registradora, bombilla y paso del ratón, `Assets/Audio/Armory`), con `AudioSource/Synth/armory_sfx.py`.
 
 ## Arte propio de la interfaz
 Corazones, viñeta, salpicadura de tarta y relleno de barra (`Assets/UI/Boss`) se generan con

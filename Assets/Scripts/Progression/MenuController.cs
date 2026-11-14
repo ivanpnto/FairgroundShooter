@@ -37,6 +37,14 @@ public class MenuController : MonoBehaviour
         Show(recordsPanel);
     }
 
+    // Fase 8: la armería en 3D no es un panel, es la escena vista por otra cámara. Se ocultan todos los menús
+    // y se recuerda de cuál se venía, para que VOLVER (Back) regrese al inicio o al resumen
+    public void HideAll()
+    {
+        returnPanel = CurrentMainMenu();
+        Show(null);
+    }
+
     public void Back() => Show(returnPanel != null ? returnPanel : startPanel);
 
     private GameObject CurrentMainMenu()
