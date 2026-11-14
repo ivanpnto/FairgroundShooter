@@ -1,14 +1,17 @@
 using UnityEngine;
 
-// Atrezo animado de la armería (Fase 8): el cajón de la caja registradora y el dependiente de cartón.
-// Animación por código, como los objetivos: al comprar, el cajón sale de golpe y vuelve, suena el «cha-ching»
-// y el payaso se balancea sobre su poste.
+// Atrezo animado de las tiendas en 3D (Fase 8): el cajón de la caja registradora y el dependiente de cartón
+// (el payaso de la armería, el charlatán de la botica). Animación por código, como los objetivos: al comprar,
+// el cajón sale de golpe y vuelve y suena el «cha-ching»; el dependiente se mece siempre un poco y, si
+// reactOnSale, además se balancea sobre su poste.
 public class ArmoryProps : MonoBehaviour
 {
     [SerializeField] private Transform drawer;
     [Tooltip("Hacia dónde sale el cajón, en el espacio local de su padre (hacia el jugador)")]
     [SerializeField] private Vector3 drawerOut = new Vector3(0f, 0f, -0.28f);
     [SerializeField] private Transform clownPivot;   // en la base del poste
+    [Tooltip("El dependiente celebra la venta (el payaso sí; el charlatán de la botica, no)")]
+    [SerializeField] private bool reactOnSale = true;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip registerClip;
 
@@ -37,8 +40,8 @@ public class ArmoryProps : MonoBehaviour
             saleAge += Time.deltaTime;
             // El cajón sale en 0,12 s (al sonar el «ching»), espera y vuelve despacio
             open = saleAge < 0.12f ? saleAge / 0.12f : saleAge < 1.2f ? 1f : Mathf.Clamp01(1f - (saleAge - 1.2f) / 0.5f);
-            // El payaso «celebra»: oscilación amortiguada de hasta 12°
-            sway = 12f * Mathf.Sin(saleAge * 9f) * Mathf.Exp(-saleAge * 2.2f);
+            // El dependiente «celebra»: oscilación amortiguada de hasta 12°
+            if (reactOnSale) sway = 12f * Mathf.Sin(saleAge * 9f) * Mathf.Exp(-saleAge * 2.2f);
             if (saleAge > 2.5f) saleAge = -1f;
         }
         if (drawer != null) drawer.localPosition = drawerHome + drawerOut * open;

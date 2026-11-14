@@ -25,8 +25,15 @@ public class MenuController : MonoBehaviour
     public void ShowProfiles() => Show(profilePanel);
     public void ShowStart() => Show(startPanel);
 
+    // Fase 8: las habilidades se compran en la botica en 3D. El panel 2D solo sale si la escena no la tiene
     public void ShowShop()
     {
+        BoticaController botica = SceneCache<BoticaController>.Get();
+        if (botica != null)
+        {
+            botica.Open();
+            return;
+        }
         returnPanel = CurrentMainMenu();
         Show(shopPanel);
     }

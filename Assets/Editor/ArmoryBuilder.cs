@@ -24,7 +24,7 @@ public static class ArmoryBuilder
     private const string AudioFolder = "Assets/Audio/Armory/";
     private const string LayerName = "Armory";
     private const int RenderBit = 2;                 // Rendering Layer «Armory»
-    private const uint InteriorMask = 1u << RenderBit;
+    internal const uint InteriorMask = 1u << RenderBit;
 
     [MenuItem("Tools/Fairground/Build Armory")]
     public static void Build()
@@ -69,7 +69,7 @@ public static class ArmoryBuilder
 
     // ── Capas ───────────────────────────────────────────────────────────────────
 
-    private static int EnsureLayers()
+    internal static int EnsureLayers()
     {
         var tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
         SerializedProperty layers = tagManager.FindProperty("layers");
@@ -96,15 +96,26 @@ public static class ArmoryBuilder
     private static void ImportAssets()
     {
         AssetDatabase.Refresh();
-        var model = (ModelImporter)AssetImporter.GetAtPath(ModelPath);
+        ImportModel(ModelPath);
+        ImportAudio(AudioFolder);
+    }
+
+    // FBX de interior: materiales por descripción (remapeados a los .mat del proyecto), sin animación
+    internal static void ImportModel(string path)
+    {
+        var model = (ModelImporter)AssetImporter.GetAtPath(path);
         model.materialImportMode = ModelImporterMaterialImportMode.ImportViaMaterialDescription;
         model.materialLocation = ModelImporterMaterialLocation.InPrefab;
         model.importAnimation = false;
         model.bakeAxisConversion = false;
         model.SearchAndRemapMaterials(ModelImporterMaterialName.BasedOnMaterialName, ModelImporterMaterialSearch.Everywhere);
         model.SaveAndReimport();
+    }
 
-        foreach (string guid in AssetDatabase.FindAssets("t:AudioClip", new[] { AudioFolder.TrimEnd('/') }))
+    // Efectos cortos: descomprimidos al cargar (suenan sin retardo), Vorbis y mono
+    internal static void ImportAudio(string folder)
+    {
+        foreach (string guid in AssetDatabase.FindAssets("t:AudioClip", new[] { folder.TrimEnd('/') }))
         {
             var imp = (AudioImporter)AssetImporter.GetAtPath(AssetDatabase.GUIDToAssetPath(guid));
             AudioImporterSampleSettings s = imp.defaultSampleSettings;
@@ -121,7 +132,7 @@ public static class ArmoryBuilder
 
     // Bombillas de la armería: materiales Lit propios. M_Bulb no sirve: usa el shader de las bombillas en cadena de
     // la caseta, que se enciende según los colores de vértice de su modelo
-    private static Material BulbMaterial(string name, Color baseColor, Color emission)
+    internal static Material BulbMaterial(string name, Color baseColor, Color emission)
     {
         string path = $"Assets/Art/Materials/Fairground/{name}.mat";
         Shader lit = Shader.Find("Universal Render Pipeline/Lit");
@@ -145,7 +156,7 @@ public static class ArmoryBuilder
         return mat;
     }
 
-    private static Material DoorDarkMaterial()
+    internal static Material DoorDarkMaterial()
     {
         const string path = "Assets/Art/Materials/Fairground/M_A_DoorDark.mat";
         var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -254,26 +265,7 @@ public static class ArmoryBuilder
         }
 
         // Etiqueta flotante (nombre y precio del arma señalada)
-        var label = new GameObject("HoverLabel", typeof(RectTransform)).AddComponent<TextMeshPro>();
-        label.transform.SetParent(root.transform, false);
-        label.rectTransform.sizeDelta = new Vector2(2f, 0.5f);
-        label.font = Rye;
-        label.fontSize = 1.5f;
-        label.alignment = TextAlignmentOptions.Center;
-        // Material por defecto de la fuente: RyeCartel es de interfaz y recorta con la máscara del Canvas, así que en
-        // el mundo no se veía. Para que se lea sobre la madera, dorado con una placa oscura detrás
-        label.color = Gold;
-        var back = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        back.name = "LabelBack";
-        Object.DestroyImmediate(back.GetComponent<Collider>());
-        back.transform.SetParent(label.transform, false);
-        back.transform.localPosition = new Vector3(0f, 0f, 0.01f);
-        back.transform.localScale = new Vector3(0.62f, 0.3f, 1f);
-        var backRenderer = back.GetComponent<MeshRenderer>();
-        backRenderer.sharedMaterial = DoorDarkMaterial();
-        backRenderer.renderingLayerMask = InteriorMask;
-        backRenderer.shadowCastingMode = ShadowCastingMode.Off;
-        label.GetComponent<MeshRenderer>().renderingLayerMask = InteriorMask;
+        TextMeshPro label = HoverLabel(root.transform);
 
         // Atrezo animado: cajón (se desliza) y payaso (gira sobre la base del poste)
         Transform drawer = FindDeep(model.transform, "Armory_RegisterDrawer");
@@ -293,8 +285,49 @@ public static class ArmoryBuilder
         SetRefs(props, "drawer", drawer, "clownPivot", clownPivot, "audioSource", audio, "registerClip", Clip("Register_ChaChing"));
 
         // Cámara y post-procesado propios
-        var camGo = new GameObject("ArmoryCamera");
-        camGo.transform.SetParent(root.transform, false);
+        Camera cam = ShopCamera(root.transform, "ArmoryCamera");
+        Volume vol = InteriorVolume(root.transform, layer, "ArmoryVolume");
+
+        ArmoryController controller = root.AddComponent<ArmoryController>();
+        SetRefs(controller, "shopCamera", cam, "interiorVolume", vol, "slots", slots.ToArray(), "props", props, "hoverLabel", label,
+            "audioSource", audio, "hoverClip", Clip("Armory_Hover"), "bulbClip", Clip("Bulb_On"));
+
+        GameObject saved = PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+        Object.DestroyImmediate(root);
+        return saved;
+    }
+
+    // Etiqueta flotante: nombre y precio del objeto señalado, en dorado sobre una placa oscura
+    internal static TextMeshPro HoverLabel(Transform root)
+    {
+        var label = new GameObject("HoverLabel", typeof(RectTransform)).AddComponent<TextMeshPro>();
+        label.transform.SetParent(root, false);
+        label.rectTransform.sizeDelta = new Vector2(2f, 0.5f);
+        label.font = Rye;
+        label.fontSize = 1.5f;
+        label.alignment = TextAlignmentOptions.Center;
+        // Material por defecto de la fuente: RyeCartel es de interfaz y recorta con la máscara del Canvas, así que en
+        // el mundo no se veía. Para que se lea sobre la madera, dorado con una placa oscura detrás
+        label.color = Gold;
+        var back = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        back.name = "LabelBack";
+        Object.DestroyImmediate(back.GetComponent<Collider>());
+        back.transform.SetParent(label.transform, false);
+        back.transform.localPosition = new Vector3(0f, 0f, 0.01f);
+        back.transform.localScale = new Vector3(0.62f, 0.3f, 1f);
+        var backRenderer = back.GetComponent<MeshRenderer>();
+        backRenderer.sharedMaterial = DoorDarkMaterial();
+        backRenderer.renderingLayerMask = InteriorMask;
+        backRenderer.shadowCastingMode = ShadowCastingMode.Off;
+        label.GetComponent<MeshRenderer>().renderingLayerMask = InteriorMask;
+        return label;
+    }
+
+    // Cámara propia de la tienda (no la del jugador, que lleva el arma pegada delante), apagada hasta entrar
+    internal static Camera ShopCamera(Transform root, string name)
+    {
+        var camGo = new GameObject(name);
+        camGo.transform.SetParent(root, false);
         Camera cam = camGo.AddComponent<Camera>();
         cam.enabled = false;
         cam.nearClipPlane = 0.05f;
@@ -311,26 +344,25 @@ public static class ArmoryBuilder
             var mainData = main.GetUniversalAdditionalCameraData();
             camData.antialiasing = mainData.antialiasing;
         }
+        return cam;
+    }
 
-        var volGo = new GameObject("ArmoryVolume");
+    // Post-procesado del interior, en la capa Armory. Apagado: el controlador lo enciende solo con su tienda abierta
+    internal static Volume InteriorVolume(Transform root, int layer, string name)
+    {
+        var volGo = new GameObject(name);
         volGo.layer = layer;
-        volGo.transform.SetParent(root.transform, false);
+        volGo.transform.SetParent(root, false);
         Volume vol = volGo.AddComponent<Volume>();
         vol.isGlobal = true;
         vol.priority = 10f;
         vol.sharedProfile = ArmoryProfile();
-
-        ArmoryController controller = root.AddComponent<ArmoryController>();
-        SetRefs(controller, "armoryCamera", cam, "slots", slots.ToArray(), "props", props, "hoverLabel", label,
-            "audioSource", audio, "hoverClip", Clip("Armory_Hover"), "bulbClip", Clip("Bulb_On"));
-
-        GameObject saved = PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
-        Object.DestroyImmediate(root);
-        return saved;
+        vol.enabled = false;
+        return vol;
     }
 
     // Copia de VP_Night con el filtro de color neutro: el interior es cálido por sus luces, no por el etalonaje
-    private static VolumeProfile ArmoryProfile()
+    internal static VolumeProfile ArmoryProfile()
     {
         const string path = "Assets/Settings/VP_Armory.asset";
         var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
@@ -382,7 +414,7 @@ public static class ArmoryBuilder
         return gun;
     }
 
-    private static Bounds RendererBounds(GameObject go)
+    internal static Bounds RendererBounds(GameObject go)
     {
         Renderer[] rs = go.GetComponentsInChildren<Renderer>(true);
         if (rs.Length == 0) return new Bounds(go.transform.position, Vector3.zero);
@@ -391,7 +423,7 @@ public static class ArmoryBuilder
         return b;
     }
 
-    private static Light NewLight(Transform parent, string name, LightType type, Vector3 pos, Quaternion rot, Color color, float intensity, float range)
+    internal static Light NewLight(Transform parent, string name, LightType type, Vector3 pos, Quaternion rot, Color color, float intensity, float range)
     {
         var go = new GameObject(name);
         go.transform.SetParent(parent, false);
@@ -406,7 +438,7 @@ public static class ArmoryBuilder
         return l;
     }
 
-    private static Transform FindDeep(Transform root, string name)
+    internal static Transform FindDeep(Transform root, string name)
     {
         foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
             if (t.name == name) return t;
