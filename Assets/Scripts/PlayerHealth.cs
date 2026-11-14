@@ -15,7 +15,8 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField, Min(0f)] private float invulnerabilityAfterHit = 0.75f;
 
     public int Hearts { get; private set; }
-    public int MaxHearts => maxHearts;
+    // Se fija al activarse: si el modo prueba se cambia a mitad de combate, no cambia hasta el siguiente
+    public int MaxHearts => currentMax > 0 ? currentMax : maxHearts;   // > 0: antes de Awake
     public bool IsActive { get; private set; }
     public bool IsDead => IsActive && Hearts <= 0;
     public bool IsInvulnerable => Time.time < invulnerableUntil;
@@ -27,6 +28,7 @@ public class PlayerHealth : MonoBehaviour
     public event System.Action Died;
 
     private float invulnerableUntil;
+    private int currentMax;
     private GameManager gameManager;
     private LevelManager levelManager;
 
@@ -34,6 +36,7 @@ public class PlayerHealth : MonoBehaviour
     {
         gameManager = FindFirstObjectByType<GameManager>();
         levelManager = FindFirstObjectByType<LevelManager>();
+        currentMax = maxHearts;
     }
 
     // Se activa sola al empezar un nivel de boss y se apaga en cualquier otro (también al empezar una
@@ -58,15 +61,17 @@ public class PlayerHealth : MonoBehaviour
     public void Activate()
     {
         IsActive = true;
-        Hearts = maxHearts;
+        currentMax = DebugMode.Enabled ? DebugMode.BossHearts : maxHearts;   // F1: 10 en modo prueba
+        Hearts = currentMax;
         invulnerableUntil = 0f;
-        HeartsChanged?.Invoke(Hearts, maxHearts);
+        HeartsChanged?.Invoke(Hearts, currentMax);
     }
 
     public void Deactivate()
     {
         IsActive = false;
-        Hearts = maxHearts;
+        currentMax = maxHearts;
+        Hearts = currentMax;
     }
 
     // Devuelve true si el golpe ha quitado vida. Fuera de Playing (revelación, transición, fin) no se
@@ -81,9 +86,9 @@ public class PlayerHealth : MonoBehaviour
         Hearts = Mathf.Max(0, Hearts - amount);
         invulnerableUntil = Time.time + invulnerabilityAfterHit;
 
-        GameLog.Info($"PlayerHealth: −{amount} corazón(es) → {Hearts}/{maxHearts}");
+        GameLog.Info($"PlayerHealth: −{amount} corazón(es) → {Hearts}/{currentMax}");
         Damaged?.Invoke(amount);
-        HeartsChanged?.Invoke(Hearts, maxHearts);
+        HeartsChanged?.Invoke(Hearts, currentMax);
 
         if (Hearts <= 0)
             Died?.Invoke();
@@ -93,11 +98,11 @@ public class PlayerHealth : MonoBehaviour
     // Objetivo especial rosa (§27.3). Devuelve false si ya estaba lleno: quien lo llame da el bonus de puntos
     public bool Heal(int amount)
     {
-        if (!IsActive || IsDead || amount <= 0 || Hearts >= maxHearts)
+        if (!IsActive || IsDead || amount <= 0 || Hearts >= currentMax)
             return false;
 
-        Hearts = Mathf.Min(maxHearts, Hearts + amount);
-        HeartsChanged?.Invoke(Hearts, maxHearts);
+        Hearts = Mathf.Min(currentMax, Hearts + amount);
+        HeartsChanged?.Invoke(Hearts, currentMax);
         return true;
     }
 

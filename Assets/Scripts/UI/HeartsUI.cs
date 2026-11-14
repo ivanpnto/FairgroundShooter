@@ -52,6 +52,8 @@ public class HeartsUI : MonoBehaviour
 
         for (int i = 0; i < hearts.Count; i++)
         {
+            // Sobran imágenes si antes hubo más corazones (10 en modo prueba, F1): se ocultan
+            hearts[i].gameObject.SetActive(i < max);
             bool full = i < current;
             hearts[i].sprite = full ? fullSprite : emptySprite;
             if (lastHearts >= 0 && i < max)

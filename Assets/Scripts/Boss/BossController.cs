@@ -810,6 +810,20 @@ public class BossController : MonoBehaviour
         return applied;
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    // Menú F1: deja la fase actual casi sin vida para que el siguiente impacto la cierre. No la cierra aquí
+    // directamente para que el cambio de fase pase por el camino normal (abierto, impacto, phaseCleared) y se
+    // pruebe lo mismo que en una partida
+    public void DebugWeakenPhase()
+    {
+        if (State == BossState.Inactive || State == BossState.Dead || PhaseHealth <= 0.1f)
+            return;
+        Health = Mathf.Max(0f, Health - (PhaseHealth - 0.1f));
+        PhaseHealth = 0.1f;
+        HealthChanged?.Invoke(Health, MaxHealth);
+    }
+#endif
+
     // ---------------------------------------------------------------- presentación
 
     private void SetState(BossState state)

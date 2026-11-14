@@ -236,8 +236,13 @@ public class ProfileManager : MonoBehaviour
 
         int earned = Mathf.Max(0, finalScore) / ScorePerCredit;
         Current.credits += earned;
-        Current.gamesPlayed++;
-        Current.bestScore = Mathf.Max(Current.bestScore, finalScore);
+        // Una partida en modo prueba (F1) da créditos, pero no cuenta para los récords ni para las partidas:
+        // con niveles de 10 s su puntuación no es comparable con las demás
+        if (!DebugMode.Enabled)
+        {
+            Current.gamesPlayed++;
+            Current.bestScore = Mathf.Max(Current.bestScore, finalScore);
+        }
 
         Commit();
         return earned;
@@ -274,7 +279,7 @@ public class ProfileManager : MonoBehaviour
 
     public void RecordBossVictory(float fightSeconds)
     {
-        if (Current == null)
+        if (Current == null || DebugMode.Enabled)   // con 10 corazones el tiempo no vale como récord
             return;
 
         Current.bossVictories++;

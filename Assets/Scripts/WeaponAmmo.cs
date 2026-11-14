@@ -60,7 +60,8 @@ public class WeaponAmmo : MonoBehaviour
         if (!CanShoot)
             return false;
 
-        currentAmmo--;
+        if (!DebugMode.InfiniteAmmo)   // F1: el disparo cuenta, pero el cargador no baja
+            currentAmmo--;
 
         OnShot?.Invoke(); // "?." evita error si nadie está suscrito
 

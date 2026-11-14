@@ -85,7 +85,9 @@ public class TargetSpawner : MonoBehaviour
     // al reloj, y si el ritmo dependiera de él, acertar un dorado haría que el nivel se relajara
     private float CurrentSpawnInterval()
     {
-        float progress = level.duration > 0f ? Mathf.Clamp01(levelElapsed / level.duration) : 0f;
+        // Con la duración real del nivel: en modo prueba (10 s) la rampa de aparición se comprime igual
+        float duration = DebugMode.LevelDuration(level);
+        float progress = duration > 0f ? Mathf.Clamp01(levelElapsed / duration) : 0f;
         return level.spawnInterval * Mathf.Lerp(1f, level.endSpawnIntervalFactor, progress);
     }
 

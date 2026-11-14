@@ -115,7 +115,7 @@ public class BossReveal : MonoBehaviour
         if (level != null && level.isBossLevel)
         {
             ResetAll();   // el circo y la caseta, enteros: el nivel empieza como uno normal
-            routine = StartCoroutine(IntroThenReveal(level.bossRevealDelay));
+            routine = StartCoroutine(IntroThenReveal(DebugMode.RevealDelay(level.bossRevealDelay)));
         }
         else
         {

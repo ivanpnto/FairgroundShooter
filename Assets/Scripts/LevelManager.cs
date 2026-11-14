@@ -61,7 +61,7 @@ public class LevelManager : MonoBehaviour
         ActivateEnvironment(level.environmentId);
 
         if (spawner != null) spawner.Configure(level);
-        if (timer != null) timer.StartLevel(level.duration);
+        if (timer != null) timer.StartLevel(DebugMode.LevelDuration(level));   // F1: 10 s en modo prueba
         if (weaponAmmo != null) weaponAmmo.ResetAmmo();   // cada nivel empieza con el cargador lleno
 
         if (levelText != null)
