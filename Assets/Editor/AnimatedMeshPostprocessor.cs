@@ -30,13 +30,15 @@ public class AnimatedMeshPostprocessor : AssetPostprocessor
         { "Booth_Bulbs", Rule.LightChain },
         { "Fair_Lights", Rule.LightChain },
         { "Forest_Fireflies", Rule.Random },
+        { "Prom_Bunting", Rule.SwayFromTop },     // Fase 8: paseo hasta la armería
+        { "Prom_StringBulbs", Rule.LightChain },
     };
 
     // Las piezas con más vértices que esto en los banderines son los cordeles: no se mueven
     private const int RopeVertexThreshold = 40;
 
     // Subir este número fuerza a Unity a reimportar los modelos afectados tras cambiar el código
-    public override uint GetVersion() => 3;
+    public override uint GetVersion() => 4;
 
     private void OnPostprocessModel(GameObject root)
     {
