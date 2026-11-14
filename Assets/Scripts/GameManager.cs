@@ -47,6 +47,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text levelTransitionNext;    // "SIGUIENTE: FONDO MARINO · 3"
     [SerializeField] private TMP_Text levelTransitionBonus;   // "BONUS DE PRECISIÓN: +87 (87 %)"
     [SerializeField, Min(1)] private int transitionSeconds = 3;
+    [Tooltip("Fase 8: transición con telón, cartel y 3-2-1. Vacío = el panel de cuenta atrás de siempre")]
+    [SerializeField] private LevelTransitionSequence transitionSequence;
 
     private ScoreManager scoreManager;
     private GameTimer gameTimer;
@@ -178,6 +180,7 @@ public class GameManager : MonoBehaviour
     private void BeginRun()
     {
         ResetTimeAndAudio();   // por si se empieza una partida nueva desde un estado raro
+        if (transitionSequence != null) transitionSequence.ResetStage();
         // Puntos, racha y contadores de disparos a cero, también en la primera partida
         scoreManager.ResetScore();
         weaponAmmo.ResetAmmo();
@@ -229,6 +232,13 @@ public class GameManager : MonoBehaviour
     private IEnumerator LevelTransitionRoutine()
     {
         CurrentState = GameState.LevelTransition;
+
+        if (transitionSequence != null && transitionSequence.IsReady)
+        {
+            yield return StagedTransition();
+            yield break;
+        }
+
         targetSpawner.ResetSpawner();   // ningún objetivo pasa de un nivel al siguiente
 
         int finished = levelManager.CurrentIndex + 1;
@@ -257,6 +267,32 @@ public class GameManager : MonoBehaviour
 
         levelManager.StartLevel(levelManager.CurrentIndex + 1);
         CurrentState = GameState.Playing;
+    }
+
+    // Fase 8: el telón tapa el cambio de decorado y el cartel anuncia el siguiente nivel (LevelTransitionSequence).
+    // Las dianas no se quitan hasta que el telón está cerrado: se quedan quietas (no es Playing) y las tapa la tela
+    private IEnumerator StagedTransition()
+    {
+        LevelConfig finished = levelManager.CurrentLevel;
+        int nextIndex = levelManager.CurrentIndex + 1;
+        string title = $"¡{finished.levelName.ToUpper()} SUPERADO!";
+        string next = $"SIGUIENTE: {levelManager.NextLevel.levelName.ToUpper()}";
+        string bonus = $"+{LastAccuracyBonus} por precisión ({LastLevelAccuracy:P0})";
+
+        hud.SetActive(false);
+        GameLog.Info($"Nivel {nextIndex} superado. Puntos: {scoreManager.GetScore()}. Siguiente: {levelManager.NextLevel.levelName}");
+
+        yield return transitionSequence.Play(title, next, bonus,
+            swapLevel: () =>
+            {
+                targetSpawner.ResetSpawner();       // ningún objetivo pasa de un nivel al siguiente
+                levelManager.StartLevel(nextIndex); // decorado, luces y música cambian detrás del telón
+            },
+            beginPlay: () =>
+            {
+                hud.SetActive(true);
+                CurrentState = GameState.Playing;
+            });
     }
 
     // Escenas cortas sin control del jugador (la revelación del boss, §27.1). Se reutiliza LevelTransition:

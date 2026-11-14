@@ -51,6 +51,8 @@ normalizado de sonoridad) para el juego; los originales están en `AudioSource/r
 Sintetizados por código para el juego, sin muestras de terceros: toma de aire del bocinazo, bocinazo, aturdido,
 aviso del esbirro, golpe recibido, tartazo, corazón recuperado, cambio de fase, fanfarria de victoria y trombón
 de derrota (`Assets/Audio/Boss`). El generador está en `AudioSource/Synth/boss_sfx.py` (numpy + scipy).
+Los de la transición entre niveles (telón, golpes tras el telón, cartel y cuenta atrás, `Assets/Audio/Transition`)
+se generan igual con `AudioSource/Synth/transition_sfx.py`.
 
 ## Arte propio de la interfaz
 Corazones, viñeta, salpicadura de tarta y relleno de barra (`Assets/UI/Boss`) se generan con
