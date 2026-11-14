@@ -109,6 +109,8 @@ public static class BoticaBuilder
         mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
         mat.SetShaderPassEnabled("DepthOnly", false);
         mat.SetShaderPassEnabled("ShadowCaster", false);
+        // URP recalcula la cola al validar el material (3000 + _QueueOffset): poner solo renderQueue no dura
+        mat.SetFloat("_QueueOffset", queue - 3000);
         mat.renderQueue = queue;
     }
 

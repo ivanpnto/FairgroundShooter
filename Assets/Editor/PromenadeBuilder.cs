@@ -9,6 +9,11 @@ using UnityEngine.Rendering;
 // El viaje de cámara hasta la armería gira justo hacia ese lado, así que el paseo cierra el hueco: camino hasta la
 // carpa, farolas con guirnaldas y banderines, tres casetas de enfrente, carritos de palomitas y de algodón con
 // globos, siluetas de público y el horizonte de siluetas por detrás (empalma con Fair_Horizon).
+// El viaje a la botica (el puesto azul) sale hacia el otro lado, así que el paseo sigue también por la derecha: por
+// delante del tiovivo hasta un tobogán en espiral, con dos casetas más (tómbola y patitos), un carrito de churros,
+// una carpita y, al fondo, unas sillas voladoras y caravanas de feriantes (también dos en el lado de la armería).
+// Detrás del puesto azul, una pista de autos de choque tapa el suelo vacío hasta el horizonte (queda fuera del
+// encuadre de la caseta: no se ve durante la partida).
 //
 // Prefab Env_Promenade (Prefabs/Enviroments): el modelo de Env_Promenade.fbx (colección Env_Promenade de
 // Booth.blend), las luces, los materiales animados (banderines con Fairground/Sway, bombillas en cadena con
@@ -66,28 +71,45 @@ public static class PromenadeBuilder
         Transform lamps = Find(model.transform, "Prom_LampBulbs");
         if (lamps != null)
         {
-            // Una luz por farol: los centros de las bombillas se sacan de la malla (cada isla es una bombilla)
-            Mesh m = lamps.GetComponent<MeshFilter>().sharedMesh;
-            Vector3[] v = m.vertices;
-            int perBulb = v.Length / 5;
-            for (int i = 0; i < 5; i++)
+            // Una luz por farol. Las bombillas están a metros unas de otras: se agrupan los vértices que distan
+            // menos de 1 m y cada grupo es una bombilla. Así sirve con cualquier número de farolas
+            Vector3[] v = lamps.GetComponent<MeshFilter>().sharedMesh.vertices;
+            var sums = new System.Collections.Generic.List<Vector3>();
+            var counts = new System.Collections.Generic.List<int>();
+            foreach (Vector3 p in v)
             {
-                Vector3 c = Vector3.zero;
-                for (int k = 0; k < perBulb; k++) c += v[i * perBulb + k];
-                c = lamps.TransformPoint(c / perBulb);
+                int k = 0;
+                while (k < sums.Count && (sums[k] / counts[k] - p).sqrMagnitude > 1f) k++;
+                if (k == sums.Count) { sums.Add(p); counts.Add(1); }
+                else { sums[k] += p; counts[k]++; }
+            }
+            for (int i = 0; i < sums.Count; i++)
+            {
+                Vector3 c = lamps.TransformPoint(sums[i] / counts[i]);
                 NewLight(root.transform, $"Light_Lamp_{i}", c + Vector3.down * 0.15f, new Color(1f, 0.75f, 0.45f), 3.5f, 8f);
             }
         }
         LightOver(root.transform, model.transform, "Prom_CartPopcorn", new Color(1f, 0.8f, 0.5f), 2.5f, 4f);
         LightOver(root.transform, model.transform, "Prom_CartCotton", new Color(1f, 0.6f, 0.8f), 2.5f, 4f);
-        for (int i = 0; i < 3; i++)
+        LightOver(root.transform, model.transform, "Prom_CartChurros", new Color(1f, 0.72f, 0.4f), 2.5f, 4f);
+        for (int i = 0; Find(model.transform, $"Prom_Stall_{i}") != null; i++)
             LightOver(root.transform, model.transform, $"Prom_Stall_{i}", new Color(1f, 0.82f, 0.6f), 3.5f, 5.5f);
 
+        // Atracciones del fondo: una luz cálida en la galería del tobogán y otra bajo el toldo de las sillas; la
+        // carpita se ilumina desde el paseo. Las ventanas de las caravanas ya brillan solas (material emisivo)
+        LightAt(root.transform, model.transform, "Prom_HelterSkelter", new Vector3(0f, 0.75f, 0f), new Color(1f, 0.78f, 0.5f), 4f, 9f);
+        LightAt(root.transform, model.transform, "Prom_HelterSkelter", new Vector3(0f, 0.15f, 0f), new Color(1f, 0.8f, 0.55f), 2.5f, 6f);
+        LightAt(root.transform, model.transform, "Prom_Swings", new Vector3(0f, 0.7f, 0f), new Color(0.75f, 1f, 0.7f), 3f, 7f);
+        LightAt(root.transform, model.transform, "Prom_TentEast", new Vector3(0f, 0.5f, 0.75f), new Color(0.9f, 0.7f, 1f), 3f, 6f);
+        // Autos de choque (al fondo, a la derecha del puesto azul; fuera del encuadre de la caseta): pista y cartel
+        LightAt(root.transform, model.transform, "Prom_Bumper", new Vector3(0f, 0.55f, 0f), new Color(1f, 0.85f, 0.6f), 5f, 10f);
+        LightAt(root.transform, model.transform, "Prom_Bumper", new Vector3(0f, 0.75f, -1.25f), new Color(1f, 0.8f, 0.5f), 2.5f, 5f);
+
         // Globos: giran desde el nudo (abajo del cordel), cada uno a su ritmo
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; ; i++)
         {
             Transform balloon = Find(model.transform, $"Prom_Balloon_{i}");
-            if (balloon == null) continue;
+            if (balloon == null) break;
             Bounds b = balloon.GetComponent<Renderer>().bounds;
             var pivot = new GameObject($"BalloonPivot_{i}").transform;
             pivot.SetParent(root.transform, false);
@@ -162,6 +184,17 @@ public static class PromenadeBuilder
         if (t == null) return;
         Bounds b = t.GetComponent<Renderer>().bounds;
         NewLight(parent, "Light_" + objectName.Replace("Prom_", ""), new Vector3(b.center.x, b.min.y + b.size.y * 0.75f, b.center.z), color, intensity, range);
+    }
+
+    // Luz en un punto relativo a la caja del objeto: (0,0,0) = su base por el centro; y = fracción de su altura;
+    // z = fracción de su media profundidad hacia el paseo (+z en Unity mira hacia la caseta)
+    private static void LightAt(Transform parent, Transform model, string objectName, Vector3 rel, Color color, float intensity, float range)
+    {
+        Transform t = Find(model, objectName);
+        if (t == null) return;
+        Bounds b = t.GetComponent<Renderer>().bounds;
+        Vector3 pos = new Vector3(b.center.x + rel.x * b.extents.x, b.min.y + rel.y * b.size.y, b.center.z + rel.z * b.extents.z);
+        NewLight(parent, $"Light_{objectName.Replace("Prom_", "")}_{parent.childCount}", pos, color, intensity, range);
     }
 
     private static void NewLight(Transform parent, string name, Vector3 pos, Color color, float intensity, float range)

@@ -12,6 +12,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_C_Dark
+    second: {fileID: 2100000, guid: 5d3223bba429aff46872a98e9a006897, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Cream
     second: {fileID: 2100000, guid: 00fd6df11dd931e43a8cc8eebcfe9f6d, type: 2}
   - first:
@@ -19,6 +24,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: M_E_Blue
     second: {fileID: 2100000, guid: b680c11c2ff0312439cf1b2c4594faa4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_E_Canvas
+    second: {fileID: 2100000, guid: 6077e02387f803544a093f6910df9bbd, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -84,6 +94,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: M_Gold
     second: {fileID: 2100000, guid: 55c6ff519abea6040937f37158538b50, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Orange
+    second: {fileID: 2100000, guid: 27ed1562a32296b43b4a301489f533c8, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
