@@ -1,5 +1,15 @@
 # Créditos
 
+## Modelos de terceros
+| Recurso | Autor | Enlace | Uso |
+|---|---|---|---|
+| Free Pack – Gun (FN Five-seven, HK MP5, M16A1, AK-47, Barrett M82A1) | PolyOne Studio | https://polyonestudio.gumroad.com/l/qbafpm | Las cinco armas (`Assets/PolyOne`, sin modificar; las correcciones van en copias propias como `HK_MP5_Body_Fixed.fbx`) |
+
+## Tipografía
+| Recurso | Autor | Licencia | Uso |
+|---|---|---|---|
+| Rye | Sorkin Type Co | SIL Open Font License 1.1 (`Assets/Fonts/OFL.txt`) | Títulos y carteles de la interfaz |
+
 ## Sonidos
 Todos de [Freesound](https://freesound.org). Procesados (recorte, mono, fade y normalizado)
 para el juego; los originales están en `AudioSource/raw/`.
