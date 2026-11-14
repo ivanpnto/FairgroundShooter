@@ -34,7 +34,7 @@ public class ResultBannerUI : MonoBehaviour
 
     private void HandleGameEnded(GameOverReason reason)
     {
-        if (reason == GameOverReason.Time || gameManager.ResultBannerSeconds <= 0f)
+        if ((reason != GameOverReason.Victory && reason != GameOverReason.Defeat) || gameManager.ResultBannerSeconds <= 0f)
             return;
 
         bool victory = reason == GameOverReason.Victory;

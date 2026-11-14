@@ -43,6 +43,8 @@ public class CurtainController : MonoBehaviour
         if (gameManager == null)
             return;
 
-        animator.SetBool(OpenParam, OpenOverride ?? gameManager.CurrentState == GameManager.GameState.Playing);
+        // En pausa sigue abierto: el telón cerrado taparía la partida que se va a retomar
+        bool open = gameManager.CurrentState == GameManager.GameState.Playing || gameManager.IsPaused;
+        animator.SetBool(OpenParam, OpenOverride ?? open);
     }
 }

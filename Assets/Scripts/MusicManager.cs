@@ -23,6 +23,8 @@ public class MusicManager : MonoBehaviour
     // pausa y el panel de la cuenta atrás, sin un silencio que parezca un corte
     [Tooltip("Factor de volumen durante la pantalla entre niveles")]
     [Range(0f, 1f)] [SerializeField] private float transitionVolume = 0.5f;
+    [Tooltip("Factor de volumen con el juego en pausa")]
+    [Range(0f, 1f)] [SerializeField] private float pausedVolume = 0.4f;
 
     private GameManager gameManager;
     private LevelManager levelManager;
@@ -48,6 +50,8 @@ public class MusicManager : MonoBehaviour
             source.spatialBlend = 0f;   // música de fondo: 2D
             source.volume = 0f;
             source.outputAudioMixerGroup = output;
+            // La pausa calla todo con AudioListener.pause; la música sigue (más baja) para que no parezca colgado
+            source.ignoreListenerPause = true;
             sources[i] = source;
         }
     }
@@ -62,6 +66,8 @@ public class MusicManager : MonoBehaviour
         float target = volume;
         if (gameManager != null && gameManager.CurrentState == GameManager.GameState.LevelTransition)
             target *= transitionVolume;
+        else if (gameManager != null && gameManager.IsPaused)
+            target *= pausedVolume;
 
         // unscaledDeltaTime: si algún día se pausa con Time.timeScale = 0 (Fase 8), el
         // fundido no se quedaría congelado a medias
@@ -89,9 +95,7 @@ public class MusicManager : MonoBehaviour
         if (gameManager == null)
             return menuMusic;
 
-        GameManager.GameState state = gameManager.CurrentState;
-        bool inRun = state == GameManager.GameState.Playing || state == GameManager.GameState.LevelTransition;
-        if (!inRun)
+        if (!gameManager.IsInRun)   // en pausa sigue la pista del nivel
             return menuMusic;
 
         LevelConfig level = levelManager != null ? levelManager.CurrentLevel : null;

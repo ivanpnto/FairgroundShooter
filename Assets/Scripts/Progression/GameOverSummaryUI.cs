@@ -32,6 +32,9 @@ public class GameOverSummaryUI : MonoBehaviour
     // aquí queda el detalle: tiempo, corazones y bonus, o cuánta vida le quedaba al boss
     private string BossLine()
     {
+        if (gameManager.LastGameOverReason == GameOverReason.Abandoned)
+            return "\n<color=#C9B99A>Partida terminada desde la pausa</color>";
+
         BossController boss = SceneCache<BossController>.Get();
         if (boss == null || boss.State == BossController.BossState.Inactive)
             return "";

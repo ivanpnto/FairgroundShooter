@@ -56,7 +56,7 @@ public class WeaponSelectorUI : MonoBehaviour
         // Los menús solo se ven fuera de la partida, pero cambiar de arma a mitad
         // de una sería una trampa (cargador lleno al instante), así que lo impedimos
         if (weaponController == null || gameManager == null
-            || gameManager.CurrentState == GameManager.GameState.Playing)
+            || gameManager.IsInRun)   // también en pausa y entre niveles
             return;
 
         var weapons = weaponController.AvailableWeapons;

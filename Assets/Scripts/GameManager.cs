@@ -8,7 +8,8 @@ public enum GameOverReason
 {
     Time,
     Defeat,
-    Victory
+    Victory,
+    Abandoned   // Fase 8: «Terminar partida» desde la pausa. Cuenta como un fin normal (créditos de lo conseguido)
 }
 
 public class GameManager : MonoBehaviour
@@ -18,10 +19,21 @@ public class GameManager : MonoBehaviour
         Waiting,
         Playing,
         LevelTransition,   // pausa entre niveles: no hay objetivos, ni tiempo, ni disparos
-        GameOver
+        GameOver,
+        Paused             // Fase 8: menú de pausa. Al final del enum: no cambia el valor de los demás
     }
 
     public GameState CurrentState { get; private set; } = GameState.Waiting;
+
+    // Pausa (Fase 8). Es un estado más y no un bool aparte porque todo lo que juega ya comprueba
+    // «CurrentState == Playing» (disparo, apuntado, tiempo, spawner, boss, daño al jugador): con Paused
+    // todo eso se detiene solo, sin tocar cada sistema. Solo se puede pausar desde Playing, así que la vuelta
+    // siempre es a Playing (en la transición entre niveles y en la revelación del boss no se pausa: duran
+    // unos segundos y ya son una pausa).
+    public bool IsPaused => CurrentState == GameState.Paused;
+    // Dentro de una partida (jugando, entre niveles o en pausa): para la música, el telón y el selector de armas
+    public bool IsInRun => CurrentState == GameState.Playing || CurrentState == GameState.LevelTransition || IsPaused;
+    public event System.Action<bool> PauseChanged;
 
     [SerializeField] private GameObject startPanel;
     [SerializeField] private GameObject hud;
@@ -83,6 +95,51 @@ public class GameManager : MonoBehaviour
         if (playerHealth != null) playerHealth.Died -= HandlePlayerDied;
     }
 
+    // Si la escena se descarga en pausa, que el tiempo y el audio no se queden congelados
+    private void OnDestroy() => ResetTimeAndAudio();
+
+    // ── Pausa ──────────────────────────────────────────────────────────────────
+    // timeScale = 0 congela lo que avanza con el tiempo escalado: corrutinas con WaitForSeconds, física
+    // (proyectiles del boss en el aire), animaciones y partículas. Lo que debe seguir vivo en pausa ya usa
+    // unscaledTime (fundido de la música, bombillas de los carteles, pulsos de la interfaz).
+    // AudioListener.pause calla los efectos y el ambiente; la música lo ignora (MusicManager) y sigue más baja.
+
+    public bool Pause()
+    {
+        if (CurrentState != GameState.Playing)
+            return false;
+        CurrentState = GameState.Paused;
+        Time.timeScale = 0f;
+        AudioListener.pause = true;
+        PauseChanged?.Invoke(true);
+        return true;
+    }
+
+    public void Resume()
+    {
+        if (!IsPaused)
+            return;
+        CurrentState = GameState.Playing;
+        ResetTimeAndAudio();
+        PauseChanged?.Invoke(false);
+    }
+
+    // «Terminar partida»: se cobra lo conseguido hasta ahora, como al morir contra el boss (decidido en la Fase 8).
+    // No es una trampa: terminarla siempre da más
+    public void QuitRun()
+    {
+        if (!IsPaused)
+            return;
+        Resume();
+        EndGame(GameOverReason.Abandoned);
+    }
+
+    private static void ResetTimeAndAudio()
+    {
+        Time.timeScale = 1f;
+        AudioListener.pause = false;
+    }
+
     // Se conservan los puntos de los niveles 1–3 y los del boss hasta ahora (§27.7): EndGame no resta nada
     private void HandlePlayerDied() => EndGame(GameOverReason.Defeat);
 
@@ -120,6 +177,7 @@ public class GameManager : MonoBehaviour
     // Una partida = todos los niveles seguidos con la puntuación acumulada
     private void BeginRun()
     {
+        ResetTimeAndAudio();   // por si se empieza una partida nueva desde un estado raro
         // Puntos, racha y contadores de disparos a cero, también en la primera partida
         scoreManager.ResetScore();
         weaponAmmo.ResetAmmo();
@@ -257,7 +315,10 @@ public class GameManager : MonoBehaviour
         finalScoreText.text = $"PUNTOS: {finalScore}";
 
         hud.SetActive(false);
-        if (reason != GameOverReason.Time && resultBannerSeconds > 0f)
+        // El cartel de victoria/derrota solo existe para el boss; al acabarse el tiempo o al terminar la partida
+        // desde la pausa, el resumen sale enseguida
+        bool banner = reason == GameOverReason.Victory || reason == GameOverReason.Defeat;
+        if (banner && resultBannerSeconds > 0f)
             StartCoroutine(ShowGameOverPanelAfter(resultBannerSeconds));
         else
             gameOverPanel.SetActive(true);
