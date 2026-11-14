@@ -34,6 +34,8 @@ public class BossHealthBarUI : MonoBehaviour
     [SerializeField] private float ghostSpeed = 0.6f;   // fracción de la barra por segundo
     [SerializeField] private Color fillColor = new Color(0.86f, 0.16f, 0.16f);
     [SerializeField] private Color stunnedColor = new Color(0.30f, 0.85f, 0.95f);   // cian = punto débil abierto (§14)
+    [Tooltip("Tamaño de toda la barra (nombre, marco, fase y aviso del bocinazo). Fase 8: 0,8, ocupaba demasiado")]
+    [SerializeField, Range(0.5f, 1.2f)] private float hudScale = 0.8f;
 
     private BossController boss;
     private float shown, target01 = 1f, ghost01 = 1f, ghostWait, punch;
@@ -136,6 +138,6 @@ public class BossHealthBarUI : MonoBehaviour
         if (fill != null) fill.anchorMax = new Vector2(target01, 1f);
         if (ghost != null) ghost.anchorMax = new Vector2(Mathf.Max(ghost01, target01), 1f);
         // Golpecito de escala al recibir daño: el ojo nota el cambio aunque esté mirando al boss
-        transform.localScale = Vector3.one * (1f + 0.04f * punch);
+        transform.localScale = Vector3.one * (hudScale * (1f + 0.04f * punch));
     }
 }
