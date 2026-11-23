@@ -125,6 +125,17 @@ public class BossController : MonoBehaviour
     // Rayo (LaserSweep): true = esquivado agachándose; false = alcanzó al jugador
     public event System.Action<bool> LaserResolved;
 
+    // Para el efecto del bocinazo (BossHonkFX), que solo pinta: 0 = sin bocinazo, 1 = toma de aire, 2 = ventana
+    // (boca abierta, se puede contrarrestar), 3 = onda en camino hacia el jugador. HonkProgress: 0..1 de cada tramo
+    public int HonkStage { get; private set; }
+    public float HonkProgress { get; private set; }
+    // Bocinazos lanzados en este combate (contrarrestados o no): BossHonkFX enseña el cartel solo en los primeros
+    public int HonksThisFight { get; private set; }
+    // Lo mismo para el rayo, y los extremos de su barrido (para dibujar por dónde va a pasar)
+    public int LasersThisFight { get; private set; }
+    public Vector3 LaserFrom { get; private set; }
+    public Vector3 LaserTo { get; private set; }
+
     // Para el efecto del rayo (BossLaser), que solo pinta: 0 = sin rayo, 1 = apuntando (aviso), 2 = disparando
     public int LaserStage { get; private set; }
     // Punto del barrido en el plano del jugador, a la altura del rayo (también durante el aviso: donde empezará)
@@ -255,6 +266,8 @@ public class BossController : MonoBehaviour
         PowerScale = ComputePowerScale();
         Health = MaxHealth;
         FightTime = 0f;
+        HonksThisFight = 0;
+        LasersThisFight = 0;
         IsFurious = false;
         HealthChanged?.Invoke(Health, MaxHealth);
         fight = StartCoroutine(FightRoutine());
@@ -288,6 +301,7 @@ public class BossController : MonoBehaviour
         ClearProjectiles();
         ShowTelegraph(false);
         LaserStage = 0;   // StopAllCoroutines corta LaserRoutine a medias: que el rayo no se quede pintado
+        HonkStage = 0;    // ídem con el bocinazo
         DamageMultiplier = 1f;
         jawTarget = jawOpen = 0f;
         if (jawPivot != null) { jawPivot.localRotation = jawClosedRotation; jawPivot.localPosition = jawClosedPosition; }
@@ -471,27 +485,38 @@ public class BossController : MonoBehaviour
         SetOpen(OpenMode.None);
         SetState(BossState.Telegraph);
         ShowTelegraph(true);
+        HonksThisFight++;
+        HonkStage = 1;
         float windup = config.honkWindupTime * Fury;
         for (float elapsed = 0f; elapsed < windup && !phaseCleared; )
         {
             if (Playing) elapsed += Time.deltaTime;
+            HonkProgress = windup > 0f ? elapsed / windup : 1f;
             SetTelegraphLight(0.15f * elapsed / windup);
             yield return null;
         }
-        if (phaseCleared) yield break;
+        if (phaseCleared) { HonkStage = 0; yield break; }
 
         // 2) Ventana: la boca se abre; solo la mandíbula recibe daño y ese daño cuenta para cancelarlo
         SetOpen(OpenMode.Counter);
         jawTarget = 1f;
+        HonkStage = 2;
+        HonkProgress = 0f;
 
         float time = Mathf.Max(config.honkTelegraphTime * Fury, IsFurious ? config.honkMinTelegraphTime : 0f);
         bool countered = false;
-        yield return TelegraphWait(time, () => countered = honkDamage >= HonkCounterDamage);
-        if (phaseCleared) yield break;   // la mandíbula se llevó la última vida de la fase
+        float windowStart = FightTime;
+        yield return TelegraphWait(time, () =>
+        {
+            HonkProgress = Mathf.Clamp01((FightTime - windowStart) / time);
+            return countered = honkDamage >= HonkCounterDamage;
+        });
+        if (phaseCleared) { HonkStage = 0; yield break; }   // la mandíbula se llevó la última vida de la fase
 
         if (countered)
         {
             GameLog.Info("Boss: ¡bocinazo contrarrestado! Aturdido");
+            HonkStage = 0;
             HonkResolved?.Invoke(true);
             DamageMultiplier = config.stunDamageMultiplier;
             jawTarget = 0.35f;   // queda con la boca entreabierta, grogui
@@ -504,10 +529,20 @@ public class BossController : MonoBehaviour
             yield break;
         }
 
-        // No se contrarrestó: golpe de 2 corazones
+        // No se contrarrestó: sale la onda y, al llegar a la caseta, quita 2 corazones. Ya no se puede parar
         SetOpen(OpenMode.None);
         SetState(BossState.Attack);
         HonkResolved?.Invoke(false);
+        HonkStage = 3;
+        float travel = config.honkWaveTravelTime;
+        for (float t = 0f; t < travel && !phaseCleared; )
+        {
+            if (Playing) t += Time.deltaTime;
+            HonkProgress = Mathf.Clamp01(t / travel);
+            yield return null;
+        }
+        HonkStage = 0;
+        if (phaseCleared) yield break;
         if (playerHealth != null) playerHealth.TakeHit(config.honkHeartDamage);
         yield return Wait(config.honkRecoveryTime);
         jawTarget = 0f;
@@ -535,6 +570,9 @@ public class BossController : MonoBehaviour
         ShowTelegraph(true);
         LaserStage = 1;
         LaserPoint = from;
+        LaserFrom = from;
+        LaserTo = to;
+        LasersThisFight++;
         float telegraph = config.laserTelegraphTime * Fury;
         for (float t = 0f; t < telegraph && !phaseCleared; )
         {

@@ -20,7 +20,7 @@ public class BossConfig : ScriptableObject
     {
         public string label = "Fase";
         [Tooltip("Vida de esta fase. El daño que sobra al acabarla se pierde: no se salta una fase de un disparo")]
-        [Min(1f)] public float health = 20f;
+        [Min(1f)] public float health = 10f;
         [Tooltip("Ids de los BossWeakPoint que se abren en esta fase (los demás quedan cerrados)")]
         public string[] weakPointIds = { "Eye" };
         [Tooltip("Ataques de la fase. El ÚLTIMO de la lista es el que se estrena en ella: es el primero que hace, " +
@@ -79,7 +79,7 @@ public class BossConfig : ScriptableObject
              "acaba 0,3 s dentro de la ventana. Con 0,6 s acababa a 0,9 s y el golpe era casi seguro (§27.6, regla 8)")]
     [Min(0f)] public float honkWindupTime = 1.2f;
     [Tooltip("Aviso: la boca se abre y se pone roja, la luz sube. El más largo porque es el que más quita (§27.6, regla 3)")]
-    [Min(0.5f)] public float honkTelegraphTime = 1.5f;
+    [Min(0.5f)] public float honkTelegraphTime = 1.8f;
     [Tooltip("En furia el aviso se acorta, pero nunca por debajo de esto")]
     [Min(0.5f)] public float honkMinTelegraphTime = 1.2f;
     [Tooltip("Daño a la mandíbula durante el aviso que lo cancela y deja al boss aturdido")]
@@ -89,6 +89,9 @@ public class BossConfig : ScriptableObject
     [Min(1)] public int honkHeartDamage = 2;
     [Tooltip("Segundos con la boca abierta tras soltarlo, antes de la ventana vulnerable")]
     [Min(0f)] public float honkRecoveryTime = 0.6f;
+    [Tooltip("Lo que tarda la onda del bocinazo en llegar al jugador (s). El golpe se aplica al llegar: así se ve " +
+             "salir de la boca y venir hacia la caseta, y se entiende qué te ha quitado los corazones (BossHonkFX)")]
+    [Min(0f)] public float honkWaveTravelTime = 0.45f;
 
     // La caseta tiene el mostrador a 1,08 m y la cámara a 1,60 m: el rayo pasa por encima del mostrador y por
     // debajo de la vista de pie, así que solo lo esquiva quien se agacha (PlayerCrouch baja la vista 0,5 m)
@@ -138,13 +141,13 @@ public class BossConfig : ScriptableObject
     [Tooltip("Multiplica la vida del boss según la potencia del arma y mejoras del jugador (el daño para aturdirlo no cambia)")]
     public bool scaleWithPlayerPower = true;
     [Tooltip("escala = potencia ^ exponente. 0 = sin escalado; 1 = el combate dura lo mismo con cualquier equipo")]
-    [Range(0f, 1f)] public float powerExponent = 0.75f;
+    [Range(0f, 1f)] public float powerExponent = 0.4f;
     [Tooltip("Tope del multiplicador de vida")]
     [Min(1f)] public float maxPowerScale = 8f;
     [Tooltip("Parte del segundo rayo del disparo doble que cuenta como daño útil contra el boss")]
     [Range(0f, 1f)] public float extraRayEfficiency = 0.5f;
     [Tooltip("Daño extra que se le supone a la bala explosiva contra el boss (0,5 = +50 %)")]
-    [Min(0f)] public float explosionBonus = 0.5f;
+    [Min(0f)] public float explosionBonus = 1.5f;
 
     [Header("Esbirros (I7.5)")]
     [Tooltip("Prefab con Target + MinionLunge (el muñeco de resorte)")]
@@ -160,7 +163,7 @@ public class BossConfig : ScriptableObject
     [Tooltip("Material del contorno durante el aviso (el rojo de peligro)")]
     public Material minionWarningMaterial;
     [Tooltip("Probabilidad de que un esbirro sea especial rosa (+1 corazón)")]
-    [Range(0f, 1f)] public float minionHeartChance = 0.15f;
+    [Range(0f, 1f)] public float minionHeartChance = 0.25f;
     public Material heartBonusOutline;
 
     public float TotalHealth

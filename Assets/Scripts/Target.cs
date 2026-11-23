@@ -105,6 +105,16 @@ public class Target : MonoBehaviour, IDamageable
         Invoke(nameof(Expire), lifetime);
     }
 
+    // Adelanta la expiración (el conejo asustado se mete en la madriguera, ShyTarget): baja tras el decorado como
+    // si se le hubiera acabado el tiempo. No hace nada si ya está muerto o yéndose
+    public void ExpireIn(float seconds)
+    {
+        if (IsDead || IsExpiring)
+            return;
+        CancelInvoke(nameof(Expire));
+        Invoke(nameof(Expire), Mathf.Max(0f, seconds));
+    }
+
     private void Expire()
     {
         if (IsDead)

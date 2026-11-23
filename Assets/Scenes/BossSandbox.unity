@@ -3289,12 +3289,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: FairgroundShooter::WindGusts
   environmentId: Sky
-  calmTime: {x: 10, y: 14}
-  warningTime: 1.2
-  gustTime: 2
-  maxSpeed: 1.25
-  font: {fileID: 11400000, guid: 1b923a1b2918c04d4a5e457112c9f5f8, type: 2}
-  color: {r: 0.85, g: 0.95, b: 1, a: 1}
+  calmTime: {x: 8, y: 12}
+  warningTime: 1.1
+  gustTime: {x: 1.8, y: 2.8}
+  meanSpeed: 2
+  speedJitter: 0.6
+  turbulence: 0.35
+  turbulenceFrequency: 2.5
+  playLimit: 5.3
+  streakMaterial: {fileID: 2100000, guid: dcbda303fc347c563b8860b083febe31, type: 2}
+  streakAreaCenter: {x: 0, y: 2.3, z: 2.6}
+  streakAreaSize: {x: 13, y: 3.8, z: 4.5}
+  streakColor: {r: 1, g: 1, b: 1, a: 0.55}
+  wispColor: {r: 1, g: 0.95, b: 0.95, a: 0.16}
   gustClip: {fileID: 8300000, guid: d2626beefc0ce819dac7a879ee99c6e6, type: 3}
   volume: 0.7
   sfxGroup: {fileID: 3458100790020658778, guid: 280fe33fbd1bdfa09ad81a7389170c25, type: 2}
@@ -7040,117 +7047,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1435236963}
   m_CullTransparentMesh: 1
---- !u!1001 &1444519372
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1994862836}
-    m_Modifications:
-    - target: {fileID: 2004793425853494348, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_Name
-      value: ShopPanel
-      objectReference: {fileID: 0}
-    - target: {fileID: 2004793425853494348, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_Pivot.x
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_Pivot.y
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_AnchorMin.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: f104398564e5293d188187037c6d9131, type: 3}
---- !u!224 &1444519373 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 8804775463832174297, guid: f104398564e5293d188187037c6d9131, type: 3}
-  m_PrefabInstance: {fileID: 1444519372}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1444519374 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2004793425853494348, guid: f104398564e5293d188187037c6d9131, type: 3}
-  m_PrefabInstance: {fileID: 1444519372}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1445944847
 GameObject:
   m_ObjectHideFlags: 0
@@ -10336,7 +10232,6 @@ RectTransform:
   - {fileID: 171302118}
   - {fileID: 1458234245}
   - {fileID: 1826631523}
-  - {fileID: 1444519373}
   - {fileID: 614635825}
   - {fileID: 1284662675}
   m_Father: {fileID: 0}
@@ -10360,7 +10255,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuController
   profilePanel: {fileID: 1826631524}
   startPanel: {fileID: 83190208}
-  shopPanel: {fileID: 1444519374}
   recordsPanel: {fileID: 614635826}
   gameOverPanel: {fileID: 1458234244}
 --- !u!114 &2003096715
@@ -12309,6 +12203,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4927350283414158023, guid: cf66dc0729b257e4a8b11dac83b61818, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4458182196771349344}
+    - targetCorrespondingSourceObject: {fileID: 4927350283414158023, guid: cf66dc0729b257e4a8b11dac83b61818, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4458182196771349345}
   m_SourcePrefab: {fileID: 100100000, guid: cf66dc0729b257e4a8b11dac83b61818, type: 3}
 --- !u!4 &4458182196771349341 stripped
 Transform:
@@ -12345,17 +12242,43 @@ MonoBehaviour:
   m_EditorClassIdentifier: FairgroundShooter::BossLaser
   beamMaterial: {fileID: 2100000, guid: dcbda303fc347c563b8860b083febe31, type: 2}
   beamColor: {r: 1, g: 0.12, b: 0.08, a: 1}
-  beamWidth: 0.14
-  aimWidth: 0.012
+  beamWidth: 0.3
+  aimWidth: 0.035
   aimLineDistance: 1.6
   beamOvershoot: 6
   chargeLightIntensity: 6
   hintFont: {fileID: 11400000, guid: 1b923a1b2918c04d4a5e457112c9f5f8, type: 2}
   hintText: "\xA1AG\xC1CHATE! (C)"
+  hintLasers: 3
   chargeClip: {fileID: 8300000, guid: 5d41a6c4a056c59e1b4b2a0f0abf880f, type: 3}
   beamClip: {fileID: 8300000, guid: 08561cbf9b32e84dbb3fc7efebb877cb, type: 3}
   volume: 0.8
   sfxGroup: {fileID: 3458100790020658778, guid: 280fe33fbd1bdfa09ad81a7389170c25, type: 2}
+--- !u!114 &4458182196771349345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4458182196771349343}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02668350b7a649c44bd7ac234c8c60a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FairgroundShooter::BossHonkFX
+  additiveMaterial: {fileID: 2100000, guid: dcbda303fc347c563b8860b083febe31, type: 2}
+  hintFont: {fileID: 11400000, guid: 1b923a1b2918c04d4a5e457112c9f5f8, type: 2}
+  dangerColor: {r: 1, g: 0.25, b: 0.12, a: 1}
+  counterColor: {r: 0.25, g: 0.95, b: 1, a: 1}
+  airColor: {r: 0.9, g: 0.95, b: 1, a: 0.8}
+  smokeColor: {r: 0.55, g: 0.55, b: 0.6, a: 0.7}
+  meterRadius: 0.85
+  waveStartRadius: 0.5
+  waveEndRadius: 2.6
+  waveStopDistance: 2.2
+  frontOffset: 0.7
+  hintText: "\xA1DISPARA A LA BOCA!"
+  hintHonks: 2
 --- !u!1001 &4469524988009468589
 PrefabInstance:
   m_ObjectHideFlags: 0

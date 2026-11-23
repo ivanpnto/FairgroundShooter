@@ -99,6 +99,7 @@ MonoBehaviour:
   randomStartDirection: 1
   fleeSpeedMultiplier: 2.2
   fleeTime: 0.7
+  burrowAfter: 0.45
 --- !u!114 &5638341860190061653
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -150,10 +151,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75d46735136ae25699ae9a4adf0915ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FairgroundShooter::ShyTarget
-  dwellTime: 0.5
+  dwellTime: 0.45
   calmTime: 2.5
   jolt: 0.25
   joltTime: 0.18
+  alertFont: {fileID: 0}
+  alertCalm: {r: 1, g: 0.85, b: 0.2, a: 1}
+  alertScared: {r: 1, g: 0.2, b: 0.1, a: 1}
+  alertHeight: 0.18
+  alertSize: 3.2
 --- !u!1001 &1374775837574356448
 PrefabInstance:
   m_ObjectHideFlags: 0

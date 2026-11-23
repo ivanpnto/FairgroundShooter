@@ -32,6 +32,11 @@ public class BalanceBot : MonoBehaviour
     [Tooltip("Clics por segundo como máximo con armas semiautomáticas")]
     [Min(0.5f)] public float maxClickRate = 5f;
     public bool tacticalReload = true;
+    // Desactivado por defecto: medido el 23/11, con la mira el bot contrarrestaba casi ningún bocinazo con la Five-seven
+    // (2 de 9, frente a 4 de 4 desde la cadera) sin que se haya encontrado la causa. Mientras tanto se mide desde la
+    // cadera, que hace al bot algo más torpe que una persona que apunta (es un modelo pesimista)
+    [Tooltip("Contra el boss apunta con la mira (sin dispersión desde la cadera). Ver el comentario: de momento, no")]
+    public bool useSightsOnBoss = false;
     [Tooltip("Probabilidad de agacharse a tiempo ante el rayo del boss (una persona a veces reacciona tarde)")]
     [Range(0f, 1f)] public float laserDodgeChance = 0.85f;
     [Tooltip("Parte del aviso del rayo que pasa antes de agacharse (tiempo de reacción)")]
@@ -55,6 +60,7 @@ public class BalanceBot : MonoBehaviour
     private BossController boss;
     private PlayerHealth health;
     private PlayerCrouch crouch;
+    private PlayerScope scope;
     private bool willDodgeLaser;
     private int lastLaserStage;
     private int laserDodged, laserHit;
@@ -84,6 +90,7 @@ public class BalanceBot : MonoBehaviour
         boss = FindFirstObjectByType<BossController>();
         health = FindFirstObjectByType<PlayerHealth>();
         crouch = FindFirstObjectByType<PlayerCrouch>();
+        scope = FindFirstObjectByType<PlayerScope>();
         if (boss != null) boss.LaserResolved += dodged => { if (dodged) laserDodged++; else laserHit++; };
         shoot = FindFirstObjectByType<PlayerShoot>();
         aim = FindFirstObjectByType<PlayerAim>();
@@ -218,6 +225,7 @@ public class BalanceBot : MonoBehaviour
     private void LateUpdate()
     {
         UpdateCrouch();
+        if (scope != null) scope.ForceAim = useSightsOnBoss && boss != null && boss.State != BossController.BossState.Inactive;
         if (gameManager.CurrentState != GameManager.GameState.Playing) { current = null; return; }
 
         Transform target = ChooseTarget();

@@ -19,6 +19,8 @@ public class PlayerScope : MonoBehaviour
     [Header("Depuración")]
     [Tooltip("Mantiene el apuntado sin pulsar nada")]
     [SerializeField] private bool forceAim;
+    // Para BalanceBot: apuntar sin pulsar el botón derecho
+    public bool ForceAim { get => forceAim; set => forceAim = value; }
 
     // A partir de este ZoomAmount se ve el overlay y desaparece el arma (solo con visor). Al
     // final del zoom y no al principio: así se nota que el arma "sube" a la cara antes de tapar la vista

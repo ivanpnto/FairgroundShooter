@@ -1,6 +1,7 @@
 // Fairground/Sway — material iluminado (PBR de URP) con DESPLAZAMIENTO DE VÉRTICES (I4.2).
 // Lo usan los banderines de la caseta (ondean hacia delante y atrás) y las algas del fondo marino
 // (se balancean a los lados). La animación ocurre entera en la GPU: no hay ningún script por pieza.
+// En el nivel del cielo, WindGusts añade una variable global (_FairgroundGust) que los inclina con las ráfagas.
 //
 // Cuánto se mueve cada vértice lo dice su COLOR DE VÉRTICE, que calcula AnimatedMeshPostprocessor al
 // importar el FBX:
@@ -46,6 +47,10 @@ Shader "Fairground/Sway"
             float _Cull;
         CBUFFER_END
 
+        // Viento del nivel del cielo (WindGusts): -1..1, sentido y fuerza de la ráfaga en el eje X del mundo. Global
+        // (Shader.SetGlobalFloat) y fuera del CBUFFER: es el mismo para todos los materiales y vale 0 fuera de la ráfaga
+        float _FairgroundGust;
+
         // Desplazamiento en espacio objeto. Onda principal que recorre la pieza a lo largo de X
         // (los banderines ondean "en ola" a lo largo del cordel) + un aleteo más rápido e irregular.
         float3 Sway(float3 positionOS, half4 color)
@@ -59,7 +64,13 @@ Shader "Fairground/Sway"
             float flutter = sin(t * 2.7 + phase) * sin(t * 1.3 + phase * 2.0);
 
             float amount = (wave + flutter * _FlutterAmount) * _WaveAmplitude * weight;
-            return positionOS + normalize(_WaveDirection.xyz + 1e-5) * amount;
+
+            // Con viento: aleteo rápido extra y la punta inclinada hacia donde sopla (0,18 m con la ráfaga a tope).
+            // La inclinación es en el X del MUNDO, pasado a espacio objeto (ya tiene en cuenta escala y giro)
+            float gust = _FairgroundGust;
+            float gustFlutter = sin(t * 4.1 + phase * 3.0) * abs(gust) * _WaveAmplitude * 1.5 * weight;
+            float3 windOS = mul((float3x3)unity_WorldToObject, float3(gust * 0.18 * weight, 0, 0));
+            return positionOS + normalize(_WaveDirection.xyz + 1e-5) * (amount + gustFlutter) + windOS;
         }
         ENDHLSL
 

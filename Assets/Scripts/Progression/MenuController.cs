@@ -4,12 +4,11 @@ using UnityEngine;
 // Perfiles → Inicio (jugar, tienda, récords) → partida → Fin (tienda, otra ronda, récords) → …
 // La partida (HUD, transición, Game Over) la sigue llevando GameManager; esto solo decide qué menú se
 // ve. Va en el Canvas "UI". Los botones de cada panel se enlazan por código en su propio script
-// (StartPanelUI, ShopPanelUI…), así que los prefabs no necesitan referencias a la escena.
+// (StartPanelUI, GameOverSummaryUI…), así que los prefabs no necesitan referencias a la escena.
 public class MenuController : MonoBehaviour
 {
     [SerializeField] private GameObject profilePanel;
     [SerializeField] private GameObject startPanel;
-    [SerializeField] private GameObject shopPanel;
     [SerializeField] private GameObject recordsPanel;
     [SerializeField] private GameObject gameOverPanel;
 
@@ -25,17 +24,15 @@ public class MenuController : MonoBehaviour
     public void ShowProfiles() => Show(profilePanel);
     public void ShowStart() => Show(startPanel);
 
-    // Fase 8: las habilidades se compran en la botica en 3D. El panel 2D solo sale si la escena no la tiene
+    // Fase 8: las habilidades se compran en la botica en 3D (el panel 2D de la Fase 5 se retiró). Como la
+    // armería, no es un panel: la botica oculta los menús con HideAll y vuelve con Back
     public void ShowShop()
     {
         BoticaController botica = SceneCache<BoticaController>.Get();
         if (botica != null)
-        {
             botica.Open();
-            return;
-        }
-        returnPanel = CurrentMainMenu();
-        Show(shopPanel);
+        else
+            Debug.LogWarning("MenuController: no hay botica en la escena; HABILIDADES no hace nada (Tools > Fairground > Build Botica).");
     }
 
     public void ShowRecords()
@@ -65,7 +62,6 @@ public class MenuController : MonoBehaviour
     {
         SetActive(profilePanel, panel == profilePanel);
         SetActive(startPanel, panel == startPanel);
-        SetActive(shopPanel, panel == shopPanel);
         SetActive(recordsPanel, panel == recordsPanel);
         SetActive(gameOverPanel, panel == gameOverPanel);
     }

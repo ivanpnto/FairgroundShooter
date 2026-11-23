@@ -10,6 +10,9 @@ public class JumpMovement : TargetMovement
     [Tooltip("Al asustarse (ShyTarget) huye en sentido contrario a esta velocidad durante fleeTime s")]
     [SerializeField] private float fleeSpeedMultiplier = 2.2f;
     [SerializeField] private float fleeTime = 0.7f;
+    [Tooltip("Segundos de huida antes de meterse en la madriguera (baja tras el decorado y se pierde). Negativo = " +
+             "no se esconde, solo huye")]
+    [SerializeField] private float burrowAfter = 0.45f;
 
     private float direction = 1f;
     private float jumpProgress;
@@ -23,6 +26,13 @@ public class JumpMovement : TargetMovement
         direction *= -1f;
         FaceDirection(direction);
         fleeLeft = fleeTime;
+        // Antes solo corría más y se le podía seguir disparando igual: el susto casi no se notaba. Ahora se esconde,
+        // como el búho: o se le acierta en el primer medio segundo o se pierde
+        if (burrowAfter >= 0f)
+        {
+            Target target = GetComponent<Target>();
+            if (target != null) target.ExpireIn(burrowAfter);
+        }
         return true;
     }
 

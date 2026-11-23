@@ -13,14 +13,13 @@ using static FairgroundUIKit;
 //    suelo), luces, los cinco huecos con su arma, la cámara y el Volume propios. Se rehace entero en cada pasada
 //    y se guarda en la misma ruta (conserva el GUID, así que la instancia de Main no se pierde).
 //  · En Main: la instancia, la interfaz (fundido, ficha, VOLVER), los botones ARMERÍA del inicio y del resumen,
-//    TIENDA → HABILIDADES, y la tienda solo con habilidades (prefab ShopPanel).
+//    TIENDA → HABILIDADES (las habilidades se compran en la botica, BoticaBuilder).
 //  · Capa Armory y Rendering Layer 2 «Armory»: aíslan el interior de las luces de cada nivel.
-// Se puede repetir. Toca Main.unity y ShopPanel.prefab: avisar antes al compañero.
+// Se puede repetir. Toca Main.unity: avisar antes al compañero.
 public static class ArmoryBuilder
 {
     private const string ModelPath = "Assets/Art/Models/Environments/Armory.fbx";
     private const string PrefabPath = "Assets/Prefabs/Enviroments/Armory.prefab";
-    private const string ShopPrefab = "Assets/Prefabs/UI/ShopPanel.prefab";
     private const string AudioFolder = "Assets/Audio/Armory/";
     private const string LayerName = "Armory";
     private const int RenderBit = 2;                 // Rendering Layer «Armory»
@@ -30,8 +29,7 @@ public static class ArmoryBuilder
     public static void Build()
     {
         if (!EditorUtility.DisplayDialog("Build Armory",
-                "Monta la armería en 3D, sus botones y la tienda de habilidades en la escena abierta, y modifica " +
-                "ShopPanel.prefab.\n\nEn Main, avisa antes a tu compañero. ¿Continuar?", "Montar", "Cancelar"))
+                "Monta la armería en 3D y sus botones en la escena abierta.\n\nEn Main, avisa antes a tu compañero. ¿Continuar?", "Montar", "Cancelar"))
             return;
         Run();
     }
@@ -59,7 +57,6 @@ public static class ArmoryBuilder
         }
         ArmoryUI ui = BuildUI(canvas, armory);
         SetRefs(armory, "ui", ui);
-        UpdateShopPrefab();
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
@@ -540,32 +537,5 @@ public static class ArmoryBuilder
         TMP_Text t = armory.GetComponentInChildren<TMP_Text>();
         t.text = "ARMERÍA";
         return armory;
-    }
-
-    // La tienda de siempre, solo con habilidades: sin la columna de armas y con la de mejoras centrada
-    private static void UpdateShopPrefab()
-    {
-        GameObject root = PrefabUtility.LoadPrefabContents(ShopPrefab);
-        foreach (string n in new[] { "WeaponsBoard", "WeaponsLabel", "WeaponsList" })
-        {
-            Transform t = root.transform.Find(n);
-            if (t != null) t.gameObject.SetActive(false);
-        }
-        foreach (string n in new[] { "UpgradesBoard", "UpgradesLabel", "UpgradesScroll" })
-        {
-            var rt = root.transform.Find(n) as RectTransform;
-            if (rt != null) rt.anchoredPosition = new Vector2(0f, rt.anchoredPosition.y);
-        }
-        Transform title = root.transform.Find("Sign/TitleText");
-        if (title != null) title.GetComponent<TMP_Text>().text = "HABILIDADES";
-        ShopPanelUI shop = root.GetComponent<ShopPanelUI>();
-        if (shop != null)
-        {
-            var so = new SerializedObject(shop);
-            so.FindProperty("includeWeapons").boolValue = false;
-            so.ApplyModifiedPropertiesWithoutUndo();
-        }
-        PrefabUtility.SaveAsPrefabAsset(root, ShopPrefab);
-        PrefabUtility.UnloadPrefabContents(root);
     }
 }

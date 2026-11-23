@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BossConfig
   phases:
   - label: Ojos
-    health: 20
+    health: 10
     weakPointIds:
     - Eye
     attacks: 00000000
@@ -29,7 +29,7 @@ MonoBehaviour:
     minionInterval: 0
     maxMinions: 0
   - label: "Manos y mand\xEDbula"
-    health: 20
+    health: 10
     weakPointIds:
     - Hand
     - Jaw
@@ -45,7 +45,7 @@ MonoBehaviour:
     minionInterval: 5
     maxMinions: 1
   - label: "N\xFAcleo"
-    health: 20
+    health: 10
     weakPointIds:
     - Core
     attacks: 000000000100000002000000
@@ -65,12 +65,13 @@ MonoBehaviour:
   projectileArcHeight: 1
   projectileAimJitter: 0.35
   honkWindupTime: 1.2
-  honkTelegraphTime: 1.5
+  honkTelegraphTime: 1.8
   honkMinTelegraphTime: 1.2
   honkCounterDamage: 3
   honkCounterWeakPointId: Jaw
   honkHeartDamage: 2
   honkRecoveryTime: 0.6
+  honkWaveTravelTime: 0.45
   laserTelegraphTime: 1.5
   laserSweepTime: 1
   laserHeight: 1.45
@@ -90,8 +91,8 @@ MonoBehaviour:
   victoryBonusPerSecond: 20
   victoryParTime: 180
   scaleWithPlayerPower: 1
-  powerExponent: 0.75
-  maxPowerScale: 20
+  powerExponent: 0.4
+  maxPowerScale: 8
   extraRayEfficiency: 0.5
   explosionBonus: 1.5
   minionPrefab: {fileID: 2834708955499654938, guid: fff0b96219f265b4ea4e5fdfbd951cda, type: 3}
@@ -101,5 +102,5 @@ MonoBehaviour:
   minionLungeTime: 0.9
   minionHeartDamage: 1
   minionWarningMaterial: {fileID: 2100000, guid: 26d1c6c2fd021e845bc1b23417a6d207, type: 2}
-  minionHeartChance: 0.15
+  minionHeartChance: 0.25
   heartBonusOutline: {fileID: 2100000, guid: 1d5947020e4ecec49b36986a8537ab01, type: 2}

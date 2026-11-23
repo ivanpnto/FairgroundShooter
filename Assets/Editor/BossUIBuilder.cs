@@ -11,9 +11,9 @@ using UnityEngine.UI;
 // abierta. Menú: Tools > Fairground > Build Boss UI.
 //
 // Se puede repetir: busca cada pieza por nombre y la reutiliza; solo crea lo que falta y vuelve a enlazar las
-// referencias. Toca la escena (avisar en Main antes, §7) y tres prefabs de interfaz (ShopPanel, RecordsPanel)
-// y el del proyectil. No sustituye a ProgressionUIBuilder: ese rehace los paneles de la Fase 5 desde cero (y hoy
-// ya no se puede ejecutar: busca un RankingBoard que ya no existe en GameOverPanel).
+// referencias. Toca la escena (avisar en Main antes, §7), el prefab RecordsPanel y el del proyectil.
+// Los iconos de las mejoras se siguen asignando a sus UpgradeData, pero desde la Fase 8 nada los muestra: solo los
+// enseñaba la fila de la tienda 2D, que se retiró al llegar la botica en 3D (allí cada mejora es un frasco).
 public static class BossUIBuilder
 {
     private const string UIArt = "Assets/UI/";
@@ -33,7 +33,7 @@ public static class BossUIBuilder
     {
         if (!EditorUtility.DisplayDialog("Build Boss UI",
                 "Monta el HUD del boss, los efectos, los iconos, el récord y «Cómo jugar» en la escena abierta, y " +
-                "modifica los prefabs ShopPanel, RecordsPanel y el del proyectil.\n\nEn Main, avisa antes a tu compañero. ¿Continuar?",
+                "modifica los prefabs RecordsPanel y el del proyectil.\n\nEn Main, avisa antes a tu compañero. ¿Continuar?",
                 "Montar", "Cancelar"))
             return;
         Run();
@@ -46,7 +46,6 @@ public static class BossUIBuilder
         LoadStyle();
         AssignIcons();
         GameObject projectile = BuildProjectilePrefab();
-        UpdateShopPrefab();
         UpdateRecordsPrefab();
 
         GameObject canvasGo = GameObject.Find("UI");
@@ -181,87 +180,6 @@ public static class BossUIBuilder
         var config = AssetDatabase.LoadAssetAtPath<BossConfig>("Assets/Data/Boss/BossConfig.asset");
         if (config != null) { config.projectilePrefab = saved; EditorUtility.SetDirty(config); }
         return saved;
-    }
-
-    // ── Tienda: icono en la fila ────────────────────────────────────────────────
-
-    private static void UpdateShopPrefab()
-    {
-        const string path = "Assets/Prefabs/UI/ShopPanel.prefab";
-        GameObject root = PrefabUtility.LoadPrefabContents(path);
-        ShopRowUI row = root.GetComponentInChildren<ShopRowUI>(true);
-        Transform iconT = row.transform.Find("Icon");
-        Image icon = iconT != null ? iconT.GetComponent<Image>() : NewImage(row.transform, "Icon", null);
-        RectTransform rt = icon.rectTransform;
-        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 0.5f);
-        rt.anchoredPosition = new Vector2(12f, 0f);
-        rt.sizeDelta = new Vector2(68f, 68f);
-        icon.preserveAspect = true;
-        icon.raycastTarget = false;
-        SetRefs(row, "iconImage", icon, "iconSpace", 84f);
-        MakeScrollable(root.transform, "UpgradesList", "UpgradesScroll");
-        PrefabUtility.SaveAsPrefabAsset(root, path);
-        PrefabUtility.UnloadPrefabContents(root);
-    }
-
-    // Con 8 mejoras (84 px cada fila) la lista no cabe en el tablero y las filas se solapaban. La lista pasa a ser
-    // el CONTENIDO de un ScrollRect: el ScrollRect ocupa el sitio que tenía la lista y hace de ventana (RectMask2D
-    // recorta lo que sobresale), y la lista crece hacia abajo lo que necesiten sus filas (ContentSizeFitter).
-    // ShopPanelUI sigue añadiendo las filas a la misma lista: no cambia nada en su código
-    private static void MakeScrollable(Transform panel, string listName, string scrollName)
-    {
-        Transform scrollT = panel.Find(scrollName);
-        RectTransform list;
-        if (scrollT == null)
-        {
-            list = (RectTransform)panel.Find(listName);
-            scrollT = NewRect(panel, scrollName).transform;
-            scrollT.SetSiblingIndex(list.GetSiblingIndex());
-            var view = (RectTransform)scrollT;
-            view.anchorMin = list.anchorMin; view.anchorMax = list.anchorMax; view.pivot = list.pivot;
-            view.anchoredPosition = list.anchoredPosition; view.sizeDelta = list.sizeDelta;
-            list.SetParent(scrollT, false);
-        }
-        else list = (RectTransform)scrollT.Find(listName);
-
-        // La lista, pegada arriba y a lo ancho de la ventana (menos la barra)
-        list.anchorMin = new Vector2(0f, 1f); list.anchorMax = new Vector2(1f, 1f); list.pivot = new Vector2(0.5f, 1f);
-        list.offsetMin = new Vector2(0f, list.offsetMin.y); list.offsetMax = new Vector2(-18f, 0f);   // 18 px para la barra
-        ContentSizeFitter fitter = GetOrAdd<ContentSizeFitter>(list.gameObject);
-        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-
-        GetOrAdd<RectMask2D>(scrollT.gameObject);
-        Image hit = GetOrAdd<Image>(scrollT.gameObject);   // transparente: recibe la rueda del ratón en toda la zona
-        hit.color = new Color(0f, 0f, 0f, 0f);
-        ScrollRect scroll = GetOrAdd<ScrollRect>(scrollT.gameObject);
-        scroll.horizontal = false; scroll.vertical = true;
-        scroll.movementType = ScrollRect.MovementType.Clamped;
-        scroll.scrollSensitivity = 35f;
-        scroll.viewport = (RectTransform)scrollT;
-        scroll.content = list;
-
-        // Barra fina a la derecha (se oculta sola si todo cabe)
-        Transform barT = scrollT.Find("Scrollbar");
-        Scrollbar bar;
-        if (barT == null)
-        {
-            Image track = NewImage(scrollT, "Scrollbar", barFill);
-            track.type = Image.Type.Sliced; track.color = new Color(0f, 0f, 0f, 0.35f); track.raycastTarget = true;
-            RectTransform tr = track.rectTransform;
-            tr.anchorMin = new Vector2(1f, 0f); tr.anchorMax = Vector2.one; tr.pivot = new Vector2(1f, 0.5f);
-            tr.offsetMin = new Vector2(-10f, 0f); tr.offsetMax = Vector2.zero;
-            Image handle = NewImage(track.transform, "Handle", barFill);
-            handle.type = Image.Type.Sliced; handle.color = Gold; handle.raycastTarget = true;
-            Stretch(handle.rectTransform, 0f, 0f);
-            bar = track.gameObject.AddComponent<Scrollbar>();
-            bar.direction = Scrollbar.Direction.BottomToTop;
-            bar.handleRect = handle.rectTransform;
-            bar.targetGraphic = handle;
-        }
-        else bar = barT.GetComponent<Scrollbar>();
-        scroll.verticalScrollbar = bar;
-        scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
     }
 
     // ── Récords: columna «El Gran Feriante» ─────────────────────────────────────

@@ -11,6 +11,10 @@ using UnityEngine;
 // Va en un objeto raíz propio y no dentro de Env_Sea, porque Tools > Setup Sea Level reconstruye ese prefab desde
 // cero. Por eso se muestra él solo cuando el nivel en curso es el de su entorno (environmentId), como hace
 // LevelManager con los entornos. Solo avanza en Playing.
+//
+// Sitios (spots): si hay varios, después de cada apertura la almeja se entierra, cambia de sitio y vuelve a salir
+// de la arena, para que no se aprenda dónde mirar. Al abrirse, la perla brilla (luz y destello) para atraer la vista.
+// El modelo (conchas con estrías y contorno oscuro, estilo «chapa») lo genera Tools > Fairground > Build Sea Clam.
 public class ClamTarget : MonoBehaviour
 {
     [Tooltip("Entorno del nivel en el que aparece (LevelConfig.environmentId)")]
@@ -31,10 +35,23 @@ public class ClamTarget : MonoBehaviour
 
     [Header("Movimiento")]
     [Tooltip("Grados que se levanta la concha de arriba")]
-    [SerializeField] private float openAngle = -60f;
+    [SerializeField] private float openAngle = -105f;
     [SerializeField] private float shakeAmount = 0.015f;
 
-    private enum Phase { Closed, Shake, Opening, Open, Closing }
+    [Header("Sitios")]
+    [Tooltip("Posiciones (mundo) entre las que cambia tras cada apertura. Vacío = se queda donde está")]
+    [SerializeField] private Vector3[] spots;
+    [Tooltip("Segundos en enterrarse y en volver a salir al cambiar de sitio")]
+    [SerializeField] private float digTime = 0.3f;
+    [Tooltip("Metros que se hunde en la arena al enterrarse")]
+    [SerializeField] private float digDepth = 0.3f;
+
+    [Header("Brillo de la perla")]
+    [Tooltip("Material aditivo para el destello en cruz (vacío = sin destello, solo luz)")]
+    [SerializeField] private Material glintMaterial;
+    [SerializeField] private Color glintColor = new Color(1f, 0.92f, 0.97f);
+
+    private enum Phase { Closed, Shake, Opening, Open, Closing, DigOut, DigIn }
 
     private Phase phase = Phase.Closed;
     private float timer;
@@ -43,6 +60,9 @@ public class ClamTarget : MonoBehaviour
     private LevelManager levelManager;
     private Quaternion hingeClosed;
     private Vector3 visualRest;
+    private int spotIndex = -1;
+    private Light glow;
+    private LineRenderer glintA, glintB;
 
     private void Awake()
     {
@@ -50,8 +70,12 @@ public class ClamTarget : MonoBehaviour
         levelManager = FindFirstObjectByType<LevelManager>();
         if (hinge != null) hingeClosed = hinge.localRotation;
         if (visual != null) visualRest = visual.transform.localPosition;
+        BuildGlint();
+        MoveToSpot(Random.Range(0, Mathf.Max(1, SpotCount)));
         Close(Random.Range(closedTime.x, closedTime.y));
     }
+
+    private int SpotCount => spots != null ? spots.Length : 0;
 
     private void Update()
     {
@@ -65,6 +89,7 @@ public class ClamTarget : MonoBehaviour
             if (phase != Phase.Closed || pearl != null) Close(Random.Range(closedTime.x, closedTime.y));
             return;
         }
+        UpdateGlint();
         if (gameManager.CurrentState != GameManager.GameState.Playing) return;
 
         timer -= Time.deltaTime;
@@ -96,7 +121,30 @@ public class ClamTarget : MonoBehaviour
                 break;
 
             case Phase.Closing:
+                RemovePearl();   // la que nadie ha derribado se va en cuanto empieza a cerrarse
                 SetOpen(Mathf.Max(timer, 0f) / closingTime);
+                if (timer <= 0f)
+                {
+                    if (SpotCount > 1) { SetOpen(0f); phase = Phase.DigOut; timer = digTime; }
+                    else Close(Random.Range(closedTime.x, closedTime.y));
+                }
+                break;
+
+            case Phase.DigOut:
+                // Se entierra: baja en la arena...
+                SetDig(1f - Mathf.Max(timer, 0f) / digTime);
+                if (timer <= 0f)
+                {
+                    int next = Random.Range(0, SpotCount - 1);
+                    if (next >= spotIndex) next++;   // nunca el mismo sitio
+                    MoveToSpot(next);
+                    phase = Phase.DigIn; timer = digTime;
+                }
+                break;
+
+            case Phase.DigIn:
+                // ...y sale en el sitio nuevo
+                SetDig(Mathf.Max(timer, 0f) / digTime);
                 if (timer <= 0f) Close(Random.Range(closedTime.x, closedTime.y));
                 break;
         }
@@ -118,9 +166,68 @@ public class ClamTarget : MonoBehaviour
         timer = wait;
         SetOpen(0f);
         if (visual != null) visual.transform.localPosition = visualRest;
-        // La perla que nadie ha derribado se va con la almeja (si ya cayó, se está retirando sola)
+        RemovePearl();
+        if (glow != null) glow.intensity = 0f;
+        if (glintA != null) glintA.enabled = glintB.enabled = false;
+    }
+
+    // La perla que nadie ha derribado se va con la almeja (si ya cayó, se está retirando sola)
+    private void RemovePearl()
+    {
         if (pearl != null && pearl.CanBeHit) Destroy(pearl.gameObject);
         pearl = null;
+    }
+
+    private void MoveToSpot(int index)
+    {
+        if (SpotCount == 0) return;
+        spotIndex = Mathf.Clamp(index, 0, SpotCount - 1);
+        transform.position = spots[spotIndex];
+    }
+
+    // 0 = en su sitio, 1 = enterrada del todo
+    private void SetDig(float amount)
+    {
+        if (visual != null) visual.transform.localPosition = visualRest + Vector3.down * (digDepth * Mathf.SmoothStep(0f, 1f, amount));
+    }
+
+    // Luz suave y destello en cruz que gira sobre la perla mientras está a la vista
+    private void BuildGlint()
+    {
+        if (pearlAnchor == null) return;
+        var lightGo = new GameObject("PearlGlow");
+        lightGo.transform.SetParent(pearlAnchor, false);
+        glow = lightGo.AddComponent<Light>();
+        glow.type = LightType.Point;
+        glow.color = glintColor;
+        glow.range = 0.9f;
+        glow.shadows = LightShadows.None;
+        glow.intensity = 0f;
+        if (glintMaterial == null) return;
+        glintA = FxUtil.NewLine(pearlAnchor, "PearlGlintA", glintMaterial, 0.02f);
+        glintB = FxUtil.NewLine(pearlAnchor, "PearlGlintB", glintMaterial, 0.02f);
+    }
+
+    private void UpdateGlint()
+    {
+        bool shown = pearl != null && pearl.CanBeHit && (phase == Phase.Open || phase == Phase.Opening);
+        if (glow != null) glow.intensity = Mathf.MoveTowards(glow.intensity, shown ? 0.9f : 0f, Time.deltaTime * 12f);
+        if (glintA == null) return;
+        glintA.enabled = glintB.enabled = shown;
+        if (!shown) return;
+        Camera cam = Camera.main;
+        Vector3 c = pearl.transform.position;
+        Vector3 toCam = cam != null ? (cam.transform.position - c).normalized : Vector3.back;
+        Quaternion face = Quaternion.LookRotation(toCam) * Quaternion.Euler(0f, 0f, Time.time * 90f);
+        float size = 0.16f + 0.06f * Mathf.Sin(Time.time * 9f);
+        Vector3 offset = toCam * 0.12f;   // por delante de la perla, para que no la tape
+        glintA.SetPosition(0, c + offset + face * Vector3.up * size);
+        glintA.SetPosition(1, c + offset - face * Vector3.up * size);
+        glintB.SetPosition(0, c + offset + face * Vector3.right * size);
+        glintB.SetPosition(1, c + offset - face * Vector3.right * size);
+        Color col = glintColor; col.a = 0.6f + 0.4f * Mathf.Sin(Time.time * 9f);
+        FxUtil.SetColor(glintA, col);
+        FxUtil.SetColor(glintB, col);
     }
 
     private void SetOpen(float amount)
