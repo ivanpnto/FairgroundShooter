@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelConfig
   levelName: El Circo
   environmentId: Circus
-  music: {fileID: 0}
+  music: {fileID: 8300000, guid: d84e10a0e6283bc0fa0d0fa216d3d1ba, type: 3}
   isBossLevel: 1
   bossRevealDelay: 12
   duration: 60

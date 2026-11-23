@@ -23,6 +23,8 @@ para el juego; los originales están en `AudioSource/raw/`.
 | Sniper Rifle | SuperPhat | https://freesound.org/s/514228/ | CC0 | Disparo Barrett |
 | Assault Rifle Reload | Kodack | https://freesound.org/s/256912/ | CC0 | Recarga de rifle |
 | pistol reload sound.mp3 | GFL7 | https://freesound.org/s/276959/ | CC0 | Recarga de pistola |
+| Retro Small Bomb Explosion | modusmogulus | https://freesound.org/s/792520/ | CC0 | Bala explosiva (vista previa HQ) |
+| Metal Ping 4.wav | JarredGibb | https://freesound.org/s/217462/ | CC0 | Acierto en una diana (vista previa HQ) |
 
 ## Ambiente
 Todos de [Freesound](https://freesound.org), en CC0. Se usa la vista previa HQ (OGG) y no el
@@ -46,7 +48,9 @@ normalizado de sonoridad) para el juego; los originales están en `AudioSource/r
 | Carnival Rides | Écrivain | https://opengameart.org/content/carnival-rides | CC0 | Menús |
 | Children's March Theme | CleytonKauffman | https://opengameart.org/content/childrens-march-theme | CC0 | Nivel 1 (Bosque) |
 | Underwater Theme II | CleytonKauffman | https://opengameart.org/content/underwater-theme-ii | CC0 | Nivel 2 (Fondo marino) |
-<<<<<<< HEAD
+| Determined to Fly | OwlishMedia | https://opengameart.org/content/determined-to-fly | CC0 | Nivel 3 (Cielo) |
+| Marionettes | Bobjt | https://opengameart.org/content/marionettes | CC0 (también CC-BY 3.0; se usa la CC0) | Nivel 4 (El Circo), antes de la revelación |
+| ring master black (battle, versión lenta) | Bobjt | https://opengameart.org/content/ring-master | CC0 | Combate contra el boss |
 
 ## Efectos del combate contra el boss (propios)
 Sintetizados por código para el juego, sin muestras de terceros: toma de aire del bocinazo, bocinazo, aturdido,
@@ -60,6 +64,3 @@ Los de la armería (caja registradora, bombilla y paso del ratón, `Assets/Audio
 Corazones, viñeta, salpicadura de tarta y relleno de barra (`Assets/UI/Boss`) se generan con
 `ArtSource/UI/hud_sprites.py` (Pillow). Los iconos de la tienda (`Assets/UI/Icons`) se renderizan desde
 `ArtSource/Icons.blend`, y los proyectiles del boss (tarta, bola y maza) están en `ArtSource/Booth.blend`.
-=======
-| Determined to Fly | OwlishMedia | https://opengameart.org/content/determined-to-fly | CC0 | Nivel 3 (Cielo) |
->>>>>>> 079bab5 (feat(J6.1): música del nivel 3 (Determined to Fly) con fundido cruzado desde el nivel 2)

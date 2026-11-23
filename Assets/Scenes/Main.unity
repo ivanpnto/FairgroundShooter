@@ -4911,7 +4911,7 @@ MonoBehaviour:
   surfaceBaseCount: 10
   dustBaseCount: 12
   targetBaseCount: 25
-  targetHitSound: {fileID: 0}
+  targetHitSound: {fileID: 8300000, guid: 3018d3ea856cd0e3e9e16d290dfc260d, type: 3}
   targetHitVolume: 1
 --- !u!114 &354793043
 MonoBehaviour:
@@ -4935,7 +4935,7 @@ MonoBehaviour:
   lightIntensity: 5
   lightRangePerRadius: 6
   lightDuration: 0.09
-  explosionSound: {fileID: 0}
+  explosionSound: {fileID: 8300000, guid: 64975129a525a72c5a48870e5bbc2a62, type: 3}
   explosionVolume: 0.8
   sfxGroup: {fileID: 3458100790020658778, guid: 280fe33fbd1bdfa09ad81a7389170c25, type: 2}
   tracerMaterial: {fileID: 2100000, guid: c41c14d47399aa94994d4bbdf80d8abf, type: 2}
@@ -15044,6 +15044,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MusicManager
   menuMusic: {fileID: 8300000, guid: b279b102e1ea803f0a9fc3992e755dac, type: 3}
+  bossMusic: {fileID: 8300000, guid: bb3b82fb0735f2c71ae349784542e40f, type: 3}
   output: {fileID: -4989561769923336352, guid: 280fe33fbd1bdfa09ad81a7389170c25, type: 2}
   volume: 0.8
   fadeTime: 1.5
