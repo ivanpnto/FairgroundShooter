@@ -32,6 +32,10 @@ public class BalanceBot : MonoBehaviour
     [Tooltip("Clics por segundo como máximo con armas semiautomáticas")]
     [Min(0.5f)] public float maxClickRate = 5f;
     public bool tacticalReload = true;
+    [Tooltip("Probabilidad de agacharse a tiempo ante el rayo del boss (una persona a veces reacciona tarde)")]
+    [Range(0f, 1f)] public float laserDodgeChance = 0.85f;
+    [Tooltip("Parte del aviso del rayo que pasa antes de agacharse (tiempo de reacción)")]
+    [Range(0f, 1f)] public float laserReaction = 0.3f;
 
     [Header("Partidas")]
     public Loadout loadout = Loadout.Starter;
@@ -50,6 +54,10 @@ public class BalanceBot : MonoBehaviour
     private ScoreManager score;
     private BossController boss;
     private PlayerHealth health;
+    private PlayerCrouch crouch;
+    private bool willDodgeLaser;
+    private int lastLaserStage;
+    private int laserDodged, laserHit;
     private PlayerShoot shoot;
     private PlayerAim aim;
     private WeaponAmmo ammo;
@@ -75,6 +83,8 @@ public class BalanceBot : MonoBehaviour
         score = FindFirstObjectByType<ScoreManager>();
         boss = FindFirstObjectByType<BossController>();
         health = FindFirstObjectByType<PlayerHealth>();
+        crouch = FindFirstObjectByType<PlayerCrouch>();
+        if (boss != null) boss.LaserResolved += dodged => { if (dodged) laserDodged++; else laserHit++; };
         shoot = FindFirstObjectByType<PlayerShoot>();
         aim = FindFirstObjectByType<PlayerAim>();
         weapons = FindFirstObjectByType<WeaponController>();
@@ -164,6 +174,7 @@ public class BalanceBot : MonoBehaviour
     {
         levelScores.Clear();
         honkOk = honkFail = minionWarnings = minionHits = projectileHits = 0;
+        laserDodged = laserHit = 0;
         fightStart = -1f;
         gameManager.RestartGame();
         // RestartGame pone timeScale = 1 (desde el menú de pausa, por si se empieza desde un estado raro):
@@ -189,7 +200,7 @@ public class BalanceBot : MonoBehaviour
         sb.Append($"por nivel [{string.Join(", ", levelScores)}]");
         if (fightStart >= 0f && boss != null)
             sb.Append($" | boss: ×{boss.PowerScale:0.00} vida, {Time.time - fightStart:0.0} s, corazones {health.Hearts}, vida restante {boss.Health:0.0}/{boss.MaxHealth:0}, " +
-                      $"bocinazos {honkOk}/{honkOk + honkFail}, esbirros avisan {minionWarnings} aciertan {minionHits}, proyectiles aciertan {projectileHits}, bonus {boss.LastVictoryBonus}");
+                      $"bocinazos {honkOk}/{honkOk + honkFail}, rayos esquivados {laserDodged}/{laserDodged + laserHit}, esbirros avisan {minionWarnings} aciertan {minionHits}, proyectiles aciertan {projectileHits}, bonus {boss.LastVictoryBonus}");
         report.Add(sb.ToString());
         Debug.Log(sb.ToString());
 
@@ -206,6 +217,7 @@ public class BalanceBot : MonoBehaviour
 
     private void LateUpdate()
     {
+        UpdateCrouch();
         if (gameManager.CurrentState != GameManager.GameState.Playing) { current = null; return; }
 
         Transform target = ChooseTarget();
@@ -235,6 +247,17 @@ public class BalanceBot : MonoBehaviour
         if (Random.value > accuracy) point += (Vector3)(Random.insideUnitCircle.normalized * missOffset);
         aim.transform.rotation = Quaternion.LookRotation(point - cam.transform.position);
         if (ammo == null || ammo.UseAmmo()) shootMethod.Invoke(shoot, null);
+    }
+
+    // Rayo del boss: se agacha tras un tiempo de reacción (si esta vez reacciona) y se levanta al acabar el barrido.
+    // La decisión se toma una vez por rayo, al empezar el aviso
+    private void UpdateCrouch()
+    {
+        if (crouch == null) return;
+        int stage = boss != null ? boss.LaserStage : 0;
+        if (stage == 1 && lastLaserStage == 0) willDodgeLaser = Random.value < laserDodgeChance;
+        lastLaserStage = stage;
+        crouch.forceCrouch = willDodgeLaser && (stage == 2 || (stage == 1 && boss.LaserProgress >= laserReaction));
     }
 
     private static Vector3 AimPoint(Transform t)

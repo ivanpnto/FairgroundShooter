@@ -89,6 +89,7 @@ tiene **3 corazones** y la partida termina al vencer al boss o al quedarse sin e
 | Clic izquierdo | Disparar (mantener con las armas automáticas) |
 | Clic derecho | Mirar por la mira del arma (cada arma tiene la suya). Desde la cadera el disparo se desvía dentro de la cruceta, que se abre con cada disparo; apuntando va exacto al centro |
 | R | Recargar (también se recarga sola al vaciar el cargador) |
+| C o Ctrl | Agacharse tras el mostrador (mantener): la única forma de esquivar el rayo del boss |
 | Esc | Pausa |
 
 - **Racha:** cada 5 aciertos seguidos el multiplicador sube 0,5, hasta ×3. Fallar (también dar al decorado) o dar a
@@ -183,9 +184,9 @@ compila, así que no sirve para hacer trampas.
 
 ### Tests
 
-60 tests de modo Edit (NUnit) en `Assets/Tests/EditMode`: el cálculo de estadísticas de arma con las mejoras
+63 tests de modo Edit (NUnit) en `Assets/Tests/EditMode`: el cálculo de estadísticas de arma con las mejoras
 (`WeaponStatsCalculator`), los datos de las mejoras, las fórmulas de balance (daño sostenido de cada arma y escalado de la vida
-del boss), la dispersión desde la cadera (`WeaponSpread`) y los ajustes del ratón (`ControlSettings`). Se
+del boss), la dispersión desde la cadera (`WeaponSpread`), los ajustes del ratón (`ControlSettings`) y la regla para esquivar el rayo (`PlayerCrouch`). Se
 ejecutan desde *Window → General → Test Runner → EditMode → Run All*.
 
 El código del juego está en su propio ensamblado (`FairgroundShooter.asmdef`) para que los tests puedan

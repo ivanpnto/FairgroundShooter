@@ -4,8 +4,10 @@ using UnityEngine;
 public enum BossAttack
 {
     ProjectileRain,   // I7.3: las manos lanzan una tanda de proyectiles en parábola (1 corazón cada uno)
-    ChargedHonk       // I7.3: bocinazo. Aviso largo; si no se contrarresta disparando a la mandíbula, 2 corazones
+    ChargedHonk,      // I7.3: bocinazo. Aviso largo; si no se contrarresta disparando a la mandíbula, 2 corazones
     // Minions: I7.5
+    LaserSweep        // Rayo de los ojos a la altura de la cabeza que barre la caseta: no se contrarresta,
+                      // solo se esquiva AGACHÁNDOSE tras el mostrador (PlayerCrouch). Al final: no cambia los otros valores
 }
 
 // Datos del boss (I7.2), igual que LevelConfig: las cifras se ajustan jugando sin tocar código ni escena.
@@ -87,6 +89,25 @@ public class BossConfig : ScriptableObject
     [Min(1)] public int honkHeartDamage = 2;
     [Tooltip("Segundos con la boca abierta tras soltarlo, antes de la ventana vulnerable")]
     [Min(0f)] public float honkRecoveryTime = 0.6f;
+
+    // La caseta tiene el mostrador a 1,08 m y la cámara a 1,60 m: el rayo pasa por encima del mostrador y por
+    // debajo de la vista de pie, así que solo lo esquiva quien se agacha (PlayerCrouch baja la vista 0,5 m)
+    [Header("Rayo (LaserSweep)")]
+    [Tooltip("Aviso: los ojos se cargan y una línea fina marca la altura del rayo. Puntos débiles cerrados")]
+    [Min(0.3f)] public float laserTelegraphTime = 1.5f;
+    [Tooltip("Segundos que tarda el rayo en barrer la caseta de un lado a otro")]
+    [Min(0.2f)] public float laserSweepTime = 1f;
+    [Tooltip("Altura del rayo (m, en el plano del jugador)")]
+    public float laserHeight = 1.45f;
+    [Tooltip("La vista tiene que quedar al menos esto por debajo del rayo para salvarse (m)")]
+    [Min(0f)] public float laserSafeMargin = 0.1f;
+    [Tooltip("Ancho total del barrido en el plano del jugador (m), centrado en él")]
+    [Min(1f)] public float laserSweepWidth = 6f;
+    [Tooltip("Mitad del ancho del rayo que alcanza a la cabeza (m): el golpe se decide al pasar por el jugador")]
+    [Min(0.05f)] public float laserHitHalfWidth = 0.35f;
+    [Min(1)] public int laserHeartDamage = 1;
+    [Tooltip("Segundos de respiro tras el barrido, antes de la ventana vulnerable")]
+    [Min(0f)] public float laserRecoveryTime = 0.5f;
 
     [Header("Aturdido (bocinazo contrarrestado)")]
     [Min(0f)] public float stunDuration = 3f;

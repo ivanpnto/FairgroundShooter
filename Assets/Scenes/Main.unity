@@ -1359,7 +1359,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4927350283414158023, guid: cf66dc0729b257e4a8b11dac83b61818, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 81047407}
   m_SourcePrefab: {fileID: 100100000, guid: cf66dc0729b257e4a8b11dac83b61818, type: 3}
 --- !u!4 &81047404 stripped
 Transform:
@@ -1371,12 +1374,42 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2934160300205881581, guid: cf66dc0729b257e4a8b11dac83b61818, type: 3}
   m_PrefabInstance: {fileID: 81047403}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 81047406}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4507cabb82f1e3b42a189a6c753bd680, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossController
+--- !u!1 &81047406 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4927350283414158023, guid: cf66dc0729b257e4a8b11dac83b61818, type: 3}
+  m_PrefabInstance: {fileID: 81047403}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &81047407
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 81047406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d5985cec69c626e5a8e2c306c64024b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FairgroundShooter::BossLaser
+  beamMaterial: {fileID: 2100000, guid: dcbda303fc347c563b8860b083febe31, type: 2}
+  beamColor: {r: 1, g: 0.12, b: 0.08, a: 1}
+  beamWidth: 0.14
+  aimWidth: 0.012
+  aimLineDistance: 1.6
+  beamOvershoot: 6
+  chargeLightIntensity: 6
+  hintFont: {fileID: 11400000, guid: 1b923a1b2918c04d4a5e457112c9f5f8, type: 2}
+  hintText: "\xA1AG\xC1CHATE! (C)"
+  chargeClip: {fileID: 8300000, guid: 5d41a6c4a056c59e1b4b2a0f0abf880f, type: 3}
+  beamClip: {fileID: 8300000, guid: 08561cbf9b32e84dbb3fc7efebb877cb, type: 3}
+  volume: 0.8
+  sfxGroup: {fileID: 3458100790020658778, guid: 280fe33fbd1bdfa09ad81a7389170c25, type: 2}
 --- !u!1 &83190208 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6678152095847050371, guid: 8eebce849bc7a9e0cbc3fe1362444df8, type: 3}
@@ -4934,6 +4967,7 @@ GameObject:
   - component: {fileID: 354793043}
   - component: {fileID: 354793044}
   - component: {fileID: 354793045}
+  - component: {fileID: 354793046}
   m_Layer: 0
   m_Name: Player
   m_TagString: MainCamera
@@ -5237,6 +5271,21 @@ MonoBehaviour:
   maxAngles: {x: 4, y: 3, z: 5}
   frequency: 22
   recovery: 1.6
+--- !u!114 &354793046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 354793032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc3fefc9594234c48b862d85293027ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FairgroundShooter::PlayerCrouch
+  crouchDepth: 0.5
+  crouchTime: 0.15
+  forceCrouch: 0
 --- !u!1 &361113426
 GameObject:
   m_ObjectHideFlags: 0
@@ -12355,9 +12404,6 @@ MonoBehaviour:
   left: {fileID: 2132052512}
   right: {fileID: 1975926311}
   baseGap: 8
-  spreadPerKick: 4
-  maxSpread: 40
-  recoverySpeed: 10
   hitmarker: {fileID: 273287878}
   hitmarkerImages:
   - {fileID: 1505441630}
@@ -20715,12 +20761,12 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "<b>Rat\xF3n</b>: apuntar\n\n<b>Clic izquierdo</b>: disparar\n\n<b>Clic
-    derecho</b>: mirar por la mira del arma\n\n<b>R</b>: recargar (tambi\xE9n se
-    recarga sola al vaciar el cargador)\n\n<b>Racha</b>: cada 5 aciertos seguidos
-    el multiplicador sube (hasta x3). Fallar o dar a una diana prohibida la reinicia\n\nAl
-    acabar la partida, gasta tus cr\xE9ditos en la <b>tienda</b>: mejoras y armas
-    nuevas"
+  m_text: "<b>Rat\xF3n</b>: apuntar\n<b>Clic izquierdo</b>: disparar\n<b>Clic derecho</b>:
+    mirar por la mira del arma\n<b>R</b>: recargar (tambi\xE9n se recarga sola al
+    vaciar el cargador)\n<b>C</b> o <b>Ctrl</b>: agacharse tras el mostrador\n\n<b>Racha</b>:
+    cada 5 aciertos seguidos el multiplicador sube (hasta x3). Fallar o dar a una
+    diana prohibida la reinicia\n\nAl acabar la partida, gasta tus cr\xE9ditos en
+    la <b>tienda</b>: mejoras y armas nuevas"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -20742,7 +20788,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2

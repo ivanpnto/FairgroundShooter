@@ -1267,6 +1267,7 @@ GameObject:
   - component: {fileID: 354793042}
   - component: {fileID: 354793043}
   - component: {fileID: 354793044}
+  - component: {fileID: 354793045}
   m_Layer: 0
   m_Name: Player
   m_TagString: MainCamera
@@ -1555,6 +1556,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
   maxHearts: 3
   invulnerabilityAfterHit: 0.75
+--- !u!114 &354793045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 354793032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc3fefc9594234c48b862d85293027ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FairgroundShooter::PlayerCrouch
+  crouchDepth: 0.5
+  crouchTime: 0.15
+  forceCrouch: 0
 --- !u!1 &368483331
 GameObject:
   m_ObjectHideFlags: 0
@@ -4227,9 +4243,6 @@ MonoBehaviour:
   left: {fileID: 2132052512}
   right: {fileID: 1975926311}
   baseGap: 8
-  spreadPerKick: 4
-  maxSpread: 40
-  recoverySpeed: 10
   hitmarker: {fileID: 273287878}
   hitmarkerImages:
   - {fileID: 1505441630}
@@ -5845,6 +5858,8 @@ MonoBehaviour:
   levelTransitionNext: {fileID: 2138904522}
   levelTransitionBonus: {fileID: 670729288}
   transitionSeconds: 3
+  transitionSequence: {fileID: 0}
+  resultBannerSeconds: 3.2
 --- !u!4 &1197756584
 Transform:
   m_ObjectHideFlags: 0
@@ -5946,6 +5961,26 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 682d11bbf3931284782b6b66046b8e4c, type: 2}
   - {fileID: 11400000, guid: 8223db076b16cba478848ca63146aa4e, type: 2}
   fileName: profiles_sandbox.json
+  demoProfile: 1
+  demoPreset:
+    name: Demo
+    credits: 1500
+    upgrades:
+    - id: ammo
+      level: 2
+    - id: firerate
+      level: 2
+    - id: score
+      level: 1
+    - id: damage
+      level: 2
+    - id: doubleshot
+      level: 1
+    - id: boss_level
+      level: 1
+    weapons:
+    - mp5
+    - m16a1
 --- !u!114 &1197756589
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5959,10 +5994,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MusicManager
   menuMusic: {fileID: 8300000, guid: b279b102e1ea803f0a9fc3992e755dac, type: 3}
+  bossMusic: {fileID: 0}
   output: {fileID: -4989561769923336352, guid: 280fe33fbd1bdfa09ad81a7389170c25, type: 2}
   volume: 0.8
   fadeTime: 1.5
   transitionVolume: 0.5
+  pausedVolume: 0.4
 --- !u!114 &1197756590
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12157,7 +12194,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4927350283414158023, guid: cf66dc0729b257e4a8b11dac83b61818, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4458182196771349344}
   m_SourcePrefab: {fileID: 100100000, guid: cf66dc0729b257e4a8b11dac83b61818, type: 3}
 --- !u!4 &4458182196771349341 stripped
 Transform:
@@ -12169,12 +12209,42 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2934160300205881581, guid: cf66dc0729b257e4a8b11dac83b61818, type: 3}
   m_PrefabInstance: {fileID: 4458182196771349340}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 4458182196771349343}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4507cabb82f1e3b42a189a6c753bd680, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossController
+--- !u!1 &4458182196771349343 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4927350283414158023, guid: cf66dc0729b257e4a8b11dac83b61818, type: 3}
+  m_PrefabInstance: {fileID: 4458182196771349340}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4458182196771349344
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4458182196771349343}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d5985cec69c626e5a8e2c306c64024b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FairgroundShooter::BossLaser
+  beamMaterial: {fileID: 2100000, guid: dcbda303fc347c563b8860b083febe31, type: 2}
+  beamColor: {r: 1, g: 0.12, b: 0.08, a: 1}
+  beamWidth: 0.14
+  aimWidth: 0.012
+  aimLineDistance: 1.6
+  beamOvershoot: 6
+  chargeLightIntensity: 6
+  hintFont: {fileID: 11400000, guid: 1b923a1b2918c04d4a5e457112c9f5f8, type: 2}
+  hintText: "\xA1AG\xC1CHATE! (C)"
+  chargeClip: {fileID: 8300000, guid: 5d41a6c4a056c59e1b4b2a0f0abf880f, type: 3}
+  beamClip: {fileID: 8300000, guid: 08561cbf9b32e84dbb3fc7efebb877cb, type: 3}
+  volume: 0.8
+  sfxGroup: {fileID: 3458100790020658778, guid: 280fe33fbd1bdfa09ad81a7389170c25, type: 2}
 --- !u!1001 &4469524988009468589
 PrefabInstance:
   m_ObjectHideFlags: 0

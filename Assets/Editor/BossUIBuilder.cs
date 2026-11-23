@@ -500,11 +500,13 @@ public static class BossUIBuilder
             "<b>Clic izquierdo</b>: disparar",
             "<b>Clic derecho</b>: mirar por la mira del arma",
             "<b>R</b>: recargar (también se recarga sola al vaciar el cargador)",
+            "<b>C</b> o <b>Ctrl</b>: agacharse tras el mostrador",
             "<b>Racha</b>: cada 5 aciertos seguidos el multiplicador sube (hasta x3). Fallar o dar a una diana prohibida la reinicia",
             "Al acabar la partida, gasta tus créditos en la <b>tienda</b>: mejoras y armas nuevas",
         };
         TMP_Text controlsText = Child<TMP_Text>(card.transform, "ControlsText") ?? NewText(card.transform, "ControlsText", "", sans, 28, Cream);
-        controlsText.text = string.Join("\n\n", controls);
+        // Los cinco controles, juntos; los dos párrafos largos (racha y tienda), separados: así cabe en 480 px
+        controlsText.text = string.Join("\n", controls, 0, 5) + "\n\n" + string.Join("\n\n", controls, 5, controls.Length - 5);
         controlsText.alignment = TextAlignmentOptions.TopLeft;
         controlsText.textWrappingMode = TextWrappingModes.Normal;
         Place(controlsText.rectTransform, new Vector2(-370f, -20f), new Vector2(640f, 480f));

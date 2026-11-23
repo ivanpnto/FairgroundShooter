@@ -122,6 +122,15 @@ public class BossController : MonoBehaviour
     public event System.Action<float> HonkCounterChanged;     // 0..1 (para que la boca/sonido reaccionen)
     public event System.Action<bool> HonkResolved;            // true = contrarrestado (aturdido); false = golpe
     public event System.Action FuryStarted;
+    // Rayo (LaserSweep): true = esquivado agachándose; false = alcanzó al jugador
+    public event System.Action<bool> LaserResolved;
+
+    // Para el efecto del rayo (BossLaser), que solo pinta: 0 = sin rayo, 1 = apuntando (aviso), 2 = disparando
+    public int LaserStage { get; private set; }
+    // Punto del barrido en el plano del jugador, a la altura del rayo (también durante el aviso: donde empezará)
+    public Vector3 LaserPoint { get; private set; }
+    // 0..1 del aviso (stage 1) o del barrido (stage 2)
+    public float LaserProgress { get; private set; }
     public event System.Action Defeated;
     // Bloque 2: un esbirro empieza su aviso (tiembla y se pone rojo). Para el sonido de peligro
     public event System.Action<MinionLunge> MinionWarning;
@@ -278,6 +287,7 @@ public class BossController : MonoBehaviour
 
         ClearProjectiles();
         ShowTelegraph(false);
+        LaserStage = 0;   // StopAllCoroutines corta LaserRoutine a medias: que el rayo no se quede pintado
         DamageMultiplier = 1f;
         jawTarget = jawOpen = 0f;
         if (jawPivot != null) { jawPivot.localRotation = jawClosedRotation; jawPivot.localPosition = jawClosedPosition; }
@@ -350,13 +360,14 @@ public class BossController : MonoBehaviour
 
                 CurrentAttack = nextAttack;
                 attacksThisPhase++;
-                lastWasHonk = CurrentAttack == BossAttack.ChargedHonk;
+                lastWasHonk = IsBigAttack(CurrentAttack);
 
-                // El bocinazo no empieza mientras un esbirro está saltando (un peligro a la vez)
-                if (CurrentAttack == BossAttack.ChargedHonk)
+                // El bocinazo y el rayo no empiezan mientras un esbirro está saltando (un peligro a la vez)
+                if (IsBigAttack(CurrentAttack))
                     while (dangerOwner != null && !phaseCleared) yield return null;
 
                 if (CurrentAttack == BossAttack.ChargedHonk) yield return HonkRoutine();
+                else if (CurrentAttack == BossAttack.LaserSweep) yield return LaserRoutine();
                 else yield return RainRoutine();
             }
 
@@ -390,8 +401,13 @@ public class BossController : MonoBehaviour
         fight = null;
     }
 
+    // Los que exigen toda la atención del jugador: nunca dos seguidos ni junto a un esbirro saltando
+    private static bool IsBigAttack(BossAttack attack) =>
+        attack == BossAttack.ChargedHonk || attack == BossAttack.LaserSweep;
+
     // El último ataque de la lista es el nuevo de la fase: se estrena con él. Después, al azar, sin repetir
-    // el bocinazo dos veces seguidas (es el peligroso: entre uno y otro tiene que haber respiro)
+    // un ataque grande (bocinazo o rayo) dos veces seguidas: entre uno y otro tiene que haber respiro.
+    // lastWasHonk guarda «el último fue grande» (el nombre es de cuando solo existía el bocinazo)
     private BossAttack PickAttack()
     {
         BossAttack[] attacks = CurrentPhase.attacks;
@@ -403,7 +419,7 @@ public class BossController : MonoBehaviour
         for (int tries = 0; tries < 8; tries++)
         {
             BossAttack pick = attacks[Random.Range(0, attacks.Length)];
-            if (!(lastWasHonk && pick == BossAttack.ChargedHonk)) return pick;
+            if (!(lastWasHonk && IsBigAttack(pick))) return pick;
         }
         return BossAttack.ProjectileRain;
     }
@@ -501,6 +517,66 @@ public class BossController : MonoBehaviour
         yield return Wait(CurrentPhase.vulnerableTime);
     }
 
+    // Rayo: no se contrarresta, solo se esquiva agachándose tras el mostrador (PlayerCrouch). Todo cerrado: es un
+    // momento para cubrirse, no para castigar. Un solo golpe por barrido, decidido al pasar el rayo por el jugador
+    private IEnumerator LaserRoutine()
+    {
+        PlayerCrouch crouch = SceneCache<PlayerCrouch>.Get();
+        Transform eye = crouch != null ? crouch.transform : (Camera.main != null ? Camera.main.transform : null);
+        Vector3 center = eye != null ? new Vector3(eye.position.x, config.laserHeight, eye.position.z) : new Vector3(0f, config.laserHeight, -5f);
+        float half = config.laserSweepWidth * 0.5f;
+        float side = Random.value < 0.5f ? -1f : 1f;   // de qué lado empieza: que no se aprenda de memoria
+        Vector3 from = center + Vector3.right * (half * side);
+        Vector3 to = center - Vector3.right * (half * side);
+
+        // 1) Aviso: ojos cargándose y una línea fina a la altura del rayo, quieta donde empezará
+        SetOpen(OpenMode.None);
+        SetState(BossState.Telegraph);
+        ShowTelegraph(true);
+        LaserStage = 1;
+        LaserPoint = from;
+        float telegraph = config.laserTelegraphTime * Fury;
+        for (float t = 0f; t < telegraph && !phaseCleared; )
+        {
+            if (Playing) t += Time.deltaTime;
+            LaserProgress = t / telegraph;
+            SetTelegraphLight(LaserProgress);
+            yield return null;
+        }
+        ShowTelegraph(false);
+        if (phaseCleared) { LaserStage = 0; yield break; }
+
+        // 2) Barrido. El golpe se decide UNA vez, cuando el rayo cruza la franja del jugador
+        SetState(BossState.Attack);
+        LaserStage = 2;
+        bool resolved = false;
+        float sweep = config.laserSweepTime * Fury;
+        for (float t = 0f; t < sweep && !phaseCleared; )
+        {
+            if (Playing) t += Time.deltaTime;
+            LaserProgress = Mathf.Clamp01(t / sweep);
+            LaserPoint = Vector3.Lerp(from, to, LaserProgress);
+
+            if (!resolved && eye != null && Mathf.Abs(LaserPoint.x - eye.position.x) <= config.laserHitHalfWidth)
+            {
+                resolved = true;
+                float eyeHeight = crouch != null ? crouch.EyeHeight : eye.position.y;
+                bool dodged = PlayerCrouch.IsBelowBeam(eyeHeight, config.laserHeight, config.laserSafeMargin);
+                GameLog.Info(dodged ? "Boss: rayo esquivado" : "Boss: el rayo alcanza al jugador");
+                LaserResolved?.Invoke(dodged);
+                if (!dodged && playerHealth != null) playerHealth.TakeHit(config.laserHeartDamage);
+            }
+            yield return null;
+        }
+        LaserStage = 0;
+        if (phaseCleared) yield break;
+
+        yield return Wait(config.laserRecoveryTime);
+        SetOpen(OpenMode.Phase);
+        SetState(BossState.Vulnerable);
+        yield return Wait(CurrentPhase.vulnerableTime);
+    }
+
     // Aviso con la luz subiendo; se corta antes si stopWhen se cumple o se vacía la fase
     private IEnumerator TelegraphWait(float seconds, System.Func<bool> stopWhen)
     {
@@ -544,8 +620,9 @@ public class BossController : MonoBehaviour
             float interval = CurrentPhase.backgroundProjectileInterval * Fury;
             // Tampoco en el reposo que precede al bocinazo: un proyectil lanzado justo antes estaría en el aire
             // durante su ventana, tapando la mandíbula (en la prueba hacía fallar casi siempre el de la fase 3)
+            // (ni antes del rayo: el jugador tiene que poder agacharse sin un proyectil en el aire)
             bool calm = State == BossState.Vulnerable ||
-                        (State == BossState.Idle && nextAttack != BossAttack.ChargedHonk);
+                        (State == BossState.Idle && !IsBigAttack(nextAttack));
             if (interval <= 0f || !calm || phaseCleared) { timer = 0f; continue; }
 
             timer += Time.deltaTime;
@@ -712,7 +789,7 @@ public class BossController : MonoBehaviour
     public bool TryClaimDanger(MinionLunge minion)
     {
         if (dangerOwner != null && dangerOwner != minion) return false;
-        bool honkBusy = CurrentAttack == BossAttack.ChargedHonk &&
+        bool honkBusy = IsBigAttack(CurrentAttack) &&
                         (State == BossState.Telegraph || State == BossState.Attack);
         if (honkBusy || State == BossState.PhaseChange || State == BossState.Dead || !Playing) return false;
         dangerOwner = minion;

@@ -33,7 +33,7 @@ MonoBehaviour:
     weakPointIds:
     - Hand
     - Jaw
-    attacks: 0000000001000000
+    attacks: 000000000200000001000000
     idleTime: {x: 1.4, y: 2.2}
     telegraphTime: 0.9
     vulnerableTime: 2.3
@@ -48,7 +48,7 @@ MonoBehaviour:
     health: 20
     weakPointIds:
     - Core
-    attacks: 0000000001000000
+    attacks: 000000000100000002000000
     idleTime: {x: 1, y: 1.6}
     telegraphTime: 0.8
     vulnerableTime: 2
@@ -71,6 +71,14 @@ MonoBehaviour:
   honkCounterWeakPointId: Jaw
   honkHeartDamage: 2
   honkRecoveryTime: 0.6
+  laserTelegraphTime: 1.5
+  laserSweepTime: 1
+  laserHeight: 1.45
+  laserSafeMargin: 0.1
+  laserSweepWidth: 6
+  laserHitHalfWidth: 0.35
+  laserHeartDamage: 1
+  laserRecoveryTime: 0.5
   stunDuration: 3
   stunDamageMultiplier: 1.5
   furyTime: 180
