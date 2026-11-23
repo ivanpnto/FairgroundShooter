@@ -85,10 +85,11 @@ tiene **3 corazones** y la partida termina al vencer al boss o al quedarse sin e
 
 | Control | Acción |
 |---|---|
-| Ratón | Apuntar (±65° en horizontal, +35° / −20° en vertical) |
+| Ratón | Apuntar (±65° en horizontal, +35° / −20° en vertical). Sensibilidad e invertir el eje Y en **OPCIONES** |
 | Clic izquierdo | Disparar (mantener con las armas automáticas) |
-| Clic derecho | Mirar por la mira del arma (cada arma tiene la suya) |
+| Clic derecho | Mirar por la mira del arma (cada arma tiene la suya). Desde la cadera el disparo se desvía dentro de la cruceta, que se abre con cada disparo; apuntando va exacto al centro |
 | R | Recargar (también se recarga sola al vaciar el cargador) |
+| Esc | Pausa |
 
 - **Racha:** cada 5 aciertos seguidos el multiplicador sube 0,5, hasta ×3. Fallar (también dar al decorado) o dar a
   una diana prohibida la devuelve a ×1.
@@ -182,8 +183,9 @@ compila, así que no sirve para hacer trampas.
 
 ### Tests
 
-41 tests de modo Edit (NUnit) en `Assets/Tests/EditMode`: el cálculo de estadísticas de arma con las mejoras
-(`WeaponStatsCalculator`), los datos de las mejoras y las fórmulas de balance (daño sostenido de cada arma y escalado de la vida del boss). Se
+60 tests de modo Edit (NUnit) en `Assets/Tests/EditMode`: el cálculo de estadísticas de arma con las mejoras
+(`WeaponStatsCalculator`), los datos de las mejoras, las fórmulas de balance (daño sostenido de cada arma y escalado de la vida
+del boss), la dispersión desde la cadera (`WeaponSpread`) y los ajustes del ratón (`ControlSettings`). Se
 ejecutan desde *Window → General → Test Runner → EditMode → Run All*.
 
 El código del juego está en su propio ensamblado (`FairgroundShooter.asmdef`) para que los tests puedan

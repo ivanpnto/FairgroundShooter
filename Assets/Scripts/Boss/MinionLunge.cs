@@ -19,7 +19,8 @@ public class MinionLunge : MonoBehaviour, IPlayerHazard
     [SerializeField] private float shakeAmount = 0.05f;
 
     public int HeartDamage { get; private set; } = 1;
-    public bool IsActiveHazard => lunging && target != null && !target.IsDead;
+    // Ni muerto ni caducando: uno que expira en pleno salto ya no se puede disparar, así que tampoco debe dañar
+    public bool IsActiveHazard => lunging && target != null && target.CanBeHit;
     public bool IsLunging => lunging;
 
     private Target target;
@@ -28,6 +29,9 @@ public class MinionLunge : MonoBehaviour, IPlayerHazard
     private GameManager gameManager;
     private bool lunging, claimed, reached;
     private Coroutine routine;
+    // Materiales de antes del aviso, mientras dura: si lo derriban temblando, HandleKilled los devuelve
+    private Material[][] outlineBeforeWarning;
+    private Vector3 warningRest;
 
     private void Awake()
     {
@@ -59,16 +63,15 @@ public class MinionLunge : MonoBehaviour, IPlayerHazard
 
         // 3. Aviso: temblor y contorno rojo
         boss.NotifyMinionWarning(this);
-        Material[][] original = SwapOutline(config.minionWarningMaterial);
-        Vector3 rest = transform.position;
+        outlineBeforeWarning = SwapOutline(config.minionWarningMaterial);
+        warningRest = transform.position;
         for (float t = 0f; t < config.minionWarningTime; )
         {
             if (Playing) t += Time.deltaTime;
-            transform.position = rest + Random.insideUnitSphere * shakeAmount;
+            transform.position = warningRest + Random.insideUnitSphere * shakeAmount;
             yield return null;
         }
-        transform.position = rest;
-        RestoreOutline(original);
+        EndWarning();
 
         GameLog.Info("Esbirro: ¡salta!");
         // 4. Salto. Capa BossHazard: la única que choca con PlayerZone (el disparo sí la ve)
@@ -91,7 +94,8 @@ public class MinionLunge : MonoBehaviour, IPlayerHazard
             yield return null;
         }
         // Si por lo que sea no ha tocado el trigger (p. ej. está muy lejos), se da por llegado
-        if (!reached && !target.IsDead)
+        // (salvo que haya caducado en pleno salto: ver IsActiveHazard)
+        if (!reached && target.CanBeHit)
         {
             PlayerHealth health = SceneCache<PlayerHealth>.Get();
             if (health != null) health.TakeHit(HeartDamage);
@@ -111,6 +115,8 @@ public class MinionLunge : MonoBehaviour, IPlayerHazard
     private void HandleKilled(Target t)
     {
         if (routine != null) StopCoroutine(routine);
+        // Derribado durante el aviso: sin esto caía con el contorno rojo de «va a saltar» y descolocado
+        EndWarning();
         lunging = false;
         SetLayer(0);
         Release();
@@ -120,6 +126,15 @@ public class MinionLunge : MonoBehaviour, IPlayerHazard
     {
         if (target != null) target.Killed -= HandleKilled;
         Release();
+    }
+
+    // Fin del aviso (por tiempo o porque lo derriban): contorno original y quieto donde estaba
+    private void EndWarning()
+    {
+        if (outlineBeforeWarning == null) return;
+        transform.position = warningRest;
+        RestoreOutline(outlineBeforeWarning);
+        outlineBeforeWarning = null;
     }
 
     private void Release()

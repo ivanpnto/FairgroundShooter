@@ -66,36 +66,46 @@ public static class PauseOptionsBuilder
         panel.raycastTarget = true;   // bloquea los clics a lo que hay detrás
         Stretch(panel.rectTransform);
 
-        Image card = Card(panel.transform, new Vector2(1100f, 760f));
-        Title(card.transform, "OPCIONES", 300f);
+        // 1000 de alto para que quepa la sección CONTROLES debajo del volumen (el Canvas mide 1080)
+        Image card = Card(panel.transform, new Vector2(1100f, 1000f));
+        Title(card.transform, "OPCIONES", 400f);
         TMP_Text sub = Child<TMP_Text>(card.transform, "Subtitle") ?? NewText(card.transform, "Subtitle", "", rye, 36, Gold);
         sub.text = "VOLUMEN";
-        Place(sub.rectTransform, new Vector2(0f, 210f), new Vector2(800f, 50f));
+        Place(sub.rectTransform, new Vector2(0f, 315f), new Vector2(800f, 50f));
 
         string[] names = { "GENERAL", "MÚSICA", "EFECTOS", "AMBIENTE" };   // orden de VolumeChannel
         var sliders = new Slider[names.Length];
         var values = new TMP_Text[names.Length];
         for (int i = 0; i < names.Length; i++)
         {
-            float y = 120f - i * 95f;
-            Transform row = card.transform.Find("Row" + i) ?? NewRect(card.transform, "Row" + i).transform;
-            Place((RectTransform)row, new Vector2(0f, y), new Vector2(900f, 80f));
-
-            TMP_Text label = Child<TMP_Text>(row, "Label") ?? NewText(row, "Label", "", rye, 34, Cream);
-            label.text = names[i];
-            label.alignment = TextAlignmentOptions.Left;
-            Place(label.rectTransform, new Vector2(-330f, 0f), new Vector2(240f, 70f));
-
-            sliders[i] = BuildSlider(row);
-            Place((RectTransform)sliders[i].transform, new Vector2(40f, 0f), new Vector2(460f, 36f));
-
-            values[i] = Child<TMP_Text>(row, "Value") ?? NewText(row, "Value", "100 %", sans, 32, Cream);
-            values[i].alignment = TextAlignmentOptions.Right;
-            Place(values[i].rectTransform, new Vector2(370f, 0f), new Vector2(140f, 70f));
+            SliderRow(card.transform, "Row" + i, names[i], 235f - i * 85f, out sliders[i], out values[i]);
+            sliders[i].minValue = 0f; sliders[i].maxValue = 1f;
         }
 
+        // ── Controles: sensibilidad del ratón e invertir el eje vertical (ControlSettings)
+        TMP_Text controls = Child<TMP_Text>(card.transform, "ControlsSubtitle") ?? NewText(card.transform, "ControlsSubtitle", "", rye, 36, Gold);
+        controls.text = "CONTROLES";
+        Place(controls.rectTransform, new Vector2(0f, -110f), new Vector2(800f, 50f));
+
+        SliderRow(card.transform, "SensitivityRow", "SENSIBILIDAD", -190f, out Slider sensitivity, out TMP_Text sensitivityValue);
+        sensitivity.minValue = ControlSettings.MinSensitivity;
+        sensitivity.maxValue = ControlSettings.MaxSensitivity;
+        sensitivity.value = ControlSettings.DefaultSensitivity;
+        sensitivityValue.text = "×1,00";
+
+        Transform invertRow = card.transform.Find("InvertRow") ?? NewRect(card.transform, "InvertRow").transform;
+        Place((RectTransform)invertRow, new Vector2(0f, -275f), new Vector2(900f, 80f));
+        TMP_Text invertLabel = Child<TMP_Text>(invertRow, "Label") ?? NewText(invertRow, "Label", "", rye, 34, Cream);
+        invertLabel.text = "INVERTIR EJE Y";
+        invertLabel.alignment = TextAlignmentOptions.Left;
+        Place(invertLabel.rectTransform, new Vector2(-250f, 0f), new Vector2(400f, 70f));
+        Button invert = ChildButton(invertRow, "InvertButton", template);
+        Place((RectTransform)invert.transform, new Vector2(300f, 0f), new Vector2(200f, 80f));
+        TMP_Text invertText = invert.GetComponentInChildren<TMP_Text>();
+        invertText.text = "NO";
+
         Button close = ChildButton(card.transform, "CloseButton", template);
-        Place((RectTransform)close.transform, new Vector2(0f, -290f), new Vector2(340f, 105f));
+        Place((RectTransform)close.transform, new Vector2(0f, -400f), new Vector2(340f, 105f));
         close.GetComponentInChildren<TMP_Text>().text = "VOLVER";
 
         // OPCIONES en el inicio, debajo de CÓMO JUGAR (BossUIBuilder lo puso en (760, 220) con 300 × 100)
@@ -106,9 +116,33 @@ public static class PauseOptionsBuilder
         openText.fontSize = 28;
 
         OptionsPanelUI ui = GetOrAdd<OptionsPanelUI>(rootT.gameObject);
-        SetRefs(ui, "panel", panel.gameObject, "sliders", sliders, "valueTexts", values, "closeButton", close, "openButton", open);
+        SetRefs(ui, "panel", panel.gameObject, "sliders", sliders, "valueTexts", values, "closeButton", close, "openButton", open,
+            "sensitivitySlider", sensitivity, "sensitivityText", sensitivityValue, "invertButton", invert, "invertText", invertText);
         panel.gameObject.SetActive(false);
         return ui;
+    }
+
+    // Fila de etiqueta + deslizador + valor (la de cada volumen y la de la sensibilidad)
+    private static Transform SliderRow(Transform card, string name, string labelText, float y, out Slider slider, out TMP_Text value)
+    {
+        Transform row = card.Find(name) ?? NewRect(card, name).transform;
+        Place((RectTransform)row, new Vector2(0f, y), new Vector2(900f, 80f));
+
+        TMP_Text label = Child<TMP_Text>(row, "Label") ?? NewText(row, "Label", "", rye, 34, Cream);
+        label.text = labelText;
+        label.alignment = TextAlignmentOptions.Left;
+        // SENSIBILIDAD es más larga que los nombres de los volúmenes: se encoge si no cabe
+        label.enableAutoSizing = true;
+        label.fontSizeMin = 24; label.fontSizeMax = 34;
+        Place(label.rectTransform, new Vector2(-330f, 0f), new Vector2(240f, 70f));
+
+        slider = BuildSlider(row);
+        Place((RectTransform)slider.transform, new Vector2(40f, 0f), new Vector2(460f, 36f));
+
+        value = Child<TMP_Text>(row, "Value") ?? NewText(row, "Value", "100 %", sans, 32, Cream);
+        value.alignment = TextAlignmentOptions.Right;
+        Place(value.rectTransform, new Vector2(370f, 0f), new Vector2(140f, 70f));
+        return row;
     }
 
     // Estructura estándar de un Slider de UGUI: fondo, zona de relleno con el relleno, y zona del tirador

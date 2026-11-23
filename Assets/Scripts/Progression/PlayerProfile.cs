@@ -39,6 +39,10 @@ public class PlayerProfile
     public bool seenHowToPlay;
     public bool bossEncountered;
 
+    // Lo creó ProfileManager desde demoPreset: solo ese se rehace en cada arranque. Un perfil de jugador que
+    // se llame igual (creado antes de que existiera el Demo) no lleva la marca y no se toca
+    public bool isDemo;
+
     public PlayerProfile(string name)
     {
         this.name = name;

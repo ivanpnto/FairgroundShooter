@@ -70,7 +70,15 @@ public class ProfileManager : MonoBehaviour
     {
         if (demoPreset == null || string.IsNullOrWhiteSpace(demoPreset.name)) return;
         int index = database.profiles.FindIndex(p => string.Equals(p.name, demoPreset.name, System.StringComparison.OrdinalIgnoreCase));
+        if (index >= 0 && !database.profiles[index].isDemo)
+        {
+            // Antes se sustituía sin mirar y el jugador perdía créditos, compras y récords (y, al guardar,
+            // también la copia .bak). Para recuperar el Demo basta con borrar o renombrar ese perfil
+            Debug.LogWarning($"ProfileManager: ya hay un perfil de jugador llamado «{database.profiles[index].name}»; no se rehace el perfil Demo.", this);
+            return;
+        }
         PlayerProfile fresh = demoPreset.Build();
+        fresh.isDemo = true;
         EnsureStarterWeapon(fresh);
         if (index >= 0) database.profiles[index] = fresh;
         else database.profiles.Add(fresh);

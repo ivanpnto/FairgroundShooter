@@ -77,6 +77,18 @@ public class WeaponData : ScriptableObject
     [Tooltip("Velocidad con la que la vista vuelve a su sitio (mayor = vuelve antes)")]
     public float cameraRecoverySpeed = 8f;
 
+    // Lo que hace que apuntar valga la pena: desde la cadera el rayo cae al azar dentro de un cono, que se abre
+    // con cada disparo; apuntando del todo es 0 (WeaponSpread). La cruceta dibuja este mismo ángulo
+    [Header("Dispersión desde la cadera")]
+    [Tooltip("Semiángulo del cono (grados) con el arma en reposo")]
+    [Min(0f)] public float hipSpread = 1f;
+    [Tooltip("Grados que se abre el cono con cada disparo")]
+    [Min(0f)] public float spreadPerShot = 0.4f;
+    [Tooltip("Apertura máxima acumulada por los disparos (grados, sin contar hipSpread)")]
+    [Min(0f)] public float maxSpreadBloom = 3f;
+    [Tooltip("Velocidad con la que el cono se cierra (decaimiento exponencial)")]
+    [Min(0f)] public float spreadRecovery = 5f;
+
     // Para apuntar hace falta además un Sight en el modelo (WeaponModel.Sight): sin él no se apunta.
     // FormerlySerializedAs: el antiguo bool hasScope se guardaba como 0/1, que coincide con
     // IronSights/Telescopic, así que los assets antiguos se migran solos al cargar

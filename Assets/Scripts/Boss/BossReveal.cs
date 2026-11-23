@@ -148,6 +148,10 @@ public class BossReveal : MonoBehaviour
             else if (gameManager.CurrentState == GameManager.GameState.GameOver) yield break;
             yield return null;
         }
+        // Si el jugador pausa justo en el frame en que se cumple el tiempo, PauseForCutscene (solo desde
+        // Playing) fallaría y la revelación se perdía para siempre: el boss no salía. Se espera a que reanude
+        while (gameManager != null && gameManager.IsPaused)
+            yield return null;
         yield return RevealRoutine();
     }
 

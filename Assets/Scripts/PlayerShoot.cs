@@ -134,6 +134,20 @@ public class PlayerShoot : MonoBehaviour
         // Todos van en Player: GetComponent evita más campos que asignar en la escena
         weaponController = GetComponent<WeaponController>();
         playerAim = GetComponent<PlayerAim>();
+        playerScope = GetComponent<PlayerScope>();   // opcional: sin él, siempre desde la cadera
+    }
+
+    // Semiángulo (grados) del cono en el que puede caer el próximo disparo: base del arma + apertura por los
+    // disparos recientes, y 0 apuntando del todo. CrosshairUI lo dibuja tal cual
+    public float CurrentSpread
+    {
+        get
+        {
+            WeaponData weapon = weaponController != null ? weaponController.CurrentWeapon : null;
+            if (weapon == null) return 0f;
+            float zoom = playerScope != null ? playerScope.ZoomAmount : 0f;
+            return WeaponSpread.Current(weapon.hipSpread, spreadBloom, zoom);
+        }
     }
 
     // Suscribirse en OnEnable y desuscribirse en OnDisable evita llamadas
@@ -149,12 +163,21 @@ public class PlayerShoot : MonoBehaviour
     }
 
     // El arma recién equipada puede disparar al momento: no hereda la espera de la anterior
-    private void HandleWeaponEquipped(WeaponData data) => nextFireTime = Time.time;
+    private void HandleWeaponEquipped(WeaponData data)
+    {
+        nextFireTime = Time.time;
+        spreadBloom = 0f;   // ni la apertura de la anterior
+    }
 
     private void Update()
     {
         if (gameManager == null)
             return;
+
+        // El cono se cierra también fuera de Playing: al volver de la pausa o entre niveles empieza cerrado
+        WeaponData current = weaponController != null ? weaponController.CurrentWeapon : null;
+        if (current != null)
+            spreadBloom = WeaponSpread.Recover(spreadBloom, current.spreadRecovery, Time.deltaTime);
 
         if (gameManager.CurrentState != GameManager.GameState.Playing)
             return;
@@ -264,6 +287,14 @@ public class PlayerShoot : MonoBehaviour
         int penetration = Mathf.Max(1, stats.Penetration);
         if (rays > 1) rayDirection = -rayDirection;   // el rayo lateral alterna de lado en cada disparo
 
+        // Dispersión: UN desvío por disparo, el mismo para todos sus rayos (el disparo doble conserva su separación).
+        // insideUnitCircle reparte uniforme en el disco. Se calcula con el cono de ANTES de este disparo: el primero
+        // de una ráfaga sale con la dispersión de reposo
+        WeaponData weapon = weaponController.CurrentWeapon;
+        shotSpreadOffset = Random.insideUnitCircle * CurrentSpread;
+        if (weapon != null)
+            spreadBloom = WeaponSpread.AddShot(spreadBloom, weapon.spreadPerShot, weapon.maxSpreadBloom);
+
         shotTargets.Clear();
         bool hitPenalty = false, killedAny = false, hitWeakPoint = false;
         float totalDamage = 0f;
@@ -366,6 +397,8 @@ public class PlayerShoot : MonoBehaviour
     private Ray RayFor(int index, int count)
     {
         Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        Transform cam = playerCamera.transform;
+        ray.direction = WeaponSpread.Deviate(ray.direction, cam.up, cam.right, shotSpreadOffset);
         if (count <= 1 || index == 0)
             return ray;
 
@@ -377,6 +410,10 @@ public class PlayerShoot : MonoBehaviour
     }
 
     private float rayDirection = 1f;
+
+    private PlayerScope playerScope;
+    private float spreadBloom;          // grados que se ha abierto el cono por los disparos recientes
+    private Vector2 shotSpreadOffset;   // desvío del disparo en curso (grados: x derecha, y arriba)
 
     // RaycastAll no garantiza el orden: se ordena por distancia para recorrer los impactos como los
     // encontraría la bala. NonAlloc con un buffer que crece si se llena

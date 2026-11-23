@@ -62,11 +62,14 @@ public class PlayerAim : MonoBehaviour
 
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
 
-        // Con la mira puesta se reduce la sensibilidad en proporción al zoom
+        // Con la mira puesta se reduce la sensibilidad en proporción al zoom. Encima, la del menú de opciones
+        // (ControlSettings): multiplicador e invertir el eje vertical
         float currentSensitivity = sensitivity * (playerScope != null ? playerScope.SensitivityScale : 1f);
+        Vector2 degrees = ControlSettings.MouseToDegrees(mouseDelta, currentSensitivity,
+            ControlSettings.Sensitivity, ControlSettings.InvertY);
 
-        float horizontal = mouseDelta.x * currentSensitivity;
-        float vertical = mouseDelta.y * currentSensitivity;
+        float horizontal = degrees.x;
+        float vertical = degrees.y;
 
         horizontalRotation += horizontal;
         verticalRotation -= vertical;

@@ -34,6 +34,10 @@ MonoBehaviour:
   cameraKick: 7
   cameraKickSide: 1.2
   cameraRecoverySpeed: 3
+  hipSpread: 3.5
+  spreadPerShot: 4
+  maxSpreadBloom: 6
+  spreadRecovery: 2.5
   scopeType: 1
   scopeFov: 15
   eyeRelief: 0.05
