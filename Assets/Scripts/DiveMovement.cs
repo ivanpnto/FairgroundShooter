@@ -35,6 +35,9 @@ public class DiveMovement : TargetMovement
         cruiseTimer = Random.Range(cruiseTime.x, cruiseTime.y);
     }
 
+    // El viento (WindGusts) mueve startPosition, pero aquí la x se lleva aparte: se suma también
+    protected override void OnPushed(Vector3 delta) => x += delta.x;
+
     protected override void Move()
     {
         float dt = DeltaTime;

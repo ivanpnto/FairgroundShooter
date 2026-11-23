@@ -11,11 +11,15 @@ public class PeekMovement : TargetMovement
     [SerializeField] private float hideTime = 0.3f;
     [SerializeField] private Vector2 waitRange = new Vector2(0.5f, 1.2f);   // escondido entre asomadas
     [SerializeField, Range(0f, 1f)] private float hittableFrom = 0.6f;     // fracción asomada desde la que se puede acertar
+    [Tooltip("Al asustarse (ShyTarget) se esconde tantas veces más deprisa, y la siguiente espera es más larga")]
+    [SerializeField] private float startleSpeed = 2.5f;
+    [SerializeField] private float startledWaitMultiplier = 1.8f;
 
     private enum Phase { Wait, Rise, Hold, Hide }
 
     private Phase phase = Phase.Wait;
     private float timer;
+    private bool startled;
     private Collider[] colliders;
 
     protected override void Start()
@@ -28,7 +32,7 @@ public class PeekMovement : TargetMovement
 
     protected override void Move()
     {
-        timer -= DeltaTime;
+        timer -= startled && phase == Phase.Hide ? DeltaTime * startleSpeed : DeltaTime;
         float shown = 0f;   // 0 = escondido, 1 = asomado del todo
 
         switch (phase)
@@ -49,7 +53,12 @@ public class PeekMovement : TargetMovement
 
             case Phase.Hide:
                 shown = Mathf.Max(timer, 0f) / hideTime;
-                if (timer <= 0f) { phase = Phase.Wait; timer = Random.Range(waitRange.x, waitRange.y); }
+                if (timer <= 0f)
+                {
+                    phase = Phase.Wait;
+                    timer = Random.Range(waitRange.x, waitRange.y) * (startled ? startledWaitMultiplier : 1f);
+                    startled = false;
+                }
                 break;
         }
 
@@ -57,6 +66,22 @@ public class PeekMovement : TargetMovement
         transform.position = startPosition + Vector3.up * (riseHeight * eased);
 
         SetHittable(shown >= hittableFrom);
+    }
+
+    // Susto (ShyTarget): si está asomándose o a la vista, se esconde YA, más deprisa de lo normal, y tarda más en
+    // volver a asomarse. Escondido o escondiéndose no hay nada que hacer
+    public override bool Startle()
+    {
+        if (phase != Phase.Rise && phase != Phase.Hold)
+            return false;
+
+        // El Hide calcula lo asomado con timer / hideTime: se entra en el punto que corresponde a lo que ya
+        // estaba fuera, para que no dé un salto. Y se acelera con startleSpeed
+        float shown = phase == Phase.Hold ? 1f : 1f - Mathf.Max(timer, 0f) / riseTime;
+        phase = Phase.Hide;
+        timer = hideTime * shown;
+        startled = true;
+        return true;
     }
 
     // Al morir, Target desactiva este componente, así que esto ya no vuelve a encender el collider

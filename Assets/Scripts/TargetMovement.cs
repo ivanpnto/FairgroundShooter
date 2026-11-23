@@ -49,6 +49,24 @@ public abstract class TargetMovement : MonoBehaviour
 
     protected abstract void Move();
 
+    // Susto (ShyTarget, mecánica del Bosque): el jugador lo ha tenido en la mira demasiado tiempo. Cada movimiento
+    // reacciona a su manera (el búho se esconde, el conejo huye); por defecto no hace nada.
+    // Devuelve false si ahora no puede asustarse (p. ej. ya está escondido), para que ShyTarget no gaste su calma
+    public virtual bool Startle() => false;
+
+    // Empujón (WindGusts, mecánica del Cielo). Se mueven la posición Y el punto de partida: unos movimientos suman
+    // a la posición cada frame (HorizontalMovement) y otros la recalculan desde startPosition (SenoMovement); así
+    // el desplazamiento se conserva en los dos casos
+    public void Push(Vector3 delta)
+    {
+        startPosition += delta;
+        transform.position += delta;
+        OnPushed(delta);
+    }
+
+    // Para los movimientos que guardan su propia posición aparte (DiveMovement lleva su x)
+    protected virtual void OnPushed(Vector3 delta) { }
+
     // Dificultad del nivel: escala el tiempo del movimiento, así se acelera el patrón entero
     // (velocidad, ritmo de los saltos, frecuencia del seno) sin tocar cada parámetro por separado
     private float speedMultiplier = 1f;

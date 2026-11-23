@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 3302545814997462293}
   - component: {fileID: 7626460098633572020}
   - component: {fileID: 7834238667111163755}
+  - component: {fileID: 6374978141862378343}
   m_Layer: 0
   m_Name: OwlTarget
   m_TagString: Untagged
@@ -72,7 +73,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Target
   points: 25
   lifetime: 6
-  hitsToKill: 1
+  health: 1
   destroyDelay: 1.0899999
   outlineMaterialName: M_T_Outline
   tintOutline: 0
@@ -97,6 +98,8 @@ MonoBehaviour:
   hideTime: 0.3
   waitRange: {x: 0.5, y: 1.2}
   hittableFrom: 0.3
+  startleSpeed: 2.5
+  startledWaitMultiplier: 1.8
 --- !u!114 &7626460098633572020
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -136,6 +139,22 @@ MonoBehaviour:
   appearDuration: 0.35
   overshoot: 1.6
   disappearDuration: 0.3
+--- !u!114 &6374978141862378343
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2834708955499654938}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75d46735136ae25699ae9a4adf0915ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FairgroundShooter::ShyTarget
+  dwellTime: 0.5
+  calmTime: 2.5
+  jolt: 0.25
+  joltTime: 0.18
 --- !u!1001 &4967720707169846724
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -7,9 +7,24 @@ public class JumpMovement : TargetMovement
     [SerializeField] private float jumpDistance = 2f;
     [SerializeField] private float movementLimit = 4f;
     [SerializeField] private bool randomStartDirection = true;
+    [Tooltip("Al asustarse (ShyTarget) huye en sentido contrario a esta velocidad durante fleeTime s")]
+    [SerializeField] private float fleeSpeedMultiplier = 2.2f;
+    [SerializeField] private float fleeTime = 0.7f;
 
     private float direction = 1f;
     private float jumpProgress;
+    private float fleeLeft;
+
+    // Susto: media vuelta y a correr. Huyendo no se vuelve a asustar (no cambiaría nada)
+    public override bool Startle()
+    {
+        if (fleeLeft > 0f)
+            return false;
+        direction *= -1f;
+        FaceDirection(direction);
+        fleeLeft = fleeTime;
+        return true;
+    }
 
     protected override void Start()
     {
@@ -23,8 +38,10 @@ public class JumpMovement : TargetMovement
 
     protected override void Move()
     {
-        // Movimiento horizontal
-        float horizontalMovement = speed * direction * DeltaTime;
+        // Movimiento horizontal (más rápido mientras huye de un susto)
+        float boost = fleeLeft > 0f ? fleeSpeedMultiplier : 1f;
+        fleeLeft = Mathf.Max(0f, fleeLeft - DeltaTime);
+        float horizontalMovement = speed * boost * direction * DeltaTime;
         transform.position += Vector3.right * horizontalMovement;
 
         // Progreso del salto actual

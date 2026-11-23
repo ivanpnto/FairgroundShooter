@@ -34,11 +34,11 @@ sus dianas e iluminación propia; es más difícil que el anterior (más vida, m
 más puntos por diana. Dentro de cada nivel, el ritmo de aparición también crece. Entre niveles, el telón se cierra
 y se suma un **bonus de precisión**.
 
-| Nivel | Decorado | Dianas |
-|---|---|---|
-| 1 · Bosque | Bosque nocturno con luna y luciérnagas | Zorro, conejo, búho que se asoma, pájaro, zorro lejano · **mofeta (prohibida)** |
-| 2 · Fondo marino | Arrecife con algas, burbujas y niebla azul | Pez payaso, medusa a impulsos, tortuga resistente · **neumático (prohibido)** |
-| 3 · Cielo | Atardecer con nubes en cuatro profundidades y globos | Águila en picado, bandadas, globos que suben, dianas lejanas · **avioneta con cartel (prohibida)** |
+| Nivel | Decorado | Dianas | Mecánica propia |
+|---|---|---|---|
+| 1 · Bosque | Bosque nocturno con luna y luciérnagas | Zorro, conejo, búho que se asoma, pájaro, zorro lejano · **mofeta (prohibida)** | **Animales asustadizos:** si tienes al búho o al conejo en la mira más de medio segundo, se asustan (el búho se esconde, el conejo huye). Premia disparar rápido |
+| 2 · Fondo marino | Arrecife con algas, burbujas y niebla azul | Pez payaso, medusa a impulsos, tortuga resistente · **neumático (prohibido)** | **Almeja con perla:** cada pocos segundos una almeja tiembla, se abre y deja ver una perla diminuta de muchos puntos durante un segundo. Premia apuntar con la mira |
+| 3 · Cielo | Atardecer con nubes en cuatro profundidades y globos | Águila en picado, bandadas, globos que suben, dianas lejanas · **avioneta con cartel (prohibida)** | **Ráfagas de viento:** un cartel avisa de hacia dónde va a soplar y el viento empuja todas las dianas durante dos segundos. Obliga a corregir la puntería |
 
 <p>
   <img src="Docs/img/nivel2-mar.png" width="49%" alt="Nivel 2: fondo marino">
