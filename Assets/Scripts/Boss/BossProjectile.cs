@@ -113,6 +113,10 @@ public class BossProjectile : MonoBehaviour, IPlayerHazard
 
     public void OnReachedPlayer()
     {
+        // Si este golpe quitó el último corazón, la derrota ya lo devolvió al pool (ClearProjectiles) dentro de
+        // PlayerHealth.TakeHit, antes de llegar aquí: devolverlo otra vez lanzaba InvalidOperationException
+        if (!gameObject.activeSelf)
+            return;
         reached = true;
         target.Despawn(0f);   // destruir o devolver al pool: lo decide Target
     }

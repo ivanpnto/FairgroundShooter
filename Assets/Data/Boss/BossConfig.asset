@@ -83,9 +83,9 @@ MonoBehaviour:
   victoryParTime: 180
   scaleWithPlayerPower: 1
   powerExponent: 0.75
-  maxPowerScale: 8
+  maxPowerScale: 20
   extraRayEfficiency: 0.5
-  explosionBonus: 0.5
+  explosionBonus: 1.5
   minionPrefab: {fileID: 2834708955499654938, guid: fff0b96219f265b4ea4e5fdfbd951cda, type: 3}
   minionLaneId: Boss_Minion
   minionWaitTime: {x: 1.6, y: 2.6}

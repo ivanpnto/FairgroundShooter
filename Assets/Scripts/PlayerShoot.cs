@@ -122,7 +122,8 @@ public class PlayerShoot : MonoBehaviour
     // De IDamageable (I7.1): un mismo disparo puede dar a dianas y a puntos débiles
     private readonly System.Collections.Generic.List<IDamageable> shotTargets = new System.Collections.Generic.List<IDamageable>();
     private readonly System.Collections.Generic.List<IDamageable> rayTargets = new System.Collections.Generic.List<IDamageable>();
-    private readonly System.Collections.Generic.List<IDamageable> blastTargets = new System.Collections.Generic.List<IDamageable>();
+    // De object y no de IDamageable: guarda el «dueño» de cada daño (ver DamageOwner)
+    private readonly System.Collections.Generic.List<object> blastTargets = new System.Collections.Generic.List<object>();
     private RaycastHit[] rayHits = new RaycastHit[16];
     private readonly Collider[] blastHits = new Collider[24];
 
@@ -408,13 +409,21 @@ public class PlayerShoot : MonoBehaviour
 
         int kills = 0;
         int count = Physics.OverlapSphereNonAlloc(center, radius, blastHits, hitMask, QueryTriggerInteraction.Ignore);
-        blastTargets.Clear();   // para no dañar dos veces al mismo objetivo (varios colliders) en esta onda
+        // Para no dañar dos veces al mismo dueño en esta onda: el mismo objetivo con varios colliders, o
+        // varios puntos débiles del mismo boss (todos pasan el daño a BossController.ApplyDamage, así que
+        // un disparo a un ojo con el otro ojo y una mano en la onda le quitaba vida tres veces). Lo que
+        // recibió el impacto directo ya cuenta como dañado
+        blastTargets.Clear();
+        if (exclude != null) blastTargets.Add(DamageOwner(exclude));
         for (int i = 0; i < count; i++)
         {
             IDamageable target = blastHits[i].GetComponent<IDamageable>();
-            if (target == null || target == exclude || !target.CanBeHit || blastTargets.Contains(target))
+            if (target == null || !target.CanBeHit)
                 continue;
-            blastTargets.Add(target);
+            object owner = DamageOwner(target);
+            if (blastTargets.Contains(owner))
+                continue;
+            blastTargets.Add(owner);
 
             float distance = Vector3.Distance(center, blastHits[i].ClosestPoint(center));
             float falloff = Mathf.Clamp01(1f - distance / radius);
@@ -425,6 +434,14 @@ public class PlayerShoot : MonoBehaviour
             if (target is Target t && t.IsDead) kills++;
         }
         return kills;
+    }
+
+    // Quién pierde vida de verdad: un punto débil no tiene vida propia y se la quita a su boss
+    private static object DamageOwner(IDamageable target)
+    {
+        if (target is BossWeakPoint weakPoint && weakPoint.Owner != null)
+            return weakPoint.Owner;
+        return target;
     }
 
     private void Publish(RaycastHit hit, ShotImpact impact)

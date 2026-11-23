@@ -32,6 +32,8 @@ public class BossWeakPoint : MonoBehaviour, IDamageable
     public string Id => id;
     public bool IsOpen { get; private set; }
     public bool CanBeHit => IsOpen && boss != null && boss.CanTakeDamage;
+    // Para que la onda de la bala explosiva dañe una sola vez al boss aunque abarque varios puntos débiles
+    public BossController Owner => boss;
 
     // Daño ya multiplicado. Para el tambaleo y el destello (capa additive del Animator, I7.4)
     public event System.Action<BossWeakPoint, float> Damaged;

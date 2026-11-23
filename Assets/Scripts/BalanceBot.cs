@@ -166,6 +166,9 @@ public class BalanceBot : MonoBehaviour
         honkOk = honkFail = minionWarnings = minionHits = projectileHits = 0;
         fightStart = -1f;
         gameManager.RestartGame();
+        // RestartGame pone timeScale = 1 (desde el menú de pausa, por si se empieza desde un estado raro):
+        // sin esto el bot jugaba siempre en tiempo real y el RESUMEN daba segundos reales falsos
+        Time.timeScale = timeScale;
         if (startAtBoss) levelManager.StartLevel(levelManager.LevelCount - 1);
         scoreAtLevelStart = score.GetScore();
     }
