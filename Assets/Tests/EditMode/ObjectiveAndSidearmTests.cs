@@ -28,6 +28,15 @@ public class ObjectiveAndSidearmTests
         Assert.AreEqual(1, LevelConfig.ScaledTarget(1, 0.01f, 60f));      // nunca 0 si había objetivo
     }
 
+    [Test]
+    public void ObjetivoPorArma_SeReduceYRedondeaHaciaArriba()
+    {
+        Assert.AreEqual(228, LevelConfig.WeaponScaledTarget(650, 0.35f));   // Barrett en el bosque
+        Assert.AreEqual(650, LevelConfig.WeaponScaledTarget(650, 1f));
+        Assert.AreEqual(0, LevelConfig.WeaponScaledTarget(0, 0.35f));
+        Assert.AreEqual(1, LevelConfig.WeaponScaledTarget(1, 0.1f));
+    }
+
     // ── Cargador propio por arma ──
 
     [Test]

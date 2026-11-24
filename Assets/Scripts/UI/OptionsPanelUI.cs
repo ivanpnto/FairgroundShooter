@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 // Panel de OPCIONES (Fase 8): cuatro deslizadores de volumen y, debajo, los controles (sensibilidad del ratón e
-// invertir el eje vertical). Se abre desde el menú de inicio y desde la pausa.
+// invertir el eje vertical) y, desde el 25/11, la pantalla (completa o ventana, y resolución). Se abre desde el menú
+// de inicio y desde la pausa.
 // Solo pinta y reenvía: el volumen lo guarda y aplica VolumeSettings; los controles, ControlSettings.
 //
 // Los deslizadores y textos van en el orden de VolumeChannel (General, Música, Efectos, Ambiente).
@@ -22,6 +24,19 @@ public class OptionsPanelUI : MonoBehaviour
     [Tooltip("Botón que alterna SÍ / NO (un Toggle de UGUI no encaja con el estilo de tique de los botones)")]
     [SerializeField] private Button invertButton;
     [SerializeField] private TMP_Text invertText;
+
+    [Header("Pantalla (25/11)")]
+    [Tooltip("Alterna PANTALLA COMPLETA / VENTANA")]
+    [SerializeField] private Button screenModeButton;
+    [SerializeField] private TMP_Text screenModeText;
+    [Tooltip("Cada clic pasa a la siguiente resolución del monitor (y vuelve a la primera al acabar)")]
+    [SerializeField] private Button resolutionButton;
+    [SerializeField] private TMP_Text resolutionText;
+
+    // Lo último que se ha pedido: Screen.width y fullScreenMode no cambian hasta el fotograma siguiente, así que el
+    // texto se pinta con esto. Unity guarda el modo y la resolución entre sesiones por su cuenta (PlayerPrefs)
+    private Vector2Int shownSize;
+    private bool shownFullScreen;
 
     private VolumeSettings volume;
     private bool syncing;
@@ -53,6 +68,8 @@ public class OptionsPanelUI : MonoBehaviour
         }
         if (invertButton != null)
             invertButton.onClick.AddListener(() => { ControlSettings.InvertY = !ControlSettings.InvertY; SyncControls(); });
+        if (screenModeButton != null) screenModeButton.onClick.AddListener(ToggleScreenMode);
+        if (resolutionButton != null) resolutionButton.onClick.AddListener(NextResolution);
 
         if (panel != null) panel.SetActive(false);
     }
@@ -77,6 +94,7 @@ public class OptionsPanelUI : MonoBehaviour
     private void Sync()
     {
         SyncControls();
+        SyncDisplay();
         if (volume == null) return;
         syncing = true;
         for (int i = 0; i < sliders.Length; i++)
@@ -107,6 +125,63 @@ public class OptionsPanelUI : MonoBehaviour
         if (sensitivitySlider != null) sensitivitySlider.SetValueWithoutNotify(ControlSettings.Sensitivity);
         if (sensitivityText != null) sensitivityText.text = FormatSensitivity(ControlSettings.Sensitivity);
         if (invertText != null) invertText.text = ControlSettings.InvertY ? "SÍ" : "NO";
+    }
+
+    // ── Pantalla ──
+
+    private void SyncDisplay()
+    {
+        shownSize = new Vector2Int(Screen.width, Screen.height);
+        shownFullScreen = Screen.fullScreenMode != FullScreenMode.Windowed;
+        PaintDisplay();
+    }
+
+    private void PaintDisplay()
+    {
+        if (screenModeText != null) screenModeText.text = shownFullScreen ? "COMPLETA" : "VENTANA";
+        if (resolutionText != null) resolutionText.text = $"{shownSize.x} x {shownSize.y}";
+    }
+
+    private void ToggleScreenMode()
+    {
+        shownFullScreen = !shownFullScreen;
+        // Pantalla completa «en ventana sin bordes» (la de la build): cambia rápido y no rompe el Alt+Tab
+        Screen.SetResolution(shownSize.x, shownSize.y, shownFullScreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
+        PaintDisplay();
+    }
+
+    private void NextResolution()
+    {
+        List<Vector2Int> sizes = DistinctSizes(Screen.resolutions);
+        if (sizes.Count == 0) return;
+        shownSize = sizes[NextIndex(sizes, shownSize)];
+        Screen.SetResolution(shownSize.x, shownSize.y, shownFullScreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
+        PaintDisplay();
+    }
+
+    // Screen.resolutions repite cada tamaño por cada frecuencia (60 Hz, 144 Hz…): solo interesan los tamaños, de
+    // menor a mayor. Los de menos de 800 px de ancho no caben en la interfaz
+    public static List<Vector2Int> DistinctSizes(IEnumerable<Resolution> all)
+    {
+        var sizes = new List<Vector2Int>();
+        foreach (Resolution r in all)
+        {
+            var size = new Vector2Int(r.width, r.height);
+            if (r.width >= 800 && !sizes.Contains(size)) sizes.Add(size);
+        }
+        sizes.Sort((a, b) => a.x != b.x ? a.x.CompareTo(b.x) : a.y.CompareTo(b.y));
+        return sizes;
+    }
+
+    // La siguiente a la actual, dando la vuelta. Si la actual no está en la lista (ventana redimensionada), la
+    // primera mayor que ella
+    public static int NextIndex(List<Vector2Int> sizes, Vector2Int current)
+    {
+        int index = sizes.IndexOf(current);
+        if (index >= 0) return (index + 1) % sizes.Count;
+        for (int i = 0; i < sizes.Count; i++)
+            if (sizes[i].x * sizes[i].y > current.x * current.y) return i;
+        return 0;
     }
 
     // «×1,25»: con coma decimal, como el resto de textos en español. Coma puesta a mano y no con la cultura

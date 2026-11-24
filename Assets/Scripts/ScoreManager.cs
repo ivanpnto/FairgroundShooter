@@ -176,6 +176,6 @@ public class ScoreManager : MonoBehaviour
 
     private void UpdateScoreText()
     {
-        scoreText.text = "SCORE: " + score;
+        scoreText.text = "PUNTOS: " + score;   // 25/11: en español, como TIEMPO y BALAS
     }
 }

@@ -24,6 +24,11 @@ public class WeaponData : ScriptableObject
     [Header("Progresión (Fase 5)")]
     [Tooltip("Créditos que cuesta desbloquearla en la tienda")]
     [Min(0)] public int price;
+
+    [Tooltip("Multiplica el objetivo de puntos de cada nivel cuando esta es el arma de la partida (25/11). 1 = el de " +
+             "LevelConfig. La Barrett hace unos 30 disparos por minuto y con ella el bot saca la cuarta parte de puntos que " +
+             "con la Five-seven: sin esto, su objetivo sería casi imposible")]
+    [Range(0.1f, 1f)] public float objectiveScale = 1f;
     [Tooltip("Daño por disparo sin mejoras. La vida de los objetivos se mide en impactos de daño 1")]
     [Min(0f)] public float baseDamage = 1f;
 

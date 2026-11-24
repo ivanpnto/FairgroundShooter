@@ -170,7 +170,10 @@ public class BalanceBot : MonoBehaviour
         if (includeBoss || startAtBoss) preset.upgrades.Add(new UpgradeLevel("boss_level", 1));
         profiles.ApplyPreset(preset);
 
+        // 25/11: el arma que se mide se desbloquea en el perfil. Si no, el selector de arma (que recuerda la del perfil
+        // y descarta las bloqueadas) volvía a la Five-seven en cuanto el perfil avisaba de un cambio
         string id = string.IsNullOrEmpty(weaponId) ? defaultWeapon : weaponId;
+        if (!preset.weapons.Contains(id)) { preset.weapons.Add(id); profiles.ApplyPreset(preset); }
         foreach (WeaponData w in weapons.AvailableWeapons)
             if (w != null && w.id == id) weapons.Equip(w);
     }

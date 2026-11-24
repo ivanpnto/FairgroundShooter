@@ -76,6 +76,9 @@ public class WeaponController : MonoBehaviour
     // perfil). Al equipar también se recalculan, pero eso ya lo avisa OnWeaponEquipped
     public event System.Action<WeaponStats> StatsChanged;
 
+    // Empieza un cambio Barrett ↔ pistola (Q / rueda), con el arma que va a quedar en la mano. Para el sonido
+    public event System.Action<WeaponData> SwitchStarted;
+
     private ProfileManager profileManager;
     private GameManager gameManager;
 
@@ -159,18 +162,25 @@ public class WeaponController : MonoBehaviour
         if (CurrentWeapon == null)
             return;
 
-        // Al cambiar de perfil se equipa la que recuerda el nuevo (o una desbloqueada si la suya ya no lo está).
-        // Con el mismo perfil, PreferredWeapon es la principal de ahora, porque Equip la guarda en el perfil
-        WeaponData preferred = PreferredWeapon();
-        if (preferred != PrimaryWeapon)
+        // En partida el perfil también avisa (p. ej. «boss visto» al aparecer el boss): ahí no se cambia de arma ni
+        // se vuelve a la principal. Antes, si llevabas la pistola en ese momento, te devolvía a la Barrett con el
+        // cargador lleno en mitad del combate
+        bool inRun = gameManager != null && gameManager.IsInRun;
+        if (!inRun)
         {
-            Equip(preferred);
-            return;
-        }
+            // Al cambiar de perfil se equipa la que recuerda el nuevo (o una desbloqueada si la suya ya no lo está).
+            // Con el mismo perfil, PreferredWeapon es la principal de ahora, porque Equip la guarda en el perfil
+            WeaponData preferred = PreferredWeapon();
+            if (preferred != PrimaryWeapon)
+            {
+                Equip(preferred);
+                return;
+            }
 
-        // La tienda solo está fuera de la partida, y ahí siempre se lleva la principal
-        if (IsHoldingSidearm)
-            EquipModel(PrimaryWeapon, -1);
+            // La tienda solo está fuera de la partida, y ahí siempre se lleva la principal
+            if (IsHoldingSidearm)
+                EquipModel(PrimaryWeapon, -1);
+        }
 
         WeaponStats stats = ComputeStats(CurrentWeapon);
         if (stats.Equals(CurrentStats))
@@ -211,6 +221,7 @@ public class WeaponController : MonoBehaviour
 
         switchElapsed = 0f;
         swappedThisSwitch = false;
+        SwitchStarted?.Invoke(IsHoldingSidearm ? PrimaryWeapon : sidearm);
         return true;
     }
 

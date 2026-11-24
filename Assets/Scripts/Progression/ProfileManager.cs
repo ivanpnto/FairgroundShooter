@@ -126,6 +126,24 @@ public class ProfileManager : MonoBehaviour
         return true;
     }
 
+    // 25/11: borrar un perfil desde la pantalla de perfiles (con confirmación en ProfilePanelUI). Si era el elegido,
+    // no queda ninguno elegido y hay que escoger otro para jugar. El perfil Demo se vuelve a crear al arrancar
+    public bool DeleteProfile(string profileName)
+    {
+        PlayerProfile profile = Find(profileName);
+        if (profile == null)
+            return false;
+
+        database.profiles.Remove(profile);
+        if (Current == profile)
+        {
+            Current = null;
+            database.selectedProfile = null;
+        }
+        Commit();
+        return true;
+    }
+
     private PlayerProfile Find(string profileName)
     {
         if (string.IsNullOrWhiteSpace(profileName))

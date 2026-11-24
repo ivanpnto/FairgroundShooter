@@ -4,7 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // Pantalla de perfiles: lista de los existentes (un clic lo elige) y campo para crear uno nuevo.
-// Sustituye al antiguo campo de nombre del Inicio. Solo UI: crear y elegir lo hace ProfileManager.
+// Sustituye al antiguo campo de nombre del Inicio. Solo UI: crear, elegir y borrar lo hace ProfileManager.
+// 25/11: cada fila tiene un botón BORRAR (hijo «DeleteButton» de la plantilla, lo pone Build Polish 25-11) que pide
+// confirmación: el primer clic pasa a «¿SEGURO?» y el segundo borra. Borrar no se puede deshacer.
 public class ProfilePanelUI : MonoBehaviour
 {
     [SerializeField] private Transform listContent;
@@ -21,6 +23,11 @@ public class ProfilePanelUI : MonoBehaviour
     private ProfileManager profileManager;
     private MenuController menu;
     private readonly List<GameObject> entries = new List<GameObject>();
+    private readonly List<TMP_Text> deleteTexts = new List<TMP_Text>();
+    private string pendingDelete;
+
+    private const string DeleteLabel = "BORRAR";
+    private const string ConfirmDeleteLabel = "¿SEGURO?";
 
     private void Awake()
     {
@@ -44,6 +51,8 @@ public class ProfilePanelUI : MonoBehaviour
         foreach (GameObject entry in entries)
             Destroy(entry);
         entries.Clear();
+        deleteTexts.Clear();
+        pendingDelete = null;
 
         if (profileManager == null)
             return;
@@ -68,7 +77,34 @@ public class ProfilePanelUI : MonoBehaviour
             string profileName = profile.name;   // copia para el cierre: no capturar la variable del bucle
             button.onClick.AddListener(() => Select(profileName));
             entries.Add(button.gameObject);
+
+            Transform deleteT = button.transform.Find("DeleteButton");
+            Button delete = deleteT != null ? deleteT.GetComponent<Button>() : null;
+            if (delete != null)
+            {
+                TMP_Text deleteText = delete.GetComponentInChildren<TMP_Text>(true);
+                deleteText.text = DeleteLabel;
+                deleteTexts.Add(deleteText);
+                delete.onClick.AddListener(() => HandleDelete(profileName, deleteText));
+            }
         }
+    }
+
+    private void HandleDelete(string profileName, TMP_Text label)
+    {
+        if (pendingDelete != profileName)
+        {
+            // Solo una fila esperando confirmación a la vez
+            foreach (TMP_Text t in deleteTexts) t.text = DeleteLabel;
+            pendingDelete = profileName;
+            label.text = ConfirmDeleteLabel;
+            SetMessage($"Pulsa otra vez para borrar a «{profileName}»: no se puede deshacer");
+            return;
+        }
+
+        if (profileManager != null && profileManager.DeleteProfile(profileName))
+            SetMessage($"Perfil «{profileName}» borrado");
+        Rebuild();
     }
 
     private void Select(string profileName)

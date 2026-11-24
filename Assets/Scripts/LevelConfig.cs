@@ -50,6 +50,13 @@ public class LevelConfig : ScriptableObject
     // Reglas del objetivo, aparte y estáticas para poder probarlas sin escena
     public static bool ObjectiveMet(int levelScore, int target) => target <= 0 || levelScore >= target;
 
+    // Objetivo para el arma de la partida (WeaponData.objectiveScale), hacia arriba y nunca 0 si había objetivo
+    public static int WeaponScaledTarget(int target, float weaponScale)
+    {
+        if (target <= 0) return 0;
+        return Mathf.Max(1, Mathf.CeilToInt(target * Mathf.Clamp01(weaponScale)));
+    }
+
     // Con el modo prueba (niveles de 10 s) el objetivo se reduce en proporción al tiempo, para poder probar sin
     // quedarse siempre fuera. Se redondea hacia arriba: nunca baja a 0 si había objetivo
     public static int ScaledTarget(int target, float playedSeconds, float configuredSeconds)

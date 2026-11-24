@@ -26,9 +26,15 @@ public class LevelManager : MonoBehaviour
     public bool HasNextLevel => IsAvailable(CurrentIndex + 1);
     public LevelConfig NextLevel => HasNextLevel ? levels[CurrentIndex + 1] : null;
 
-    // Objetivo de puntos del nivel (24/11), ya ajustado al modo prueba. 0 = sin objetivo (boss incluido)
-    public int TargetFor(LevelConfig level) =>
-        level == null || level.isBossLevel ? 0 : LevelConfig.ScaledTarget(level.targetScore, DebugMode.LevelDuration(level), level.duration);
+    // Objetivo de puntos del nivel (24/11), ya ajustado al modo prueba y al arma de la partida (25/11: la Barrett
+    // tiene su propio factor). 0 = sin objetivo (boss incluido)
+    public int TargetFor(LevelConfig level)
+    {
+        if (level == null || level.isBossLevel) return 0;
+        int target = LevelConfig.ScaledTarget(level.targetScore, DebugMode.LevelDuration(level), level.duration);
+        WeaponData weapon = weaponController != null ? weaponController.PrimaryWeapon : null;
+        return weapon != null ? LevelConfig.WeaponScaledTarget(target, weapon.objectiveScale) : target;
+    }
     public int CurrentTarget => TargetFor(CurrentLevel);
 
     public event System.Action<LevelConfig, int> LevelStarted;

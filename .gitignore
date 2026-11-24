@@ -116,3 +116,7 @@ InitTestScene*.unity*
 Assets/_Recovery/
 Assets/_Recovery.meta
 /FairgroundShooter/
+
+# Capturas de pantalla del editor (MCP / herramientas de grabación): no van al repositorio (25/11)
+/[Aa]ssets/[Ss]creenshots/
+/[Aa]ssets/[Ss]creenshots.meta

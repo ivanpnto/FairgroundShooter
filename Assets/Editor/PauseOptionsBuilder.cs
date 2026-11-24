@@ -68,33 +68,34 @@ public static class PauseOptionsBuilder
 
         // 1000 de alto para que quepa la sección CONTROLES debajo del volumen (el Canvas mide 1080)
         Image card = Card(panel.transform, new Vector2(1100f, 1000f));
-        Title(card.transform, "OPCIONES", 400f);
+        // 25/11: filas a 75 px (antes 85) para que quepa la fila PANTALLA sin agrandar el tablero
+        Title(card.transform, "OPCIONES", 410f);
         TMP_Text sub = Child<TMP_Text>(card.transform, "Subtitle") ?? NewText(card.transform, "Subtitle", "", rye, 36, Gold);
         sub.text = "VOLUMEN";
-        Place(sub.rectTransform, new Vector2(0f, 315f), new Vector2(800f, 50f));
+        Place(sub.rectTransform, new Vector2(0f, 330f), new Vector2(800f, 50f));
 
         string[] names = { "GENERAL", "MÚSICA", "EFECTOS", "AMBIENTE" };   // orden de VolumeChannel
         var sliders = new Slider[names.Length];
         var values = new TMP_Text[names.Length];
         for (int i = 0; i < names.Length; i++)
         {
-            SliderRow(card.transform, "Row" + i, names[i], 235f - i * 85f, out sliders[i], out values[i]);
+            SliderRow(card.transform, "Row" + i, names[i], 255f - i * 75f, out sliders[i], out values[i]);
             sliders[i].minValue = 0f; sliders[i].maxValue = 1f;
         }
 
         // ── Controles: sensibilidad del ratón e invertir el eje vertical (ControlSettings)
         TMP_Text controls = Child<TMP_Text>(card.transform, "ControlsSubtitle") ?? NewText(card.transform, "ControlsSubtitle", "", rye, 36, Gold);
         controls.text = "CONTROLES";
-        Place(controls.rectTransform, new Vector2(0f, -110f), new Vector2(800f, 50f));
+        Place(controls.rectTransform, new Vector2(0f, -40f), new Vector2(800f, 50f));
 
-        SliderRow(card.transform, "SensitivityRow", "SENSIBILIDAD", -190f, out Slider sensitivity, out TMP_Text sensitivityValue);
+        SliderRow(card.transform, "SensitivityRow", "SENSIBILIDAD", -110f, out Slider sensitivity, out TMP_Text sensitivityValue);
         sensitivity.minValue = ControlSettings.MinSensitivity;
         sensitivity.maxValue = ControlSettings.MaxSensitivity;
         sensitivity.value = ControlSettings.DefaultSensitivity;
         sensitivityValue.text = "×1,00";
 
         Transform invertRow = card.transform.Find("InvertRow") ?? NewRect(card.transform, "InvertRow").transform;
-        Place((RectTransform)invertRow, new Vector2(0f, -275f), new Vector2(900f, 80f));
+        Place((RectTransform)invertRow, new Vector2(0f, -185f), new Vector2(900f, 80f));
         TMP_Text invertLabel = Child<TMP_Text>(invertRow, "Label") ?? NewText(invertRow, "Label", "", rye, 34, Cream);
         invertLabel.text = "INVERTIR EJE Y";
         invertLabel.alignment = TextAlignmentOptions.Left;
@@ -104,8 +105,29 @@ public static class PauseOptionsBuilder
         TMP_Text invertText = invert.GetComponentInChildren<TMP_Text>();
         invertText.text = "NO";
 
+        // ── Pantalla (25/11): completa o ventana, y resolución. Dos tiques que cambian al pulsarlos
+        Transform displayRow = card.transform.Find("DisplayRow") ?? NewRect(card.transform, "DisplayRow").transform;
+        Place((RectTransform)displayRow, new Vector2(0f, -260f), new Vector2(900f, 80f));
+        TMP_Text displayLabel = Child<TMP_Text>(displayRow, "Label") ?? NewText(displayRow, "Label", "", rye, 34, Cream);
+        displayLabel.text = "PANTALLA";
+        displayLabel.alignment = TextAlignmentOptions.Left;
+        Place(displayLabel.rectTransform, new Vector2(-250f, 0f), new Vector2(400f, 70f));
+        Button screenMode = ChildButton(displayRow, "ScreenModeButton", template);
+        Place((RectTransform)screenMode.transform, new Vector2(110f, 0f), new Vector2(230f, 80f));
+        TMP_Text screenModeText = screenMode.GetComponentInChildren<TMP_Text>();
+        screenModeText.text = "COMPLETA";
+        Button resolution = ChildButton(displayRow, "ResolutionButton", template);
+        Place((RectTransform)resolution.transform, new Vector2(350f, 0f), new Vector2(230f, 80f));
+        TMP_Text resolutionText = resolution.GetComponentInChildren<TMP_Text>();
+        resolutionText.text = "1920 x 1080";
+        foreach (TMP_Text t in new[] { screenModeText, resolutionText })
+        {
+            t.enableAutoSizing = true; t.fontSizeMin = 16; t.fontSizeMax = 28;
+            t.margin = new Vector4(30f, 0f, 30f, 0f);
+        }
+
         Button close = ChildButton(card.transform, "CloseButton", template);
-        Place((RectTransform)close.transform, new Vector2(0f, -400f), new Vector2(340f, 105f));
+        Place((RectTransform)close.transform, new Vector2(0f, -380f), new Vector2(340f, 105f));
         close.GetComponentInChildren<TMP_Text>().text = "VOLVER";
 
         // OPCIONES en el inicio, debajo de CÓMO JUGAR (BossUIBuilder lo puso en (760, 220) con 300 × 100)
@@ -117,7 +139,16 @@ public static class PauseOptionsBuilder
 
         OptionsPanelUI ui = GetOrAdd<OptionsPanelUI>(rootT.gameObject);
         SetRefs(ui, "panel", panel.gameObject, "sliders", sliders, "valueTexts", values, "closeButton", close, "openButton", open,
-            "sensitivitySlider", sensitivity, "sensitivityText", sensitivityValue, "invertButton", invert, "invertText", invertText);
+            "sensitivitySlider", sensitivity, "sensitivityText", sensitivityValue, "invertButton", invert, "invertText", invertText,
+            "screenModeButton", screenMode, "screenModeText", screenModeText, "resolutionButton", resolution, "resolutionText", resolutionText);
+
+        // SALIR en el inicio, debajo de OPCIONES (25/11): antes solo se salía de la build con Alt+F4
+        Button exitStart = ChildButton(startPanel, "ExitButton", template);
+        Place((RectTransform)exitStart.transform, new Vector2(760f, -10f), new Vector2(300f, 100f));
+        TMP_Text exitStartText = exitStart.GetComponentInChildren<TMP_Text>();
+        exitStartText.text = "SALIR";
+        exitStartText.fontSize = 28;
+        GetOrAdd<QuitButtonUI>(exitStart.gameObject);
         panel.gameObject.SetActive(false);
         return ui;
     }
@@ -203,34 +234,44 @@ public static class PauseOptionsBuilder
         panel.raycastTarget = true;
         Stretch(panel.rectTransform);
 
-        Image card = Card(panel.transform, new Vector2(760f, 720f));
-        Title(card.transform, "PAUSA", 270f);
+        // 25/11: 840 de alto para el cuarto botón, SALIR DEL JUEGO
+        Image card = Card(panel.transform, new Vector2(760f, 840f));
+        Title(card.transform, "PAUSA", 330f);
 
         Button resume = ChildButton(card.transform, "ContinueButton", template);
-        Place((RectTransform)resume.transform, new Vector2(0f, 120f), new Vector2(460f, 110f));
+        Place((RectTransform)resume.transform, new Vector2(0f, 180f), new Vector2(460f, 110f));
         resume.GetComponentInChildren<TMP_Text>().text = "CONTINUAR";
 
         Button opts = ChildButton(card.transform, "OptionsButton", template);
-        Place((RectTransform)opts.transform, new Vector2(0f, -10f), new Vector2(460f, 110f));
+        Place((RectTransform)opts.transform, new Vector2(0f, 55f), new Vector2(460f, 110f));
         opts.GetComponentInChildren<TMP_Text>().text = "OPCIONES";
 
         Button quit = ChildButton(card.transform, "QuitButton", template);
-        Place((RectTransform)quit.transform, new Vector2(0f, -140f), new Vector2(460f, 110f));
+        Place((RectTransform)quit.transform, new Vector2(0f, -70f), new Vector2(460f, 110f));
         TMP_Text quitText = quit.GetComponentInChildren<TMP_Text>();
         quitText.text = "TERMINAR PARTIDA";
-        // Texto largo (y más aún «¿SEGURO? PULSA OTRA VEZ»): se encoge para caber entre las muescas del tique
-        quitText.enableAutoSizing = true;
-        quitText.fontSizeMin = 16; quitText.fontSizeMax = 34;
-        quitText.margin = new Vector4(48f, 0f, 48f, 0f);
+
+        Button exit = ChildButton(card.transform, "ExitButton", template);
+        Place((RectTransform)exit.transform, new Vector2(0f, -195f), new Vector2(460f, 110f));
+        TMP_Text exitText = exit.GetComponentInChildren<TMP_Text>();
+        exitText.text = "SALIR DEL JUEGO";
+
+        // Textos largos (y más aún «¿SEGURO? PULSA OTRA VEZ»): se encogen para caber entre las muescas del tique
+        foreach (TMP_Text t in new[] { quitText, exitText })
+        {
+            t.enableAutoSizing = true;
+            t.fontSizeMin = 16; t.fontSizeMax = 34;
+            t.margin = new Vector4(48f, 0f, 48f, 0f);
+        }
 
         TMP_Text hint = Child<TMP_Text>(card.transform, "Hint") ?? NewText(card.transform, "Hint", "", sans, 26, Cream);
-        hint.text = "Esc: continuar  ·  Terminar cobra los créditos de lo conseguido";
-        Place(hint.rectTransform, new Vector2(0f, -265f), new Vector2(680f, 60f));
+        hint.text = "Esc: continuar  ·  Terminar y Salir cobran los créditos de lo conseguido";
+        Place(hint.rectTransform, new Vector2(0f, -310f), new Vector2(680f, 60f));
         hint.textWrappingMode = TextWrappingModes.Normal;
 
         PauseMenuUI ui = GetOrAdd<PauseMenuUI>(rootT.gameObject);
         SetRefs(ui, "panel", panel.gameObject, "card", card.gameObject, "continueButton", resume, "optionsButton", opts,
-            "quitButton", quit, "quitText", quitText, "options", options);
+            "quitButton", quit, "quitText", quitText, "exitButton", exit, "exitText", exitText, "options", options);
         panel.gameObject.SetActive(false);
     }
 

@@ -16,7 +16,8 @@ public class ObjectiveUI : MonoBehaviour
     [SerializeField] private Image checkIcon;
     [SerializeField] private TMP_Text bannerText;
 
-    [SerializeField] private Color pendingColor = Color.white;   // como el resto del HUD: el gris se perdía sobre las bombillas
+    // Crema, como el resto del HUD desde el 25/11 (con sombra; el gris claro se perdía sobre las bombillas)
+    [SerializeField] private Color pendingColor = new Color(0.96f, 0.91f, 0.79f);
     [SerializeField] private Color reachedColor = new Color(0.45f, 0.95f, 0.45f);
     [SerializeField, Min(0.1f)] private float introSeconds = 2.2f;
     [SerializeField, Min(0.1f)] private float reachedSeconds = 1.6f;
@@ -26,6 +27,7 @@ public class ObjectiveUI : MonoBehaviour
     private GameManager gameManager;
 
     private int target;
+    private bool required;   // false en el cielo sin el circo comprado: ahí es un RETO, no se exige
     private bool announcedReached;
     private float bannerTime = -1f, bannerDuration;
     private int lastShownScore = int.MinValue;
@@ -45,6 +47,8 @@ public class ObjectiveUI : MonoBehaviour
     private void HandleLevelStarted(LevelConfig level, int index)
     {
         target = levels.TargetFor(level);
+        // Mismo criterio que GameManager.OnTimeUp: el objetivo solo se exige si hay un nivel después
+        required = levels.HasNextLevel;
         announcedReached = false;
         lastShownScore = int.MinValue;
         HideBanner();
@@ -69,7 +73,7 @@ public class ObjectiveUI : MonoBehaviour
                 && gameManager.CurrentState == GameManager.GameState.Playing)
             {
                 announcedReached = true;
-                ShowBanner("¡OBJETIVO SUPERADO!", reachedSeconds);
+                ShowBanner(required ? "¡OBJETIVO SUPERADO!" : "¡RETO SUPERADO!", reachedSeconds);
             }
         }
 
@@ -80,7 +84,7 @@ public class ObjectiveUI : MonoBehaviour
     {
         lastShownScore = points;
         bool met = LevelConfig.ObjectiveMet(points, target);
-        counterText.text = $"OBJETIVO {points} / {target}";
+        counterText.text = $"{(required ? "OBJETIVO" : "RETO")} {points} / {target}";
         counterText.color = met ? reachedColor : pendingColor;
         if (checkIcon != null)
         {

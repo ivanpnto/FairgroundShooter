@@ -1467,6 +1467,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cc529d94c92753ee2bfefc1c0016c718, type: 2}
   - {fileID: 11400000, guid: 7fc6ff48f30ab010db4bf5f130ceeca5, type: 2}
   - {fileID: 11400000, guid: 1e940cee636c177959a1a1bb07579073, type: 2}
+  sidearm: {fileID: 11400000, guid: ad4356d7b22abd458bd588441b672045, type: 2}
+  switchDuration: 0.35
   weaponHolder: {fileID: 1127249792}
   weaponAmmo: {fileID: 354793039}
   weaponVisual: {fileID: 1127249793}
@@ -1512,6 +1514,8 @@ MonoBehaviour:
   targetBaseCount: 25
   targetHitSound: {fileID: 0}
   targetHitVolume: 1
+  switchSound: {fileID: 0}
+  switchVolume: 0.8
 --- !u!114 &354793043
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5393,6 +5397,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  switchOffset: {x: 0, y: -0.35, z: -0.05}
+  switchRotation: {x: 35, y: 0, z: 0}
   magazineOutOffset: {x: 0, y: -0.25, z: 0}
   magazineCurve:
     serializedVersion: 2

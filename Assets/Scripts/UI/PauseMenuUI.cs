@@ -4,7 +4,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-// Menú de pausa (Fase 8): Esc pausa y reanuda. CONTINUAR, OPCIONES (volumen) y TERMINAR PARTIDA.
+// Menú de pausa (Fase 8): Esc pausa y reanuda. CONTINUAR, OPCIONES (volumen), TERMINAR PARTIDA y, desde el 25/11,
+// SALIR DEL JUEGO (cobra los créditos como TERMINAR y cierra el juego).
 //
 // La pausa en sí es de GameManager (Pause / Resume / QuitRun); aquí solo están la tecla y el panel. El panel
 // sigue al evento PauseChanged y no a la tecla, así que también se ve si otro sistema pausa el juego.
@@ -22,13 +23,17 @@ public class PauseMenuUI : MonoBehaviour
     [SerializeField] private Button optionsButton;
     [SerializeField] private Button quitButton;
     [SerializeField] private TMP_Text quitText;
+    [SerializeField] private Button exitButton;
+    [SerializeField] private TMP_Text exitText;
     [SerializeField] private OptionsPanelUI options;
 
     private const string QuitLabel = "TERMINAR PARTIDA";
     private const string ConfirmLabel = "¿SEGURO? PULSA OTRA VEZ";
+    private const string ExitLabel = "SALIR DEL JUEGO";
 
     private GameManager gameManager;
     private bool confirmingQuit;
+    private bool confirmingExit;
 
     private void Awake()
     {
@@ -36,6 +41,7 @@ public class PauseMenuUI : MonoBehaviour
         if (continueButton != null) continueButton.onClick.AddListener(() => { if (gameManager != null) gameManager.Resume(); });
         if (optionsButton != null) optionsButton.onClick.AddListener(OpenOptions);
         if (quitButton != null) quitButton.onClick.AddListener(HandleQuit);
+        if (exitButton != null) exitButton.onClick.AddListener(HandleExit);
         if (panel != null) panel.SetActive(false);
     }
 
@@ -76,6 +82,8 @@ public class PauseMenuUI : MonoBehaviour
         {
             confirmingQuit = false;
             if (quitText != null) quitText.text = QuitLabel;
+            confirmingExit = false;
+            if (exitText != null) exitText.text = ExitLabel;
             if (card != null) card.SetActive(true);
         }
         else if (options != null && options.IsOpen)
@@ -111,5 +119,19 @@ public class PauseMenuUI : MonoBehaviour
             return;
         }
         if (gameManager != null) gameManager.QuitRun();
+    }
+
+    // Igual que TERMINAR (doble clic), y además cierra el juego. La partida se termina antes para que el perfil
+    // guarde los créditos de lo conseguido: salir no debe castigar más que terminar
+    private void HandleExit()
+    {
+        if (!confirmingExit)
+        {
+            confirmingExit = true;
+            if (exitText != null) exitText.text = ConfirmLabel;
+            return;
+        }
+        if (gameManager != null) gameManager.QuitRun();
+        GameQuit.Quit();
     }
 }

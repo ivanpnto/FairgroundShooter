@@ -55,6 +55,11 @@ public class WeaponEffects : MonoBehaviour
     [Tooltip("Sonido al acertar a un objetivo (opcional: vacío = no suena)")]
     [SerializeField] private AudioClip targetHitSound;
     [Range(0f, 1f)] [SerializeField] private float targetHitVolume = 1f;
+    // 25/11: «clac» metálico al empezar el cambio Barrett ↔ pistola (Q / rueda). Generado por código: Tools > Fairground
+    // > Build Polish 25-11 lo escribe en Assets/Audio/Weapons/Weapon_Switch.wav
+    [Tooltip("Sonido al cambiar a la pistola de apoyo y volver (opcional)")]
+    [SerializeField] private AudioClip switchSound;
+    [Range(0f, 1f)] [SerializeField] private float switchVolume = 0.8f;
 
     private WeaponAmmo weaponAmmo;
     private WeaponController weaponController;
@@ -154,6 +159,7 @@ public class WeaponEffects : MonoBehaviour
     {
         if (weaponAmmo != null) weaponAmmo.OnShot += HandleShot;
         if (weaponController != null) weaponController.OnWeaponEquipped += HandleWeaponEquipped;
+        if (weaponController != null) weaponController.SwitchStarted += HandleSwitchStarted;
         if (playerShoot != null)
         {
             playerShoot.ImpactResolved += HandleImpact;    // partículas: una por impacto
@@ -165,6 +171,7 @@ public class WeaponEffects : MonoBehaviour
     {
         if (weaponAmmo != null) weaponAmmo.OnShot -= HandleShot;
         if (weaponController != null) weaponController.OnWeaponEquipped -= HandleWeaponEquipped;
+        if (weaponController != null) weaponController.SwitchStarted -= HandleSwitchStarted;
         if (playerShoot != null)
         {
             playerShoot.ImpactResolved -= HandleImpact;
@@ -439,6 +446,13 @@ public class WeaponEffects : MonoBehaviour
                 break;
             }
         }
+    }
+
+    // Por la fuente de la recarga: el cambio la cancela, así que nunca suenan las dos a la vez
+    private void HandleSwitchStarted(WeaponData next)
+    {
+        if (switchSound != null && reloadSource != null)
+            reloadSource.PlayOneShot(switchSound, switchVolume);
     }
 
     // Un clip sin asignar (p. ej. un arma sin sonido de cargador) simplemente no suena
