@@ -340,12 +340,13 @@ public static class BoticaBuilder
         plate.rectTransform.sizeDelta = new Vector2(big ? 0.52f : 0.46f, 0.09f);
         plate.font = Rye;
         plate.fontSize = 0.6f;
-        // Los nombres largos («Multiplicador de puntos») en dos líneas, no en una diminuta
-        plate.textWrappingMode = TextWrappingModes.Normal;
-        plate.lineSpacing = -20f;
+        // Una sola línea: en dos, la segunda quedaba por debajo del canto y la tapaba la balda (24/11). Los nombres
+        // largos se acortan en la etiqueta («Multiplicador de puntos» → MULTIPLICADOR); el cartel al pasar el ratón
+        // y la ficha siguen diciendo el nombre entero
+        plate.textWrappingMode = TextWrappingModes.NoWrap;
         plate.enableAutoSizing = true; plate.fontSizeMin = 0.25f; plate.fontSizeMax = 0.6f;
         plate.alignment = TextAlignmentOptions.Center;
-        plate.text = upgrade.displayName.ToUpper();
+        plate.text = BoticaSlot.PlateName(upgrade.displayName);
         plate.GetComponent<MeshRenderer>().renderingLayerMask = InteriorMask;
 
         BoticaSlot slot = go.AddComponent<BoticaSlot>();

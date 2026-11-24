@@ -28,6 +28,8 @@ public abstract class TentShopController : MonoBehaviour
     [SerializeField] protected TentShopUI ui;
     [Tooltip("Etiqueta flotante con nombre y precio sobre el objeto señalado")]
     [SerializeField] protected TMPro.TMP_Text hoverLabel;
+    [Tooltip("Cuánto se adelanta el cartel del objeto señalado hacia la cámara (m), para que no lo tape el mueble")]
+    [SerializeField] protected float labelTowardCamera = 0.45f;
     [SerializeField] protected AudioSource audioSource;
     [SerializeField] protected AudioClip hoverClip;
     [Tooltip("Post-procesado del interior. Si está vacío se busca entre los hijos")]
@@ -261,6 +263,10 @@ public abstract class TentShopController : MonoBehaviour
         hoverLabel.gameObject.SetActive(hovered != null);
         if (hovered == null) return;
         hoverLabel.text = LabelFor(hovered);
-        hoverLabel.transform.position = hovered.LabelPoint;
+        // Un poco hacia la cámara: a la profundidad del objeto, la balda de arriba (o el remate, en la fila de arriba)
+        // tapaba el cartel. Así queda siempre por delante del mueble (24/11)
+        Vector3 point = hovered.LabelPoint;
+        if (shopCamera != null) point += (shopCamera.transform.position - point).normalized * labelTowardCamera;
+        hoverLabel.transform.position = point;
     }
 }

@@ -93,20 +93,21 @@ public class BossConfig : ScriptableObject
              "salir de la boca y venir hacia la caseta, y se entiende qué te ha quitado los corazones (BossHonkFX)")]
     [Min(0f)] public float honkWaveTravelTime = 0.45f;
 
-    // La caseta tiene el mostrador a 1,08 m y la cámara a 1,60 m: el rayo pasa por encima del mostrador y por
+    // Chorro de agua de la flor del ojal (24/11; antes un rayo por los ojos, de ahí el nombre interno «Laser»).
+    // La caseta tiene el mostrador a 1,08 m y la cámara a 1,60 m: el chorro pasa por encima del mostrador y por
     // debajo de la vista de pie, así que solo lo esquiva quien se agacha (PlayerCrouch baja la vista 0,5 m)
-    [Header("Rayo (LaserSweep)")]
-    [Tooltip("Aviso: los ojos se cargan y una línea fina marca la altura del rayo. Puntos débiles cerrados")]
+    [Header("Chorro de agua (LaserSweep)")]
+    [Tooltip("Aviso: la flor gira, gotea y una línea marca la altura del chorro. Puntos débiles cerrados")]
     [Min(0.3f)] public float laserTelegraphTime = 1.5f;
-    [Tooltip("Segundos que tarda el rayo en barrer la caseta de un lado a otro")]
+    [Tooltip("Segundos que tarda el chorro en barrer la caseta de un lado a otro")]
     [Min(0.2f)] public float laserSweepTime = 1f;
-    [Tooltip("Altura del rayo (m, en el plano del jugador)")]
+    [Tooltip("Altura del chorro (m, en el plano del jugador)")]
     public float laserHeight = 1.45f;
-    [Tooltip("La vista tiene que quedar al menos esto por debajo del rayo para salvarse (m)")]
+    [Tooltip("La vista tiene que quedar al menos esto por debajo del chorro para salvarse (m)")]
     [Min(0f)] public float laserSafeMargin = 0.1f;
     [Tooltip("Ancho total del barrido en el plano del jugador (m), centrado en él")]
     [Min(1f)] public float laserSweepWidth = 6f;
-    [Tooltip("Mitad del ancho del rayo que alcanza a la cabeza (m): el golpe se decide al pasar por el jugador")]
+    [Tooltip("Mitad del ancho del chorro que alcanza a la cabeza (m): el golpe se decide al pasar por el jugador")]
     [Min(0.05f)] public float laserHitHalfWidth = 0.35f;
     [Min(1)] public int laserHeartDamage = 1;
     [Tooltip("Segundos de respiro tras el barrido, antes de la ventana vulnerable")]

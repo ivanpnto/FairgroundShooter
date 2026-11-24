@@ -68,8 +68,9 @@ tiene **3 corazones** y la partida termina al vencer al boss o al quedarse sin e
 - **Tres fases.** En cada una se abren unos puntos débiles distintos (ojos, palmas y mandíbula, núcleo del pecho),
   que brillan en cian. El resto del cuerpo para las balas.
 - **Ataques que siempre avisan.** Se contrarrestan disparando la lluvia de tartas, bolas y mazas en parábola, los
-  esbirros que saltan hacia el jugador y el **bocinazo**. El **rayo** de los ojos, que barre la caseta a la altura de
-  la cabeza, es el único que no se puede parar: se esquiva agachándose tras el mostrador (C o Ctrl).
+  esbirros que saltan hacia el jugador y el **bocinazo**. El **chorro de agua** de la flor del ojal, que barre la
+  caseta a la altura de la cabeza, es el único que no se puede parar: se esquiva agachándose tras el mostrador
+  (C o Ctrl). Si te da, te quita un corazón y te deja la pantalla mojada; una tarta te mancha media pantalla.
 - **El bocinazo** se lee sin explicación: el boss coge aire (se ve cómo le entra en la boca), abre la boca con
   anillos rojos que laten cada vez más deprisa y, alrededor, un aro cian que se llena con cada impacto en la
   mandíbula. Si se completa, el bocinazo se corta y el boss queda aturdido; si no, salen tres ondas de sonido hacia
@@ -94,7 +95,7 @@ tiene **3 corazones** y la partida termina al vencer al boss o al quedarse sin e
 | Clic izquierdo | Disparar (mantener con las armas automáticas) |
 | Clic derecho | Mirar por la mira del arma (cada arma tiene la suya). Desde la cadera el disparo se desvía dentro de la cruceta, que se abre con cada disparo; apuntando va exacto al centro |
 | R | Recargar (también se recarga sola al vaciar el cargador) |
-| C o Ctrl | Agacharse tras el mostrador (mantener): la única forma de esquivar el rayo del boss |
+| C o Ctrl | Agacharse tras el mostrador (mantener): la única forma de esquivar el chorro de agua del boss (las tartas y los esbirros te alcanzan igual) |
 | Esc | Pausa (continuar, opciones o terminar la partida). En la armería y la botica, volver al menú |
 
 - **Racha:** cada 5 aciertos seguidos el multiplicador sube 0,5, hasta ×3. Fallar (también dar al decorado) o dar a
@@ -205,11 +206,11 @@ compila, así que no sirve para hacer trampas.
 
 ### Tests
 
-67 tests de modo Edit (NUnit) en `Assets/Tests/EditMode`: el cálculo de estadísticas de arma con las mejoras
+70 tests de modo Edit (NUnit) en `Assets/Tests/EditMode`: el cálculo de estadísticas de arma con las mejoras
 (`WeaponStatsCalculator`), los datos de las mejoras, las fórmulas de balance (daño sostenido de cada arma y escalado
 de la vida del boss), el perfil Demo, el guardado del volumen (`VolumeSettings`), la dispersión desde la cadera
-(`WeaponSpread`), los ajustes del ratón (`ControlSettings`), la regla para esquivar el rayo (`PlayerCrouch`) y el
-límite del empujón del viento (`WindGusts.LimitPush`). Se
+(`WeaponSpread`), los ajustes del ratón (`ControlSettings`), la regla para esquivar el chorro (`PlayerCrouch`) y el
+límite del empujón del viento (`WindGusts.LimitPush`) y la etiqueta corta de la botica (`BoticaSlot.PlateName`). Se
 ejecutan desde *Window → General → Test Runner → EditMode → Run All*.
 
 El código del juego está en su propio ensamblado (`FairgroundShooter.asmdef`) para que los tests puedan
@@ -229,7 +230,7 @@ referenciarlo, y la lógica que se prueba está escrita como **funciones puras**
 | Animator y clips | Telón (Closed / Opening / Open / Closing) y brazos del boss, con un **Animation Event** que lanza el proyectil en el fotograma exacto |
 | Animación en GPU | Shaders de vértice escritos a mano: banderines y algas que se mecen (y se inclinan con las ráfagas de viento, con una variable global del shader), bombillas en cadena y luciérnagas |
 | Iluminación y materiales | Iluminación y post-procesado por nivel (noche, submarina, atardecer), luz del arma y tiendas aisladas de la iluminación de los niveles con Rendering Layers, apagón y luces rojas en la revelación del boss, penumbra en la transición entre niveles |
-| Partículas y efectos | Fogonazo, chispas, polvo, confeti de acierto, explosión con brasas, trazas, viñeta roja, salpicadura de tarta, rachas de viento, aire que entra en la boca del boss, energía que cargan sus ojos y chispas del rayo |
+| Partículas y efectos | Fogonazo, chispas, polvo, confeti de acierto, explosión con brasas, trazas, viñeta roja, salpicadura de tarta, rachas de viento, aire que entra en la boca del boss, chorro de agua con gotas y salpicaduras, y pantalla mojada |
 | Estados de juego | `GameManager` (Waiting / Playing / LevelTransition / GameOver) y máquina de estados del boss |
 | Interfaz | Menús de perfiles, récords, Cómo jugar, pausa y opciones; tiendas en 3D con selección por raycast desde el ratón; HUD con racha, munición, corazones y barra de vida del boss |
 | Sonido | Música por nivel con fundido cruzado (y en el nivel 4, silencio en la revelación y música propia para el combate), AudioMixer con volumen por grupo, ambiente 3D de la feria y efectos del boss, la transición y las tiendas sintetizados por código |

@@ -136,7 +136,8 @@ public class BossController : MonoBehaviour
     public Vector3 LaserFrom { get; private set; }
     public Vector3 LaserTo { get; private set; }
 
-    // Para el efecto del rayo (BossLaser), que solo pinta: 0 = sin rayo, 1 = apuntando (aviso), 2 = disparando
+    // Para el efecto del chorro de agua (BossWaterJet; nombre interno «Laser» de cuando era un rayo), que solo pinta:
+    // 0 = sin chorro, 1 = aviso, 2 = barriendo
     public int LaserStage { get; private set; }
     // Punto del barrido en el plano del jugador, a la altura del rayo (también durante el aviso: donde empezará)
     public Vector3 LaserPoint { get; private set; }
@@ -600,7 +601,7 @@ public class BossController : MonoBehaviour
                 resolved = true;
                 float eyeHeight = crouch != null ? crouch.EyeHeight : eye.position.y;
                 bool dodged = PlayerCrouch.IsBelowBeam(eyeHeight, config.laserHeight, config.laserSafeMargin);
-                GameLog.Info(dodged ? "Boss: rayo esquivado" : "Boss: el rayo alcanza al jugador");
+                GameLog.Info(dodged ? "Boss: chorro esquivado" : "Boss: el chorro alcanza al jugador");
                 LaserResolved?.Invoke(dodged);
                 if (!dodged && playerHealth != null) playerHealth.TakeHit(config.laserHeartDamage);
             }

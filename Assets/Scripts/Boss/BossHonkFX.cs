@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 
 // Presentación del bocinazo (BossAttack.ChargedHonk): solo pinta. La lógica está en BossController.HonkRoutine;
-// aquí se lee HonkStage / HonkProgress / HonkCounterProgress cada frame, como hace BossLaser con el rayo.
+// aquí se lee HonkStage / HonkProgress / HonkCounterProgress cada frame, como hace BossWaterJet con el chorro de agua.
 //
 // Problema que resuelve: el bocinazo quitaba 2 corazones sin que pasara nada en pantalla. Ahora cada tramo se lee
 // sin explicación:

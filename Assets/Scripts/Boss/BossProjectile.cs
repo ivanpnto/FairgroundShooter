@@ -72,7 +72,38 @@ public class BossProjectile : MonoBehaviour, IPlayerHazard
         Kind = (ProjectileKind)Mathf.Min(index, (int)ProjectileKind.Pie);
     }
 
-    private void FixedUpdate() => body.AddForce(gravity, ForceMode.Acceleration);
+    // Corrección final (24/11): en el último tramo del vuelo el proyectil se recoloca hacia la cabeza del jugador,
+    // esté de pie o agachado. Antes iba a un punto fijo a la altura de pie: al agacharse te pasaba por encima y te
+    // quitaba vida igual (la zona de daño es fija y llega hasta abajo), así que parecía que esquivabas y no era así.
+    // Agacharse solo debe servir contra el chorro de agua. No cambia el tiempo de vuelo (el aviso) y empieza tarde,
+    // cuando ya se ve que viene a por ti: no es un misil teledirigido, es «se te viene encima».
+    [Tooltip("Parte del vuelo a partir de la cual corrige hacia la cabeza del jugador (0..1)")]
+    [Range(0f, 1f)] [SerializeField] private float homingStart = 0.5f;
+
+    private float flightDuration, flightElapsed;
+    private Vector3 aimOffset;   // la dispersión del lanzamiento, que se conserva en parte al corregir
+    private float destinationZ;  // profundidad del destino (la zona de daño): se corrige solo en altura y lado
+
+    private void FixedUpdate()
+    {
+        body.AddForce(gravity, ForceMode.Acceleration);
+        if (flightDuration <= 0f || reached || target == null || target.IsDead) return;
+
+        flightElapsed += Time.fixedDeltaTime;
+        float remaining = flightDuration - flightElapsed;
+        if (flightElapsed < flightDuration * homingStart || remaining < 0.03f) return;
+
+        Camera cam = Camera.main;
+        if (cam == null) return;
+        // A la altura y el lado de la cabeza, pero en la profundidad del destino: el golpe cuenta al entrar en la zona
+        // de daño, delante de la cámara, y ahí ya tiene que ir a la altura de los ojos
+        Vector3 eye = cam.transform.position;
+        Vector3 aim = new Vector3(eye.x, eye.y, destinationZ) + aimOffset * 0.4f;
+        // Velocidad que llega a aim en el tiempo que queda con la misma gravedad, y se va acercando a ella (no de golpe)
+        Vector3 needed = (aim - body.position - 0.5f * gravity * remaining * remaining) / remaining;
+        float blend = 1f - Mathf.Exp(-Time.fixedDeltaTime * 25f);
+        body.linearVelocity = Vector3.Lerp(body.linearVelocity, needed, blend);
+    }
 
     // Tiro balístico que pasa por destination al cabo de flightTime segundos con un arco de arcHeight metros.
     //   Altura del arco sobre la recta, a mitad de camino:  h = g·t² / 8   →   g = 8·h / t²  (hacia abajo)
@@ -89,6 +120,14 @@ public class BossProjectile : MonoBehaviour, IPlayerHazard
         Vector3 velocity = (displacement - 0.5f * gravity * flightTime * flightTime) / flightTime;
 
         body.linearVelocity = velocity;
+        flightDuration = flightTime;
+        flightElapsed = 0f;
+        // La dispersión del lanzamiento respecto al centro de la zona de daño (no respecto a la cámara: si el jugador
+        // estaba agachado al lanzarla, eso no es dispersión y la mandaría por encima de la cabeza)
+        PlayerDamageZone zone = SceneCache<PlayerDamageZone>.Get();
+        aimOffset = zone != null ? destination - zone.transform.position : Vector3.zero;
+        aimOffset.z = 0f;
+        destinationZ = destination.z;
         body.angularVelocity = new Vector3(Random.Range(-maxSpin, maxSpin), Random.Range(-maxSpin, maxSpin),
             Random.Range(-maxSpin, maxSpin)) * Mathf.Deg2Rad;
     }
@@ -101,6 +140,8 @@ public class BossProjectile : MonoBehaviour, IPlayerHazard
         reached = false;
         gravity = Vector3.zero;
         HeartDamage = 1;
+        flightDuration = 0f;
+        flightElapsed = 0f;
 
         // Se mueve el Rigidbody y no solo el Transform: con interpolación, mover solo el Transform haría
         // que el primer fotograma se dibujase interpolando desde donde acabó el vuelo anterior

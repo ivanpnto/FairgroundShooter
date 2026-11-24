@@ -84,7 +84,7 @@ public class BoticaSlot : ShopSlot
         if (seal != null) seal.SetActive(IsMaxed && fillAge < 0f);
         if (plate != null && upgrade != null)
         {
-            plate.text = upgrade.displayName.ToUpper();
+            plate.text = PlateName(upgrade.displayName);
             plate.color = IsMaxed ? plateMaxColor : plateColor;
             plate.fontStyle = IsMaxed ? FontStyles.Bold : FontStyles.Normal;
         }
@@ -134,5 +134,15 @@ public class BoticaSlot : ShopSlot
         }
 
         base.Update();
+    }
+
+    // Nombre corto para la etiqueta de papel (24/11): en una sola línea, los nombres largos se cortan antes de « de »
+    // («Multiplicador de puntos» → MULTIPLICADOR). En dos líneas, la segunda quedaba bajo el canto de la balda.
+    // El cartel al pasar el ratón y la ficha siguen diciendo el nombre entero
+    public static string PlateName(string displayName)
+    {
+        string name = displayName.ToUpper();
+        int cut = name.IndexOf(" DE ", System.StringComparison.Ordinal);
+        return name.Length > 16 && cut > 0 ? name.Substring(0, cut) : name;
     }
 }

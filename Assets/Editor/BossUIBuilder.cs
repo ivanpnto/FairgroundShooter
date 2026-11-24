@@ -418,7 +418,7 @@ public static class BossUIBuilder
             "<b>Clic izquierdo</b>: disparar",
             "<b>Clic derecho</b>: mirar por la mira del arma",
             "<b>R</b>: recargar (también se recarga sola al vaciar el cargador)",
-            "<b>C</b> o <b>Ctrl</b>: agacharse tras el mostrador",
+            "<b>C</b> o <b>Ctrl</b>: agacharse tras el mostrador (contra el chorro de agua)",
             "<b>Racha</b>: cada 5 aciertos seguidos el multiplicador sube (hasta x3). Fallar o dar a una diana prohibida la reinicia",
             "Al acabar la partida, gasta tus créditos en la <b>tienda</b>: mejoras y armas nuevas",
         };

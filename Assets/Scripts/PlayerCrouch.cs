@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Agacharse tras el mostrador de la caseta (contra el rayo del boss, BossAttack.LaserSweep): mientras se mantiene
+// Agacharse tras el mostrador de la caseta (contra el chorro de agua del boss, BossAttack.LaserSweep): mientras se mantiene
 // C o Ctrl izquierdo, la vista baja crouchDepth metros. Va en Player (la cámara).
 //
 // Mueve la POSICIÓN local de la cámara: PlayerAim y CameraShake solo escriben la rotación, así que no se pisan.
@@ -21,7 +21,7 @@ public class PlayerCrouch : MonoBehaviour
     // 0 = de pie, 1 = agachado del todo
     public float CrouchAmount { get; private set; }
     public bool IsCrouching => CrouchAmount > 0.5f;
-    // Altura (mundo) de la vista: es lo que mira el rayo
+    // Altura (mundo) de la vista: es lo que mira el chorro de agua
     public float EyeHeight => transform.position.y;
 
     private GameManager gameManager;
@@ -57,7 +57,7 @@ public class PlayerCrouch : MonoBehaviour
 
     private void OnDisable() => SetAmount(0f);
 
-    // ¿Se salva del rayo? La vista tiene que quedar al menos margin por debajo de él (función pura, con tests)
+    // ¿Se salva del chorro? La vista tiene que quedar al menos margin por debajo de él (función pura, con tests)
     public static bool IsBelowBeam(float eyeHeight, float beamHeight, float margin)
     {
         return eyeHeight <= beamHeight - margin;

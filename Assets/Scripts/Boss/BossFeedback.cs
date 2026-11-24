@@ -31,7 +31,12 @@ public class BossFeedback : MonoBehaviour
     [Header("Viñeta y tartazo")]
     [SerializeField] private Color vignetteColor = new Color(0.85f, 0.05f, 0.05f);
     [SerializeField] private float vignetteFade = 1.6f;      // alfa que pierde por segundo
-    [SerializeField] private float splatSeconds = 1.3f;
+    [SerializeField] private float splatSeconds = 2.1f;
+    [Tooltip("Tamaño de la mancha respecto al de la imagen (560 px de referencia)")]
+    [SerializeField] private float splatSize = 1.6f;
+    [Tooltip("Distancia en horizontal del centro de la mancha al centro de la pantalla (px, en 1920×1080): " +
+             "con el tamaño de arriba, el borde de la mancha se mete 100–200 px en la mira por un lado")]
+    [SerializeField] private Vector2 splatOffsetX = new Vector2(190f, 280f);
 
     private PlayerHealth health;
     private PlayerDamageZone zone;
@@ -111,9 +116,10 @@ public class BossFeedback : MonoBehaviour
         if (!damaged || pieSplat == null) return;
         if (hazard is BossProjectile projectile && projectile.Kind == ProjectileKind.Pie)
         {
-            // En un borde al azar, nunca en el centro: se ve y hace gracia, pero no tapa la mira
-            Vector2 side = new Vector2(Random.value < 0.5f ? -1f : 1f, Random.Range(-0.6f, 0.6f));
-            pieSplat.rectTransform.anchoredPosition = splatBasePos + new Vector2(side.x * Random.Range(430f, 560f), side.y * 260f);
+            // 24/11: más grande y hacia el centro. Se centra a un lado de la mira y su borde la invade: molesta de
+            // verdad durante un par de segundos, pero se sigue viendo el boss por el otro lado y por debajo
+            float sideX = Random.value < 0.5f ? -1f : 1f;
+            pieSplat.rectTransform.anchoredPosition = splatBasePos + new Vector2(sideX * Random.Range(splatOffsetX.x, splatOffsetX.y), Random.Range(-60f, 140f));
             pieSplat.rectTransform.localRotation = Quaternion.Euler(0f, 0f, Random.Range(-35f, 35f));
             pieSplat.gameObject.SetActive(true);
             splatAge = 0f;
@@ -176,9 +182,11 @@ public class BossFeedback : MonoBehaviour
             float k = splatAge / splatSeconds;
             // Plaf (escala que rebota) y luego resbala hacia abajo mientras se desvanece
             float pop = splatAge < 0.12f ? Mathf.Lerp(0.4f, 1.15f, splatAge / 0.12f) : Mathf.Lerp(1.15f, 1f, (splatAge - 0.12f) / 0.2f);
-            pieSplat.rectTransform.localScale = Vector3.one * pop;
-            pieSplat.rectTransform.anchoredPosition += Vector2.down * (40f * Time.deltaTime * Mathf.Clamp01(k * 2f));
-            pieSplat.color = new Color(1f, 1f, 1f, 1f - Mathf.Clamp01((k - 0.6f) / 0.4f));
+            // Se estira un poco hacia abajo al escurrir
+            float drip = 1f + 0.12f * Mathf.Clamp01(k * 1.5f);
+            pieSplat.rectTransform.localScale = new Vector3(pop, pop * drip, 1f) * splatSize;
+            pieSplat.rectTransform.anchoredPosition += Vector2.down * (60f * Time.deltaTime * Mathf.Clamp01(k * 2f));
+            pieSplat.color = new Color(1f, 1f, 1f, 1f - Mathf.Clamp01((k - 0.7f) / 0.3f));
             if (k >= 1f) { splatAge = -1f; pieSplat.gameObject.SetActive(false); }
         }
     }

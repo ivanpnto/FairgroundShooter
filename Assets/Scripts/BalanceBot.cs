@@ -37,9 +37,9 @@ public class BalanceBot : MonoBehaviour
     // cadera, que hace al bot algo más torpe que una persona que apunta (es un modelo pesimista)
     [Tooltip("Contra el boss apunta con la mira (sin dispersión desde la cadera). Ver el comentario: de momento, no")]
     public bool useSightsOnBoss = false;
-    [Tooltip("Probabilidad de agacharse a tiempo ante el rayo del boss (una persona a veces reacciona tarde)")]
+    [Tooltip("Probabilidad de agacharse a tiempo ante el chorro de agua del boss (una persona a veces reacciona tarde)")]
     [Range(0f, 1f)] public float laserDodgeChance = 0.85f;
-    [Tooltip("Parte del aviso del rayo que pasa antes de agacharse (tiempo de reacción)")]
+    [Tooltip("Parte del aviso del chorro que pasa antes de agacharse (tiempo de reacción)")]
     [Range(0f, 1f)] public float laserReaction = 0.3f;
 
     [Header("Partidas")]
@@ -207,7 +207,7 @@ public class BalanceBot : MonoBehaviour
         sb.Append($"por nivel [{string.Join(", ", levelScores)}]");
         if (fightStart >= 0f && boss != null)
             sb.Append($" | boss: ×{boss.PowerScale:0.00} vida, {Time.time - fightStart:0.0} s, corazones {health.Hearts}, vida restante {boss.Health:0.0}/{boss.MaxHealth:0}, " +
-                      $"bocinazos {honkOk}/{honkOk + honkFail}, rayos esquivados {laserDodged}/{laserDodged + laserHit}, esbirros avisan {minionWarnings} aciertan {minionHits}, proyectiles aciertan {projectileHits}, bonus {boss.LastVictoryBonus}");
+                      $"bocinazos {honkOk}/{honkOk + honkFail}, chorros esquivados {laserDodged}/{laserDodged + laserHit}, esbirros avisan {minionWarnings} aciertan {minionHits}, proyectiles aciertan {projectileHits}, bonus {boss.LastVictoryBonus}");
         report.Add(sb.ToString());
         Debug.Log(sb.ToString());
 

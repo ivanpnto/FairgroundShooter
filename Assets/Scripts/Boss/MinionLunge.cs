@@ -83,12 +83,16 @@ public class MinionLunge : MonoBehaviour, IPlayerHazard
 
         PlayerDamageZone zone = SceneCache<PlayerDamageZone>.Get();
         Vector3 from = transform.position;
-        Vector3 to = zone != null ? zone.transform.position : Camera.main.transform.position;
         Vector3 scale0 = transform.localScale;
         for (float t = 0f; t < config.minionLungeTime; )
         {
             if (Playing) t += Time.deltaTime;
             float k = Mathf.Clamp01(t / config.minionLungeTime);
+            // Hacia la cabeza del jugador en cada fotograma (de pie o agachado): agacharse no esquiva el salto, solo
+            // el chorro de agua. En profundidad, hasta la zona de daño
+            Camera cam = Camera.main;
+            Vector3 eye = cam != null ? cam.transform.position : (zone != null ? zone.transform.position : from);
+            Vector3 to = zone != null ? new Vector3(zone.transform.position.x, eye.y, zone.transform.position.z) : eye;
             transform.position = Vector3.Lerp(from, to, k) + Vector3.up * (4f * arcHeight * k * (1f - k));
             transform.localScale = scale0 * Mathf.Lerp(1f, lungeScale, k);
             yield return null;

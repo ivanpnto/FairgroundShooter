@@ -1401,17 +1401,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: FairgroundShooter::BossLaser
   beamMaterial: {fileID: 2100000, guid: dcbda303fc347c563b8860b083febe31, type: 2}
+  waterMaterial: {fileID: 2100000, guid: 63c4ebfef330a2b45b211661e6300b69, type: 2}
   beamColor: {r: 1, g: 0.12, b: 0.08, a: 1}
-  beamWidth: 0.3
+  waterColor: {r: 0.7, g: 0.9, b: 1, a: 0.85}
+  waterEdgeColor: {r: 0.45, g: 0.75, b: 1, a: 0.45}
+  jetWidth: {x: 0.12, y: 0.45}
+  jetDroop: 0.35
   aimWidth: 0.035
   aimLineDistance: 1.6
   beamOvershoot: 6
-  chargeLightIntensity: 6
+  nozzleOffset: 0.35
   hintFont: {fileID: 11400000, guid: 1b923a1b2918c04d4a5e457112c9f5f8, type: 2}
   hintText: "\xA1AG\xC1CHATE! (C)"
   hintLasers: 3
-  chargeClip: {fileID: 8300000, guid: 5d41a6c4a056c59e1b4b2a0f0abf880f, type: 3}
-  beamClip: {fileID: 8300000, guid: 08561cbf9b32e84dbb3fc7efebb877cb, type: 3}
+  wetDrops: 16
+  wetSeconds: 1.6
+  chargeClip: {fileID: 8300000, guid: 35e44a3185f9f9b4cb5c2a0ece857288, type: 3}
+  beamClip: {fileID: 8300000, guid: 869baff3413ea724087551c17c92fe22, type: 3}
+  splashClip: {fileID: 8300000, guid: 5aa2ff55557dbc8438e2dcf7889104c2, type: 3}
   volume: 0.8
   sfxGroup: {fileID: 3458100790020658778, guid: 280fe33fbd1bdfa09ad81a7389170c25, type: 2}
 --- !u!114 &81047408
@@ -26446,7 +26453,9 @@ MonoBehaviour:
   volume: 0.9
   vignetteColor: {r: 0.85, g: 0.05, b: 0.05, a: 1}
   vignetteFade: 1.6
-  splatSeconds: 1.3
+  splatSeconds: 2.1
+  splatSize: 1.6
+  splatOffsetX: {x: 250, y: 340}
 --- !u!82 &1973531574
 AudioSource:
   m_ObjectHideFlags: 0

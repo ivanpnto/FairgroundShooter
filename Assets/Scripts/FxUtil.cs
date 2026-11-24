@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-// Piezas comunes de los efectos que se montan por código (BossHonkFX, BossLaser, WindGusts, ShyTarget): líneas,
+// Piezas comunes de los efectos que se montan por código (BossHonkFX, BossWaterJet, WindGusts, ShyTarget): líneas,
 // anillos, sistemas de partículas sencillos y carteles en pantalla. Así cada efecto no repite la misma
 // configuración y no hay que montar nada en la escena salvo el material.
 //
