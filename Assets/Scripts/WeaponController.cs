@@ -15,12 +15,46 @@ public class WeaponController : MonoBehaviour
     [Tooltip("Armas que se pueden elegir en los menús, en el orden en que se recorren")]
     [SerializeField] private WeaponData[] availableWeapons;
 
+    [Header("Arma de apoyo (Q / rueda)")]
+    [Tooltip("Pistola a la que se cambia con Q o la rueda. Solo si el arma principal tiene visor telescópico (la Barrett)")]
+    [SerializeField] private WeaponData sidearm;
+    [Tooltip("Duración total del cambio: la mitad bajando el arma y la otra mitad subiendo la nueva. No se dispara mientras dura")]
+    [SerializeField, Min(0.05f)] private float switchDuration = 0.35f;
+
     [Header("Referencias")]
     [SerializeField] private Transform weaponHolder;
     [SerializeField] private WeaponAmmo weaponAmmo;
     [SerializeField] private WeaponVisual weaponVisual;
 
     public WeaponData CurrentWeapon { get; private set; }
+
+    // El arma elegida para la partida (selector o armería). CurrentWeapon es la que está en la mano: la misma, o la
+    // pistola de apoyo si se ha cambiado con Q / rueda. Fuera de la partida siempre se vuelve a la principal
+    public WeaponData PrimaryWeapon { get; private set; }
+    public WeaponData Sidearm => sidearm;
+    public bool HasSidearm => SidearmAllowed(PrimaryWeapon, sidearm);
+    public bool IsHoldingSidearm => CurrentWeapon != null && CurrentWeapon != PrimaryWeapon;
+
+    // Regla del cambio, aparte para poder probarla sin escena: solo un arma de visor telescópico (lenta, para
+    // lejos) lleva pistola de apoyo; con cualquier otra el cambio no aporta nada
+    public static bool SidearmAllowed(WeaponData primary, WeaponData sidearm) =>
+        primary != null && sidearm != null && primary != sidearm && primary.scopeType == ScopeType.Telescopic;
+
+    // Cambio en curso: no se dispara, ni se recarga, ni se apunta
+    public bool IsSwitching => switchElapsed >= 0f;
+    // 0 → 1 → 0 durante el cambio: cuánto ha bajado el arma (lo lee WeaponVisual)
+    public float SwitchLowerAmount => IsSwitching ? SwitchCurve(switchElapsed / switchDuration) : 0f;
+
+    // Triángulo suavizado: baja la primera mitad, sube la segunda. El modelo se cambia en el punto más bajo
+    public static float SwitchCurve(float t)
+    {
+        t = Mathf.Clamp01(t);
+        float tri = t < 0.5f ? t * 2f : (1f - t) * 2f;
+        return Mathf.SmoothStep(0f, 1f, tri);
+    }
+
+    // Estadísticas del arma principal, aunque se lleve la pistola en la mano (escalado del boss)
+    public WeaponStats PrimaryStats => PrimaryWeapon == CurrentWeapon ? CurrentStats : ComputeStats(PrimaryWeapon);
 
     // Estadísticas EFECTIVAS del arma equipada (WeaponData + mejoras del perfil). Munición, cadencia,
     // alcance y daño se leen de aquí; WeaponData queda para lo visual, el sonido y el modo de disparo
@@ -43,6 +77,13 @@ public class WeaponController : MonoBehaviour
     public event System.Action<WeaponStats> StatsChanged;
 
     private ProfileManager profileManager;
+    private GameManager gameManager;
+
+    // Balas que le quedan al arma que NO está en la mano (−1 = cargador lleno). Con solo dos armas (principal y
+    // apoyo) basta un número: así cambiar dos veces no es una recarga gratis
+    private int otherWeaponAmmo = -1;
+    private float switchElapsed = -1f;
+    private bool swappedThisSwitch;
 
     // Guardamos el modelo que hemos creado nosotros en lugar de vaciar WeaponHolder:
     // así no destruimos otros hijos que se le añadan en el futuro (fogonazo, mira...)
@@ -51,6 +92,7 @@ public class WeaponController : MonoBehaviour
     private void Awake()
     {
         profileManager = FindFirstObjectByType<ProfileManager>();
+        gameManager = FindFirstObjectByType<GameManager>();
     }
 
     private void OnEnable()
@@ -65,7 +107,31 @@ public class WeaponController : MonoBehaviour
 
     private void Start()
     {
-        Equip(IsUnlocked(startingWeapon) ? startingWeapon : FirstUnlocked());
+        Equip(PreferredWeapon());
+    }
+
+    // La que recuerda el perfil si sigue desbloqueada; si no, la inicial o la primera que tenga
+    private WeaponData PreferredWeapon()
+    {
+        string saved = profileManager != null ? profileManager.EquippedWeaponId : null;
+        if (!string.IsNullOrEmpty(saved) && availableWeapons != null)
+            foreach (WeaponData data in availableWeapons)
+                if (data != null && data.id == saved && IsUnlocked(data))
+                    return data;
+        return IsUnlocked(startingWeapon) ? startingWeapon : FirstUnlocked();
+    }
+
+    // Cuántas armas puede elegir el perfil en el selector (con una sola, no se pregunta)
+    public int UnlockedCount
+    {
+        get
+        {
+            int count = 0;
+            if (availableWeapons != null)
+                foreach (WeaponData data in availableWeapons)
+                    if (IsUnlocked(data)) count++;
+            return count;
+        }
     }
 
     // Sin ProfileManager en la escena todo está desbloqueado, como antes de la Fase 5
@@ -93,12 +159,18 @@ public class WeaponController : MonoBehaviour
         if (CurrentWeapon == null)
             return;
 
-        // Al cambiar de perfil el arma equipada puede no estar desbloqueada en el nuevo
-        if (!IsUnlocked(CurrentWeapon))
+        // Al cambiar de perfil se equipa la que recuerda el nuevo (o una desbloqueada si la suya ya no lo está).
+        // Con el mismo perfil, PreferredWeapon es la principal de ahora, porque Equip la guarda en el perfil
+        WeaponData preferred = PreferredWeapon();
+        if (preferred != PrimaryWeapon)
         {
-            Equip(FirstUnlocked());
+            Equip(preferred);
             return;
         }
+
+        // La tienda solo está fuera de la partida, y ahí siempre se lleva la principal
+        if (IsHoldingSidearm)
+            EquipModel(PrimaryWeapon, -1);
 
         WeaponStats stats = ComputeStats(CurrentWeapon);
         if (stats.Equals(CurrentStats))
@@ -113,6 +185,7 @@ public class WeaponController : MonoBehaviour
         StatsChanged?.Invoke(stats);
     }
 
+    // Equipa el arma PRINCIPAL (selector al jugar, armería). Llena los dos cargadores y cancela un cambio en curso
     public void Equip(WeaponData data)
     {
         if (data == null || data.modelPrefab == null)
@@ -121,6 +194,71 @@ public class WeaponController : MonoBehaviour
             return;
         }
 
+        PrimaryWeapon = data;
+        otherWeaponAmmo = -1;
+        switchElapsed = -1f;
+        EquipModel(data, -1);
+
+        // Se recuerda en el perfil (sin perfil elegido todavía no hay dónde: lo pondrá HandleProfileChanged)
+        if (profileManager != null) profileManager.SetEquippedWeapon(data.id);
+    }
+
+    // Q / rueda en partida. Devuelve false si ahora no se puede (sin pistola de apoyo o ya cambiando)
+    public bool TrySwitchWeapon()
+    {
+        if (!HasSidearm || IsSwitching || CurrentWeapon == null)
+            return false;
+
+        switchElapsed = 0f;
+        swappedThisSwitch = false;
+        return true;
+    }
+
+    // Al empezar cada nivel: los dos cargadores llenos (el contorno rojo, en cambio, solo llena el de la mano)
+    public void RefillAll()
+    {
+        otherWeaponAmmo = -1;
+        weaponAmmo.ResetAmmo();
+    }
+
+    private void Update()
+    {
+        bool inRun = gameManager == null || gameManager.IsInRun;
+
+        // Fuera de la partida se vuelve a la principal: menús, armería y selector la muestran a ella
+        if (!inRun)
+        {
+            switchElapsed = -1f;
+            if (IsHoldingSidearm)
+                EquipModel(PrimaryWeapon, -1);
+            otherWeaponAmmo = -1;
+            return;
+        }
+
+        // El cambio solo avanza jugando: en pausa o entre niveles se queda congelado
+        if (!IsSwitching || gameManager == null || gameManager.CurrentState != GameManager.GameState.Playing)
+            return;
+
+        switchElapsed += Time.deltaTime;
+
+        if (!swappedThisSwitch && switchElapsed >= switchDuration * 0.5f)
+        {
+            swappedThisSwitch = true;
+            WeaponData next = IsHoldingSidearm ? PrimaryWeapon : sidearm;
+            // Las balas del arma que se guarda se apuntan; una recarga a medias se pierde (se cancela)
+            int restore = otherWeaponAmmo;
+            otherWeaponAmmo = weaponAmmo.CurrentAmmo;
+            EquipModel(next, restore);
+            GameLog.Info($"Cambio de arma: {next.displayName}");
+        }
+
+        if (switchElapsed >= switchDuration)
+            switchElapsed = -1f;
+    }
+
+    // Pone el modelo y los datos de un arma en la mano. startAmmo −1 = cargador lleno
+    private void EquipModel(WeaponData data, int startAmmo)
+    {
         if (currentModel != null)
             Destroy(currentModel);
 
@@ -129,7 +267,7 @@ public class WeaponController : MonoBehaviour
         currentModel = Instantiate(data.modelPrefab, weaponHolder);
 
         CurrentStats = ComputeStats(data);
-        weaponAmmo.Configure(CurrentStats.MagazineSize, CurrentStats.ReloadTime);
+        weaponAmmo.Configure(CurrentStats.MagazineSize, CurrentStats.ReloadTime, startAmmo);
 
         WeaponModel model = currentModel.GetComponent<WeaponModel>();
         CurrentModel = model;

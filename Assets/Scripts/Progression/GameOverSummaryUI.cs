@@ -58,7 +58,12 @@ public class GameOverSummaryUI : MonoBehaviour
         int total = profileManager != null ? profileManager.Credits : 0;
         creditsText.text = $"+{gameManager.LastCreditsEarned} CRÉDITOS  ·  TIENES {total}";
 
-        summaryText.text =
+        // Si la partida acabó por el objetivo, es lo primero que hay que leer
+        string missed = gameManager.LastGameOverReason == GameOverReason.MissedTarget
+            ? $"<color=#FF8C73>NO LLEGASTE AL OBJETIVO ({gameManager.LastLevelScore} / {gameManager.LastLevelTarget})</color>\n"
+            : "";
+
+        summaryText.text = missed +
             $"Bonus de precisión del último nivel: +{gameManager.LastAccuracyBonus} ({gameManager.LastLevelAccuracy:P0})\n" +
             $"Precisión de la partida: {scoreManager.RunAccuracy:P0} ({scoreManager.RunShotsHit}/{scoreManager.RunShotsFired})\n" +
             $"Racha máxima: {scoreManager.MaxStreak} aciertos seguidos" + BossLine();

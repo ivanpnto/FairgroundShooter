@@ -15,38 +15,53 @@ MonoBehaviour:
   levelName: Bosque
   environmentId: Forest
   music: {fileID: 8300000, guid: 7f88b5d5b014b719c92e6f95d23fb4c6, type: 3}
+  isBossLevel: 0
+  bossRevealDelay: 12
   duration: 60
+  targetScore: 650
   entries:
   - label: Zorro
     prefab: {fileID: 1679959058992252095, guid: e33f4119c87741b48845d253235be39b, type: 3}
     laneId: Forest_Fox
     weight: 3
     maxActive: 2
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
   - label: Conejo
     prefab: {fileID: 1790279968755509595, guid: 8a18bbbc796ab6a40bc3ae4b89e62808, type: 3}
     laneId: Forest_Rabbit
     weight: 2.5
     maxActive: 1
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
   - label: Buho
     prefab: {fileID: 2834708955499654938, guid: d2e8c95056f521341a25722c63485fc0, type: 3}
     laneId: Forest_Owl
     weight: 2
     maxActive: 1
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
   - label: Pajaro
     prefab: {fileID: 6937787947357308795, guid: af873c609adb8531d9312c6947d27630, type: 3}
     laneId: Bird
     weight: 2
     maxActive: 1
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
   - label: Zorro lejano
     prefab: {fileID: 520881531753138277, guid: 45e662d1a89f7794ab4f8ff99f89e845, type: 3}
     laneId: Forest_FarFox
     weight: 1.2
     maxActive: 1
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
   - label: Mofeta
     prefab: {fileID: 5433160951029243825, guid: 92e7bbe3b2f3b84499d60d5279bf011a, type: 3}
     laneId: Forest_Skunk
     weight: 1.2
     maxActive: 1
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
   spawnInterval: 1.3
   endSpawnIntervalFactor: 0.7
   maxActiveTargets: 5

@@ -39,6 +39,17 @@ public class PlayerProfile
     public bool seenHowToPlay;
     public bool bossEncountered;
 
+    // 24/11: CÓMO JUGAR tiene versión. Cuando cambian las reglas (objetivo por nivel, pistola de apoyo) se sube
+    // CurrentHowToPlayVersion y cada perfil la vuelve a ver UNA vez al pulsar EMPEZAR. Los perfiles anteriores
+    // leen 0 y la ven otra vez; seenHowToPlay se mantiene para no romper los que ya existen
+    public const int CurrentHowToPlayVersion = 2;
+    public int howToPlayVersion;
+    public bool NeedsHowToPlay => howToPlayVersion < CurrentHowToPlayVersion;
+
+    // Arma principal elegida (selector al jugar o EQUIPAR de la armería), para preseleccionarla la próxima vez.
+    // Vacío en los perfiles antiguos: se usa la inicial
+    public string equippedWeapon;
+
     // Lo creó ProfileManager desde demoPreset: solo ese se rehace en cada arranque. Un perfil de jugador que
     // se llame igual (creado antes de que existiera el Demo) no lleva la marca y no se toca
     public bool isDemo;

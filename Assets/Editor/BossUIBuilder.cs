@@ -419,12 +419,15 @@ public static class BossUIBuilder
             "<b>Clic derecho</b>: mirar por la mira del arma",
             "<b>R</b>: recargar (también se recarga sola al vaciar el cargador)",
             "<b>C</b> o <b>Ctrl</b>: agacharse tras el mostrador (contra el chorro de agua)",
+            "<b>Q</b> o <b>rueda</b>: cambiar a la pistola (solo con la Barrett)",
             "<b>Racha</b>: cada 5 aciertos seguidos el multiplicador sube (hasta x3). Fallar o dar a una diana prohibida la reinicia",
-            "Al acabar la partida, gasta tus créditos en la <b>tienda</b>: mejoras y armas nuevas",
+            "Con los créditos, mejoras en la <b>botica</b> y armas en la <b>armería</b>",
         };
+        const int controlLines = 6;
         TMP_Text controlsText = Child<TMP_Text>(card.transform, "ControlsText") ?? NewText(card.transform, "ControlsText", "", sans, 28, Cream);
-        // Los cinco controles, juntos; los dos párrafos largos (racha y tienda), separados: así cabe en 480 px
-        controlsText.text = string.Join("\n", controls, 0, 5) + "\n\n" + string.Join("\n\n", controls, 5, controls.Length - 5);
+        // Los seis controles, juntos; los dos párrafos (racha y tiendas), separados. A 26 pt cabe en 480 px
+        controlsText.fontSize = 26;
+        controlsText.text = string.Join("\n", controls, 0, controlLines) + "\n\n" + string.Join("\n\n", controls, controlLines, controls.Length - controlLines);
         controlsText.alignment = TextAlignmentOptions.TopLeft;
         controlsText.textWrappingMode = TextWrappingModes.Normal;
         Place(controlsText.rectTransform, new Vector2(-370f, -20f), new Vector2(640f, 480f));
@@ -443,6 +446,14 @@ public static class BossUIBuilder
                 new Vector2(370f, 170f - i * 95f));
             if (rows[i].name == "PinkRow") pinkRow = row;
         }
+
+        // 24/11: el objetivo de puntos, bajo la leyenda (es una regla que puede acabar la partida, no un control)
+        TMP_Text objectiveText = Child<TMP_Text>(card.transform, "ObjectiveText") ?? NewText(card.transform, "ObjectiveText", "", sans, 28, Cream);
+        objectiveText.text = "<b><color=#EDBD4F>Objetivo</color></b>: cada nivel pide unos <b>puntos</b> (salen en pantalla). " +
+                             "Si no llegas antes de que acabe el tiempo, termina la partida";
+        objectiveText.alignment = TextAlignmentOptions.TopLeft;
+        objectiveText.textWrappingMode = TextWrappingModes.Normal;
+        Place(objectiveText.rectTransform, new Vector2(370f, -235f), new Vector2(640f, 130f));
 
         // Botón de cerrar (ENTENDIDO / ¡A JUGAR!): copia del botón de Récords, sin sus acciones
         Button close = ChildButton(card.transform, "CloseButton", template);
@@ -463,7 +474,10 @@ public static class BossUIBuilder
         panel.gameObject.SetActive(false);
 
         // EMPEZAR pasa por HowToPlayUI (primera partida del perfil). Fuera también la llamada a
-        // PlayerAim.EnableAiming, un método que ya no existe (se borró en la Fase 2)
+        // PlayerAim.EnableAiming, un método que ya no existe (se borró en la Fase 2).
+        // 24/11: si ya está el selector de arma al jugar, EMPEZAR es suyo (él llama a HowToPlayUI): no se toca
+        if (Object.FindFirstObjectByType<WeaponPickerUI>() != null)
+            return;
         Button start = startPanel.Find("StartButton").GetComponent<Button>();
         for (int i = start.onClick.GetPersistentEventCount() - 1; i >= 1; i--)
             UnityEventTools.RemovePersistentListener(start.onClick, i);

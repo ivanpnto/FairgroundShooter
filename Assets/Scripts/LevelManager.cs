@@ -26,11 +26,17 @@ public class LevelManager : MonoBehaviour
     public bool HasNextLevel => IsAvailable(CurrentIndex + 1);
     public LevelConfig NextLevel => HasNextLevel ? levels[CurrentIndex + 1] : null;
 
+    // Objetivo de puntos del nivel (24/11), ya ajustado al modo prueba. 0 = sin objetivo (boss incluido)
+    public int TargetFor(LevelConfig level) =>
+        level == null || level.isBossLevel ? 0 : LevelConfig.ScaledTarget(level.targetScore, DebugMode.LevelDuration(level), level.duration);
+    public int CurrentTarget => TargetFor(CurrentLevel);
+
     public event System.Action<LevelConfig, int> LevelStarted;
 
     private TargetSpawner spawner;
     private GameTimer timer;
     private WeaponAmmo weaponAmmo;
+    private WeaponController weaponController;
     private ProfileManager profileManager;
 
     private void Awake()
@@ -38,6 +44,7 @@ public class LevelManager : MonoBehaviour
         spawner = FindFirstObjectByType<TargetSpawner>();
         timer = FindFirstObjectByType<GameTimer>();
         weaponAmmo = FindFirstObjectByType<WeaponAmmo>();
+        weaponController = FindFirstObjectByType<WeaponController>();
         profileManager = FindFirstObjectByType<ProfileManager>();
     }
 
@@ -62,7 +69,9 @@ public class LevelManager : MonoBehaviour
 
         if (spawner != null) spawner.Configure(level);
         if (timer != null) timer.StartLevel(DebugMode.LevelDuration(level));   // F1: 10 s en modo prueba
-        if (weaponAmmo != null) weaponAmmo.ResetAmmo();   // cada nivel empieza con el cargador lleno
+        // Cada nivel empieza con los cargadores llenos (el del arma en mano y el de la pistola de apoyo)
+        if (weaponController != null) weaponController.RefillAll();
+        else if (weaponAmmo != null) weaponAmmo.ResetAmmo();
 
         if (levelText != null)
             levelText.text = $"NIVEL {index + 1} · {level.levelName.ToUpper()}";

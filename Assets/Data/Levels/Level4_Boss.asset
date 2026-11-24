@@ -18,6 +18,7 @@ MonoBehaviour:
   isBossLevel: 1
   bossRevealDelay: 12
   duration: 60
+  targetScore: 0
   entries:
   - label: Foca
     prefab: {fileID: 8790973385919696551, guid: b33b10855614a6b4c826aa9de5d14e8c, type: 3}

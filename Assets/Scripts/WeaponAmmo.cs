@@ -122,19 +122,28 @@ public class WeaponAmmo : MonoBehaviour
 
     // Lo llama WeaponController al equipar un arma. Los campos serializados se quedan
     // como valores por defecto por si el objeto se usa sin controlador
-    public void Configure(int newMagazineSize, float newReloadTime)
+    public void Configure(int newMagazineSize, float newReloadTime) => Configure(newMagazineSize, newReloadTime, -1);
+
+    // startAmmo: balas con las que entra el arma (−1 = lleno). Lo usa el cambio a la pistola de apoyo, para que cada
+    // arma conserve su cargador. Siempre se cancela la recarga: si no, terminaría con los datos del arma anterior
+    public void Configure(int newMagazineSize, float newReloadTime, int startAmmo)
     {
         magazineSize = newMagazineSize;
         reloadTime = newReloadTime;
 
-        // Un arma recién equipada empieza llena: cancelar la recarga evita que
-        // termine con los datos del arma anterior
-        currentAmmo = magazineSize;
+        currentAmmo = ClampStartAmmo(startAmmo, magazineSize);
         isReloading = false;
         reloadTimer = 0f;
 
-        UpdateAmmoText();
+        // Un arma que se guardó vacía vuelve recargando, como si se hubiera vaciado en la mano
+        if (currentAmmo <= 0)
+            StartReload();
+        else
+            UpdateAmmoText();
     }
+
+    public static int ClampStartAmmo(int startAmmo, int magazineSize) =>
+        startAmmo < 0 ? magazineSize : Mathf.Min(startAmmo, magazineSize);
 
     public void ResetAmmo()
     {

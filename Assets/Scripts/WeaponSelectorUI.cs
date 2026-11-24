@@ -2,7 +2,8 @@ using UnityEngine;
 using TMPro;
 
 /// <summary>
-/// Selector de arma de los menús (inicio y Game Over): botones ◀ ▶, nombre y stats.
+/// Selector de arma (botones ◀ ▶, nombre y stats). Desde el 24/11 solo está en WeaponPickerUI, que sale al darle a
+/// jugar; la armería es el sitio para comprar y equipar.
 /// Solo es UI: la lista de armas y el arma equipada son de WeaponController. Al elegir,
 /// el arma se equipa en el momento, así que Start/Restart no necesitan saber nada de ella.
 /// </summary>
@@ -11,6 +12,8 @@ public class WeaponSelectorUI : MonoBehaviour
     [SerializeField] private TMP_Text nameText;
     [Tooltip("Línea de stats bajo el nombre (opcional)")]
     [SerializeField] private TMP_Text statsText;
+    [Tooltip("Pista de la pistola de apoyo bajo las stats, solo con un arma que la lleve (opcional)")]
+    [SerializeField] private TMP_Text sidearmText;
 
     private WeaponController weaponController;
     private GameManager gameManager;
@@ -111,5 +114,13 @@ public class WeaponSelectorUI : MonoBehaviour
 
         string mode = data.isAutomatic ? "Automática" : "Semiautomática";
         statsText.text = $"{stats.MagazineSize} balas · {1f / stats.TimeBetweenShots:0.#} disp/s · {mode}";
+
+        if (sidearmText != null)
+        {
+            WeaponData sidearm = weaponController.Sidearm;
+            sidearmText.text = WeaponController.SidearmAllowed(data, sidearm)
+                ? $"+ {sidearm.displayName} de apoyo (Q / rueda)"
+                : "";
+        }
     }
 }

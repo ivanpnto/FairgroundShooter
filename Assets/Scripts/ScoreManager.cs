@@ -26,6 +26,11 @@ public class ScoreManager : MonoBehaviour
     public int ShotsFired { get; private set; }
     public int ShotsHit { get; private set; }
 
+    // Puntos ganados en el nivel actual, para su objetivo (24/11). Incluye las penalizaciones y no el bonus de
+    // precisión (se suma al acabar el nivel, después de comprobar el objetivo)
+    public int LevelScore => score - levelStartScore;
+    private int levelStartScore;
+
     // De toda la partida (para el resumen final)
     public int RunShotsFired { get; private set; }
     public int RunShotsHit { get; private set; }
@@ -126,6 +131,7 @@ public class ScoreManager : MonoBehaviour
     {
         ShotsFired = 0;
         ShotsHit = 0;
+        levelStartScore = score;   // el bonus del nivel anterior ya está sumado: no cuenta para este
     }
 
     // Precisión del nivel actual, 0..1 (0 si no hubo disparos)
@@ -159,6 +165,7 @@ public class ScoreManager : MonoBehaviour
     public void ResetScore()
     {
         score = 0;
+        levelStartScore = 0;
         ShotsFired = ShotsHit = RunShotsFired = RunShotsHit = 0;
         MaxStreak = 0;
         StreakCount = -1;   // fuerza el aviso aunque ya estuviera a 0, para que el HUD se reinicie

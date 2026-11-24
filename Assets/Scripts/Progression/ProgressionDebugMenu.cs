@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 //  · Modo prueba rápida (DebugMode): niveles de 10 s, 10 corazones contra el boss y revelación a los 2 s,
 //    más atajos para la partida en curso (saltar de nivel, acabar el nivel, debilitar la fase del boss).
 //
-// Como el cambio de arma con 1–5, solo existe en el editor y en development builds: en una build normal no
+// Solo existe en el editor y en development builds: en una build normal no
 // se compila, así que no sirve para hacer trampas.
 //
 // Se crea solo al arrancar (RuntimeInitializeOnLoadMethod) para no añadir nada a Main.unity.

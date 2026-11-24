@@ -68,7 +68,7 @@ public class ArmoryController : TentShopController
     public ArmorySlot.SlotState StateOf(WeaponData w)
     {
         if (weapons == null || !weapons.IsUnlocked(w)) return ArmorySlot.SlotState.Locked;
-        return weapons.CurrentWeapon == w ? ArmorySlot.SlotState.Equipped : ArmorySlot.SlotState.Owned;
+        return weapons.PrimaryWeapon == w ? ArmorySlot.SlotState.Equipped : ArmorySlot.SlotState.Owned;
     }
 
     protected override void RefreshSlots()

@@ -42,6 +42,23 @@ public class LevelConfig : ScriptableObject
     [Header("Duración")]
     [Min(1f)] public float duration = 60f;
 
+    [Header("Objetivo (24/11)")]
+    [Tooltip("Puntos que hay que conseguir EN ESTE NIVEL (sin el bonus de precisión) para pasar al siguiente. " +
+             "Si no se llega, termina la partida. 0 = sin objetivo (el nivel del boss no lo usa)")]
+    [Min(0)] public int targetScore;
+
+    // Reglas del objetivo, aparte y estáticas para poder probarlas sin escena
+    public static bool ObjectiveMet(int levelScore, int target) => target <= 0 || levelScore >= target;
+
+    // Con el modo prueba (niveles de 10 s) el objetivo se reduce en proporción al tiempo, para poder probar sin
+    // quedarse siempre fuera. Se redondea hacia arriba: nunca baja a 0 si había objetivo
+    public static int ScaledTarget(int target, float playedSeconds, float configuredSeconds)
+    {
+        if (target <= 0) return 0;
+        if (configuredSeconds <= 0f || playedSeconds >= configuredSeconds) return target;
+        return Mathf.Max(1, Mathf.CeilToInt(target * playedSeconds / configuredSeconds));
+    }
+
     [Header("Aparición")]
     public SpawnEntry[] entries;
     [Min(0.1f)] public float spawnInterval = 1.3f;

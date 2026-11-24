@@ -15,28 +15,39 @@ MonoBehaviour:
   levelName: Fondo marino
   environmentId: Sea
   music: {fileID: 8300000, guid: 362d6ddebc5aee6a88754e842e7150b7, type: 3}
+  isBossLevel: 0
+  bossRevealDelay: 12
   duration: 60
+  targetScore: 1200
   entries:
   - label: Pez payaso
     prefab: {fileID: 1923112617276313945, guid: 104ed9803dec24f46bbab4302c549a77, type: 3}
     laneId: Sea_Fish
     weight: 3
     maxActive: 2
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
   - label: Medusa
     prefab: {fileID: 4595728634970797782, guid: 52919e123e0b98146bd3c144f7e1b6af, type: 3}
     laneId: Sea_Jelly
     weight: 2.5
     maxActive: 2
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
   - label: Tortuga
     prefab: {fileID: 8790973385919696551, guid: b2379613200be4049873a8d93b4efb52, type: 3}
     laneId: Sea_Turtle
     weight: 1
     maxActive: 1
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
   - label: Neumatico
     prefab: {fileID: 1095068116342393269, guid: cd66cfc193036c746b127cf756b3a8d0, type: 3}
     laneId: Sea_Tyre
     weight: 1.5
     maxActive: 1
+    groupSize: 1
+    groupSpacing: {x: 0.9, y: 0.3, z: 0}
   spawnInterval: 1.1
   endSpawnIntervalFactor: 0.6
   maxActiveTargets: 6

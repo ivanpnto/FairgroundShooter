@@ -96,6 +96,7 @@ tiene **3 corazones** y la partida termina al vencer al boss o al quedarse sin e
 | Clic derecho | Mirar por la mira del arma (cada arma tiene la suya). Desde la cadera el disparo se desvía dentro de la cruceta, que se abre con cada disparo; apuntando va exacto al centro |
 | R | Recargar (también se recarga sola al vaciar el cargador) |
 | C o Ctrl | Agacharse tras el mostrador (mantener): la única forma de esquivar el chorro de agua del boss (las tartas y los esbirros te alcanzan igual) |
+| Q o rueda | Solo con la Barrett: cambiar a la pistola de apoyo (Five-seven) y volver. Cada arma conserva su cargador y el cambio tarda unos 0,35 s, sin poder disparar |
 | Esc | Pausa (continuar, opciones o terminar la partida). En la armería y la botica, volver al menú |
 
 - **Racha:** cada 5 aciertos seguidos el multiplicador sube 0,5, hasta ×3. Fallar (también dar al decorado) o dar a
@@ -104,8 +105,13 @@ tiene **3 corazones** y la partida termina al vencer al boss o al quedarse sin e
 - **Dianas especiales**, con contorno y halo de color: **dorado** = +3 s de tiempo; **rojo** = cargador lleno;
   **rosa** (solo contra el boss) = +1 corazón.
 - **Bonus de precisión** al terminar cada nivel, según el porcentaje de aciertos.
+- **Objetivo de puntos:** cada nivel pide unos puntos ganados en ese nivel (650 en el bosque, 1200 en el fondo
+  marino y 1350 en el cielo), sin contar el bonus de precisión. Se anuncian al empezar y en el cartel entre niveles,
+  y un contador bajo la racha se pone verde al superarlos. Si no se llega, termina la partida (se cobran los créditos
+  igual). El cielo solo lo exige si después viene el circo; el nivel del boss no tiene objetivo.
 
-La pantalla **CÓMO JUGAR** del menú resume todo esto, y se muestra sola la primera vez que juega cada perfil.
+La pantalla **CÓMO JUGAR** del menú resume todo esto, y se muestra sola la primera vez que juega cada perfil (y otra
+vez cuando cambian las reglas).
 
 **Pausa y opciones.** Esc detiene la partida. Desde la pausa se puede seguir, abrir **OPCIONES** (volumen General,
 Música, Efectos y Ambiente, sensibilidad del ratón e invertir el eje Y, que se guardan entre sesiones) o **terminar la partida**, que cobra los créditos de lo
@@ -151,7 +157,8 @@ las mejoras se combinan entre sí.
 | AK-47 | 1,5 | 30 | 10 | 2,5 s | Automática | 800 |
 | Barrett M82A1 | 3 | 5 | 0,8 | 3,5 s | Semiautomática | 1200 |
 
-El arma se equipa en la armería o con el selector ◀ ▶ del menú de inicio y del resumen de la partida. Los precios
+El arma se compra y se equipa en la armería. Al darle a jugar (o a OTRA RONDA) sale un selector con las armas propias
+y la última usada ya marcada; con una sola arma no se pregunta. La elegida se guarda en el perfil. Los precios
 salen de una sesión de balance con un jugador simulado (unos 490 créditos por partida al empezar).
 
 ---
@@ -196,21 +203,22 @@ compila, así que no sirve para hacer trampas.
 | Herramienta | Para qué |
 |---|---|
 | **F1** · menú de depuración | Dar 500 créditos, reiniciar el perfil, desbloquearlo todo. **Modo prueba rápida**: niveles de 10 s, 10 corazones contra el boss y revelación a los 2 s (sin contar para récords), munición infinita, saltar a cualquier nivel, acabar el nivel y dejar la fase del boss con 0,1 de vida |
-| **1–5** | Cambiar entre las armas desbloqueadas en plena partida |
 | `BossDebugHUD` | Estado del boss en pantalla (fase, vida, ataque, corazones) |
 | `BalanceBot` y `BossTestBot` | Jugadores simulados que disparan por la misma tubería que el jugador y escriben resultados en la consola. Se usaron para fijar precios y dificultad |
-| *Tools → Fairground* | Herramientas que montan niveles, iluminación, colliders, tiendas e interfaz en la escena (*Setup Sky Level*, *Setup Boss Level*, *Setup Scenery Colliders*, *Build Armory*, *Build Botica*, *Build Promenade*, *Build Level Transition*, *Build Pause And Options*, *Build Sea Clam*…) |
+| *Tools → Fairground* | Herramientas que montan niveles, iluminación, colliders, tiendas e interfaz en la escena (*Setup Sky Level*, *Setup Boss Level*, *Setup Scenery Colliders*, *Build Armory*, *Build Botica*, *Build Promenade*, *Build Level Transition*, *Build Pause And Options*, *Build Sea Clam*, *Build Weapon Picker*, *Build Objective HUD*…) |
 
 > **Cuidado:** *Setup Forest Level*, *Setup Sea Level* y *Setup Exterior* reconstruyen sus prefabs desde cero y
 > borran lo que se haya añadido después. Las demás se pueden repetir.
 
 ### Tests
 
-70 tests de modo Edit (NUnit) en `Assets/Tests/EditMode`: el cálculo de estadísticas de arma con las mejoras
+76 tests de modo Edit (NUnit) en `Assets/Tests/EditMode`: el cálculo de estadísticas de arma con las mejoras
 (`WeaponStatsCalculator`), los datos de las mejoras, las fórmulas de balance (daño sostenido de cada arma y escalado
 de la vida del boss), el perfil Demo, el guardado del volumen (`VolumeSettings`), la dispersión desde la cadera
-(`WeaponSpread`), los ajustes del ratón (`ControlSettings`), la regla para esquivar el chorro (`PlayerCrouch`) y el
-límite del empujón del viento (`WindGusts.LimitPush`) y la etiqueta corta de la botica (`BoticaSlot.PlateName`). Se
+(`WeaponSpread`), los ajustes del ratón (`ControlSettings`), la regla para esquivar el chorro (`PlayerCrouch`), el
+límite del empujón del viento (`WindGusts.LimitPush`), la etiqueta corta de la botica (`BoticaSlot.PlateName`) y, desde
+el 24/11, el objetivo de puntos, el cargador propio de cada arma y el cambio a la pistola de apoyo
+(`ObjectiveAndSidearmTests`). Se
 ejecutan desde *Window → General → Test Runner → EditMode → Run All*.
 
 El código del juego está en su propio ensamblado (`FairgroundShooter.asmdef`) para que los tests puedan

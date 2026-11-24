@@ -87,7 +87,8 @@ public class PlayerScope : MonoBehaviour
         // Sin Sight no hay dónde poner el ojo: esa arma no apunta (p. ej. el MP5 hasta que
         // tenga su alza). Recargar saca de la mira, como en un arma real
         bool canAim = weapon != null && model != null && model.Sight != null
-                      && (weaponAmmo == null || !weaponAmmo.IsReloading);
+                      && (weaponAmmo == null || !weaponAmmo.IsReloading)
+                      && !weaponController.IsSwitching;   // al cambiar de arma se sale del visor
         bool pressed = forceAim || (Mouse.current != null && Mouse.current.rightButton.isPressed);
         float target = canAim && pressed ? 1f : 0f;
 

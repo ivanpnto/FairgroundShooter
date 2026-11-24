@@ -797,17 +797,17 @@ public class BossController : MonoBehaviour
     // ---------------------------------------------------------------- esbirros (I7.5)
 
     // Un peligro a la vez: un esbirro solo salta si no hay bocinazo en marcha ni otro esbirro saltando
-    // Potencia del arma equipada (con mejoras) frente al arma inicial sin mejoras → multiplicador de vida
+    // Potencia del arma principal (con mejoras; no la pistola de apoyo aunque se lleve en la mano) frente al arma inicial sin mejoras → multiplicador de vida
     private float ComputePowerScale()
     {
         if (config == null || !config.scaleWithPlayerPower) return 1f;
         WeaponController weapons = SceneCache<WeaponController>.Get();
         ProfileManager profiles = SceneCache<ProfileManager>.Get();
-        if (weapons == null || weapons.CurrentWeapon == null || profiles == null || profiles.StarterWeapon == null) return 1f;
+        if (weapons == null || weapons.PrimaryWeapon == null || profiles == null || profiles.StarterWeapon == null) return 1f;
 
         WeaponStats baseline = WeaponStatsCalculator.Compute(profiles.StarterWeapon, null, null);
         float reference = BossPowerScaling.SustainedDamage(baseline, profiles.StarterWeapon.isAutomatic, config.extraRayEfficiency, config.explosionBonus);
-        float current = BossPowerScaling.SustainedDamage(weapons.CurrentStats, weapons.CurrentWeapon.isAutomatic, config.extraRayEfficiency, config.explosionBonus);
+        float current = BossPowerScaling.SustainedDamage(weapons.PrimaryStats, weapons.PrimaryWeapon.isAutomatic, config.extraRayEfficiency, config.explosionBonus);
         float scale = BossPowerScaling.Scale(reference > 0f ? current / reference : 1f, config.powerExponent, config.maxPowerScale);
         GameLog.Info($"Boss: potencia del jugador ×{(reference > 0f ? current / reference : 1f):0.00} → vida ×{scale:0.00}");
         return scale;

@@ -27,6 +27,12 @@ public class WeaponVisual : MonoBehaviour
         new Keyframe(0f, 0f), new Keyframe(0.2f, 1f),
         new Keyframe(0.85f, 1f), new Keyframe(1f, 0f));
 
+    [Header("Cambio de arma (Q / rueda)")]
+    [Tooltip("Cuánto baja el arma en el punto más bajo del cambio (metros, ejes del WeaponHolder)")]
+    [SerializeField] private Vector3 switchOffset = new Vector3(0f, -0.35f, -0.05f);
+    [Tooltip("Inclinación en el punto más bajo del cambio (grados): el cañón cae hacia abajo")]
+    [SerializeField] private Vector3 switchRotation = new Vector3(35f, 0f, 0f);
+
     [Header("Recarga: cargador")]
     [Tooltip("Hacia dónde sale el cargador (metros, ejes del WeaponHolder: Y negativo = abajo)")]
     [SerializeField] private Vector3 magazineOutOffset = new Vector3(0f, -0.25f, 0f);
@@ -65,6 +71,7 @@ public class WeaponVisual : MonoBehaviour
 
     // Player (la cámara) es el padre de WeaponHolder: de ahí sale cuánto se está apuntando
     private PlayerScope playerScope;
+    private WeaponController weaponController;
 
     private void Awake()
     {
@@ -73,6 +80,7 @@ public class WeaponVisual : MonoBehaviour
         restScale = transform.localScale;
 
         playerScope = GetComponentInParent<PlayerScope>();
+        weaponController = GetComponentInParent<WeaponController>();
 
         CacheParts();
     }
@@ -168,12 +176,17 @@ public class WeaponVisual : MonoBehaviour
         // ---------- 1. Arma completa ----------
         float w = reloading ? weaponReloadCurve.Evaluate(progress) : 0f;
 
+        // Cambio de arma: baja la saliente y sube la nueva (el modelo se cambia en el punto más bajo)
+        float sw = weaponController != null ? weaponController.SwitchLowerAmount : 0f;
+
         transform.localPosition = restPosition
                                 + reloadOffset * w
+                                + switchOffset * sw
                                 + Vector3.back * (recoilKick * r);
 
         transform.localRotation = restRotation
                                 * Quaternion.Euler(reloadRotation * w)
+                                * Quaternion.Euler(switchRotation * sw)
                                 * Quaternion.Euler(-recoilAngle * r, 0f, 0f);
 
         // ---------- 2. Cargador ----------

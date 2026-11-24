@@ -187,11 +187,10 @@ public class PlayerShoot : MonoBehaviour
         if (weaponController == null || weaponController.CurrentWeapon == null)
             return;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        // Antes de leer CurrentWeapon: si se cambia de arma este frame, el disparo
-        // de este mismo frame ya usa los datos de la nueva
-        HandleDebugWeaponKeys();
-#endif
+        // Q o rueda: Barrett ↔ pistola de apoyo. Mientras dura el cambio (~0,35 s) no se dispara ni se recarga
+        HandleWeaponSwitchInput();
+        if (weaponController.IsSwitching)
+            return;
 
         WeaponData weapon = weaponController.CurrentWeapon;
         WeaponStats stats = weaponController.CurrentStats;   // cadencia (con mejoras); el modo sale de WeaponData
@@ -240,37 +239,23 @@ public class PlayerShoot : MonoBehaviour
         }
     }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    // Atajo de depuración: 1–5 equipan las armas de AvailableWeapons en plena partida.
-    // Solo existe en el editor y en builds de desarrollo; en una build normal no se
-    // compila, así que no sirve para hacer trampas (Equip rellena el cargador)
-    private void HandleDebugWeaponKeys()
+    // Umbral de la rueda: un «clic» de rueda vale 120 en Windows (1 en otros); así un roce no cambia de arma
+    private const float ScrollThreshold = 0.5f;
+
+    // Sustituye al atajo de depuración 1–5 (quitado): ahora el único cambio en partida es el de la Barrett a la
+    // pistola de apoyo, y la regla de cuándo se puede está en WeaponController
+    private void HandleWeaponSwitchInput()
     {
-        Keyboard keyboard = Keyboard.current;
-        if (keyboard == null)
+        if (!weaponController.HasSidearm)
             return;
 
-        var weapons = weaponController.AvailableWeapons;
-        if (weapons == null)
-            return;
+        bool pressed = Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame;
+        if (!pressed && Mouse.current != null)
+            pressed = Mathf.Abs(Mouse.current.scroll.ReadValue().y) >= ScrollThreshold;
 
-        for (int i = 0; i < weapons.Count && i < 5; i++)
-        {
-            // Fila superior y teclado numérico: Key.Digit1..5 y Key.Numpad1..5 son consecutivas
-            if (!keyboard[Key.Digit1 + i].wasPressedThisFrame && !keyboard[Key.Numpad1 + i].wasPressedThisFrame)
-                continue;
-
-            // La misma arma no se reequipa: rellenaría el cargador gratis. Las bloqueadas en el perfil,
-            // tampoco: el atajo es para probar, no para saltarse la tienda (para eso está el menú de depuración)
-            if (weapons[i] != null && weapons[i] != weaponController.CurrentWeapon && weaponController.IsUnlocked(weapons[i]))
-            {
-                weaponController.Equip(weapons[i]);
-                GameLog.Info($"Depuración: equipada {weapons[i].displayName} (tecla {i + 1})");
-            }
-            return;
-        }
+        if (pressed)
+            weaponController.TrySwitchWeapon();
     }
-#endif
 
     // Pipeline del disparo (I6.2), con las estadísticas efectivas del arma:
     //   1. Rays rayos (1 normal, 2 con disparo doble), repartidos en horizontal alrededor del centro.

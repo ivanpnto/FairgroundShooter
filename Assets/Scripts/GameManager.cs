@@ -9,7 +9,8 @@ public enum GameOverReason
     Time,
     Defeat,
     Victory,
-    Abandoned   // Fase 8: «Terminar partida» desde la pausa. Cuenta como un fin normal (créditos de lo conseguido)
+    Abandoned,   // Fase 8: «Terminar partida» desde la pausa. Cuenta como un fin normal (créditos de lo conseguido)
+    MissedTarget // 24/11: no llegó al objetivo de puntos del nivel. También cobra los créditos de lo conseguido
 }
 
 public class GameManager : MonoBehaviour
@@ -210,11 +211,19 @@ public class GameManager : MonoBehaviour
     public int LastAccuracyBonus { get; private set; }
     public float LastLevelAccuracy { get; private set; }
 
+    // Puntos del último nivel terminado y su objetivo (para el resumen si no se llegó)
+    public int LastLevelScore { get; private set; }
+    public int LastLevelTarget { get; private set; }
+
     // Lo llama GameTimer cuando el tiempo del nivel llega a 0
     public void OnTimeUp()
     {
         if (CurrentState != GameState.Playing)
             return;
+
+        // El objetivo se mira ANTES del bonus de precisión: es lo que enseñaba el contador del HUD
+        LastLevelScore = scoreManager.LevelScore;
+        LastLevelTarget = levelManager != null ? levelManager.CurrentTarget : 0;
 
         // Antes de cambiar de estado: el bonus se calcula con los disparos de este nivel
         float levelMultiplier = levelManager != null && levelManager.CurrentLevel != null
@@ -223,10 +232,29 @@ public class GameManager : MonoBehaviour
         LastAccuracyBonus = scoreManager.ApplyAccuracyBonus(levelMultiplier);
         GameLog.Info($"Bonus de precisión: +{LastAccuracyBonus} ({LastLevelAccuracy:P0} de {scoreManager.ShotsFired} disparos)");
 
+        // Sin siguiente nivel (el 3 sin el circo comprado) la partida acaba igual que siempre: ahí el objetivo es
+        // solo un reto. Con siguiente nivel, hay que cumplirlo para pasar
         if (levelManager != null && levelManager.HasNextLevel)
+        {
+            if (!LevelConfig.ObjectiveMet(LastLevelScore, LastLevelTarget))
+            {
+                GameLog.Info($"Objetivo no alcanzado: {LastLevelScore} / {LastLevelTarget}");
+                EndGame(GameOverReason.MissedTarget);
+                return;
+            }
             StartCoroutine(LevelTransitionRoutine());
+        }
         else
             EndGame();
+    }
+
+    // «SIGUIENTE: FONDO MARINO · OBJETIVO 1200» (el objetivo, más pequeño y en dorado). Sin objetivo, solo el nombre
+    private string NextLevelLine()
+    {
+        LevelConfig next = levelManager.NextLevel;
+        string line = $"SIGUIENTE: {next.levelName.ToUpper()}";
+        int target = levelManager.TargetFor(next);
+        return target > 0 ? $"{line}  <size=80%><color=#FFD24A>· OBJETIVO {target}</color></size>" : line;
     }
 
     private IEnumerator LevelTransitionRoutine()
@@ -257,7 +285,7 @@ public class GameManager : MonoBehaviour
         // Cuenta atrás visible: el jugador sabe cuándo vuelve la acción
         for (int s = transitionSeconds; s > 0; s--)
         {
-            SetText(levelTransitionNext, $"SIGUIENTE: {nextName}\nEMPIEZA EN {s}");
+            SetText(levelTransitionNext, $"{NextLevelLine()}\nEMPIEZA EN {s}");
             yield return new WaitForSeconds(1f);
         }
 
@@ -276,7 +304,7 @@ public class GameManager : MonoBehaviour
         LevelConfig finished = levelManager.CurrentLevel;
         int nextIndex = levelManager.CurrentIndex + 1;
         string title = $"¡{finished.levelName.ToUpper()} SUPERADO!";
-        string next = $"SIGUIENTE: {levelManager.NextLevel.levelName.ToUpper()}";
+        string next = NextLevelLine();
         string bonus = $"+{LastAccuracyBonus} por precisión ({LastLevelAccuracy:P0})";
 
         hud.SetActive(false);

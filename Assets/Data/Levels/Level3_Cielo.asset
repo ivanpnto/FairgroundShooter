@@ -15,7 +15,10 @@ MonoBehaviour:
   levelName: Cielo
   environmentId: Sky
   music: {fileID: 8300000, guid: e79138925b8eb117490019c258b3b590, type: 3}
+  isBossLevel: 0
+  bossRevealDelay: 12
   duration: 60
+  targetScore: 1350
   entries:
   - label: Aguila
     prefab: {fileID: 1889973634243407635, guid: fc916390d4dabb74bbeb0a435713a8f4, type: 3}

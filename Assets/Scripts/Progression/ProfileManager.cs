@@ -222,6 +222,18 @@ public class ProfileManager : MonoBehaviour
         Commit();
     }
 
+    public string EquippedWeaponId => Current != null ? Current.equippedWeapon : null;
+
+    // Recuerda el arma principal elegida. Solo guarda, sin ProfileChanged: quien la cambia es el propio
+    // WeaponController, y avisar haría que se volviera a equipar a sí mismo
+    public void SetEquippedWeapon(string id)
+    {
+        if (Current == null || string.IsNullOrEmpty(id) || Current.equippedWeapon == id)
+            return;
+        Current.equippedWeapon = id;
+        Save();
+    }
+
     // Cobra weapon.price y desbloquea; false si ya está desbloqueada o no hay créditos
     public bool BuyWeapon(WeaponData weapon)
     {
@@ -273,8 +285,9 @@ public class ProfileManager : MonoBehaviour
     // Victoria contra el boss: cuenta y mejor tiempo. Lo llama BossController antes de acabar la partida
     public void MarkHowToPlaySeen()
     {
-        if (Current == null || Current.seenHowToPlay) return;
+        if (Current == null || !Current.NeedsHowToPlay) return;
         Current.seenHowToPlay = true;
+        Current.howToPlayVersion = PlayerProfile.CurrentHowToPlayVersion;
         Commit();
     }
 
